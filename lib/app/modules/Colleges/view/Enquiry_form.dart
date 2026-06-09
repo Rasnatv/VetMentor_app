@@ -1,0 +1,652 @@
+
+import 'package:flutter/material.dart';
+import '../../../core/constants/appcolors.dart';
+import '../../../core/style/dimens.dart';
+import '../../../core/style/textstyle.dart';
+import '../../../core/utils/responsive utiliteclass.dart';
+import '../../../data/models/modelclass.dart';
+import '../../../widgets/fieldwrapper.dart';
+
+class EnquiryBottomSheet extends StatefulWidget {
+  final College college;
+  final void Function(Map<String, dynamic> data) onSubmit;
+  final VoidCallback onSkip;
+
+  const EnquiryBottomSheet({
+    super.key,
+    required this.college,
+    required this.onSubmit,
+    required this.onSkip,
+  });
+
+  @override
+  State<EnquiryBottomSheet> createState() => _EnquiryBottomSheetState();
+}
+
+class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
+  final _formKey   = GlobalKey<FormState>();
+  final _firstCtrl = TextEditingController();
+  final _lastCtrl  = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _neetCtrl  = TextEditingController();
+
+  String  _gender  = 'Male';
+  String? _state;
+  String? _category;
+  String? _course;
+  bool    _loading = false;
+
+  final List<String> _states = [
+    'Kerala', 'Tamil Nadu', 'Karnataka', 'Maharashtra',
+    'Uttar Pradesh', 'West Bengal', 'Rajasthan', 'Gujarat', 'Punjab', 'Other',
+  ];
+  final List<String> _categories = ['General', 'OBC', 'SC / ST', 'EWS'];
+  final List<String> _courses = [
+    'PCB – Physics, Chemistry, Biology',
+    'PCM – Physics, Chemistry, Maths',
+    'PCMB – Physics, Chemistry, Maths & Biology',
+    'Agriculture Science',
+    'B.Sc Agriculture',
+    'B.Sc Zoology',
+    'B.Sc Microbiology',
+    'B.Sc Biotechnology',
+    'B.Pharm / Pharmacy',
+    'Other UG',
+  ];
+
+  @override
+  void dispose() {
+    _firstCtrl.dispose();
+    _lastCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _neetCtrl.dispose();
+    super.dispose();
+  }
+
+  // ── input decoration ──────────────────────────
+  InputDecoration _dec(String hint, Responsive r) => InputDecoration(
+    hintText: hint,
+    hintStyle: AppTextStyles.bodySmall.copyWith(
+      color: AppColors.textSecondary,
+      fontSize: r.fontSize(12),
+    ),
+    contentPadding: EdgeInsets.symmetric(
+      horizontal: r.spacing(AppDimens.paddingMD),
+      vertical: r.spacing(AppDimens.paddingSM + 2),
+    ),
+    filled: true,
+    fillColor: AppColors.backgroundGrey,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+      borderSide: const BorderSide(color: AppColors.border),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+      borderSide: const BorderSide(color: AppColors.border),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+      borderSide: const BorderSide(color: AppColors.error, width: 1.2),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+      borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+    ),
+    errorStyle: TextStyle(fontSize: r.fontSize(10), height: 1),
+    isDense: true,
+  );
+
+  // ── submit ────────────────────────────────────
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    await Future.delayed(const Duration(milliseconds: 600));
+    setState(() => _loading = false);
+    widget.onSubmit({
+      'firstName' : _firstCtrl.text.trim(),
+      'lastName'  : _lastCtrl.text.trim(),
+      'gender'    : _gender,
+      'email'     : _emailCtrl.text.trim(),
+      'phone'     : _phoneCtrl.text.trim(),
+      'state'     : _state ?? '',
+      'category'  : _category ?? '',
+      'course'    : _course ?? '',
+      'neet'      : _neetCtrl.text.trim(),
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  //  BUILD
+  // ═══════════════════════════════════════════════
+  @override
+  Widget build(BuildContext context) {
+    final r      = Responsive.of(context);
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimens.radiusXXL),
+        ),
+      ),
+      padding: EdgeInsets.only(bottom: bottom),
+      // Cap sheet width on tablet/desktop
+      constraints: BoxConstraints(
+        maxWidth: r.value(mobile: double.infinity, tablet: 560, desktop: 640),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHandle(r),
+          _buildHeader(r),
+          const Divider(height: 1, color: AppColors.borderLight),
+          Flexible(child: _buildForm(r)),
+        ],
+      ),
+    );
+  }
+
+  // ── drag handle ───────────────────────────────
+  Widget _buildHandle(Responsive r) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: r.spacing(AppDimens.paddingSM + 2),
+        bottom: r.spacing(AppDimens.paddingXS + 2),
+      ),
+      child: Container(
+        width: 38,
+        height: 4,
+        decoration: BoxDecoration(
+          color: AppColors.border,
+          borderRadius: BorderRadius.circular(AppDimens.radiusXS),
+        ),
+      ),
+    );
+  }
+
+  // ── header ────────────────────────────────────
+  Widget _buildHeader(Responsive r) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        r.spacing(AppDimens.paddingXL),
+        r.spacing(AppDimens.paddingXS + 2),
+        r.spacing(AppDimens.paddingXL),
+        r.spacing(AppDimens.paddingLG - 2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: r.value(mobile: AppDimens.avatarMD, tablet: 52.0),
+            height: r.value(mobile: AppDimens.avatarMD, tablet: 52.0),
+            decoration: BoxDecoration(
+              color: AppColors.primarySurface,
+              borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+            ),
+            child: Icon(
+              Icons.edit_note_rounded,
+              color: AppColors.primary,
+              size: r.value(mobile: AppDimens.iconMD, tablet: AppDimens.iconLG),
+            ),
+          ),
+          SizedBox(width: r.spacing(AppDimens.paddingMD)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Quick Enquiry',
+                  style: AppTextStyles.titleLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: r.fontSize(16),
+                  ),
+                ),
+                Text(
+                  widget.college.name,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.primary,
+                    fontSize: r.fontSize(12),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          // close button
+          GestureDetector(
+            onTap: widget.onSkip,
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.backgroundGrey,
+                borderRadius: BorderRadius.circular(AppDimens.radiusSM),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                color: AppColors.textSecondary,
+                size: r.value(
+                  mobile: AppDimens.iconXS + 2,
+                  tablet: AppDimens.iconSM,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── form ──────────────────────────────────────
+  Widget _buildForm(Responsive r) {
+    final hGap = r.spacing(AppDimens.paddingLG - 2); // ~14 on mobile
+    final colGap = r.spacing(AppDimens.paddingMD);   // ~12 on mobile
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        r.spacing(AppDimens.paddingXL),
+        r.spacing(AppDimens.paddingLG),
+        r.spacing(AppDimens.paddingXL),
+        0,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            // ── Name row ──────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'First Name *',
+                    child: TextFormField(
+                      controller: _firstCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _dec('Arjun', r),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
+                      ),
+                      validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    ),
+                  ),
+                ),
+                SizedBox(width: colGap),
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'Last Name',
+                    child: TextFormField(
+                      controller: _lastCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _dec('Kumar', r),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: hGap),
+
+            // ── Gender ────────────────────────────
+            FieldWrapper(
+              label: 'Gender *',
+              child: Row(
+                children: ['Male', 'Female', 'Other'].map((g) {
+                  final active = _gender == g;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _gender = g),
+                      child: Container(
+                        margin: EdgeInsets.only(
+                          right: g != 'Other' ? r.spacing(AppDimens.paddingSM) : 0,
+                        ),
+                        height: r.value(
+                          mobile: AppDimens.buttonHeightSM + 2,
+                          tablet: AppDimens.buttonHeight - 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: active
+                              ? AppColors.primarySurface
+                              : AppColors.backgroundGrey,
+                          borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+                          border: Border.all(
+                            color: active ? AppColors.primary : AppColors.border,
+                            width: active ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              g == 'Male'
+                                  ? Icons.male_rounded
+                                  : g == 'Female'
+                                  ? Icons.female_rounded
+                                  : Icons.transgender_rounded,
+                              size: r.value(
+                                mobile: AppDimens.iconXS + 1,
+                                tablet: AppDimens.iconSM,
+                              ),
+                              color: active
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                            ),
+                            SizedBox(width: r.spacing(AppDimens.paddingXS)),
+                            Text(
+                              g,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: active
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                                fontWeight: active
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                fontSize: r.fontSize(12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            SizedBox(height: hGap),
+
+            // ── Email ─────────────────────────────
+            FieldWrapper(
+              label: 'Email Address *',
+              child: TextFormField(
+                controller: _emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: _dec('arjun@email.com', r),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: r.fontSize(13),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Required';
+                  if (!RegExp(r'^[\w.+\-]+@[\w\-]+\.[a-zA-Z]+$')
+                      .hasMatch(v.trim())) {
+                    return 'Enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            SizedBox(height: hGap),
+
+            // ── Phone ─────────────────────────────
+            FieldWrapper(
+              label: 'Phone Number *',
+              child: Row(
+                children: [
+                  Container(
+                    width: r.value(mobile: 58.0, tablet: 66.0),
+                    height: r.value(
+                      mobile: AppDimens.inputHeight - 4,
+                      tablet: AppDimens.inputHeight,
+                    ),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundGrey,
+                      borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Text(
+                      '+91',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: r.spacing(AppDimens.paddingSM)),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      maxLength: 10,
+                      decoration: _dec('98765 43210', r).copyWith(
+                        counterText: '',
+                      ),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Required';
+                        if (v.trim().length < 10) return 'Enter 10-digit number';
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: hGap),
+
+            // ── State + Category ──────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'State',
+                    child: DropdownButtonFormField<String>(
+                      value: _state,
+                      hint: Text(
+                        'Select',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: r.fontSize(12),
+                        ),
+                      ),
+                      decoration: _dec('', r),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
+                      ),
+                      isExpanded: true,
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: r.value(
+                          mobile: AppDimens.iconXS + 4,
+                          tablet: AppDimens.iconSM,
+                        ),
+                        color: AppColors.textSecondary,
+                      ),
+                      items: _states
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _state = v),
+                    ),
+                  ),
+                ),
+                SizedBox(width: colGap),
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'Category',
+                    child: DropdownButtonFormField<String>(
+                      value: _category,
+                      hint: Text(
+                        'Select',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: r.fontSize(12),
+                        ),
+                      ),
+                      decoration: _dec('', r),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
+                      ),
+                      isExpanded: true,
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: r.value(
+                          mobile: AppDimens.iconXS + 4,
+                          tablet: AppDimens.iconSM,
+                        ),
+                        color: AppColors.textSecondary,
+                      ),
+                      items: _categories
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _category = v),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: hGap),
+
+            // ── Course dropdown ───────────────────
+            FieldWrapper(
+              label: 'Course Studied (12th / UG) *',
+              child: DropdownButtonFormField<String>(
+                value: _course,
+                hint: Text(
+                  'Select your stream',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: r.fontSize(12),
+                  ),
+                ),
+                decoration: _dec('', r),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: r.fontSize(13),
+                ),
+                isExpanded: true,
+                icon: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: r.value(
+                    mobile: AppDimens.iconXS + 4,
+                    tablet: AppDimens.iconSM,
+                  ),
+                  color: AppColors.textSecondary,
+                ),
+                validator: (v) => v == null ? 'Please select a course' : null,
+                items: _courses
+                    .map((c) => DropdownMenuItem(
+                  value: c,
+                  child: Text(
+                    c,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: r.fontSize(12)),
+                  ),
+                ))
+                    .toList(),
+                onChanged: (v) => setState(() => _course = v),
+              ),
+            ),
+            SizedBox(height: hGap),
+
+            // ── NEET Score ────────────────────────
+            FieldWrapper(
+              label: 'NEET Score (optional)',
+              child: TextFormField(
+                controller: _neetCtrl,
+                keyboardType: TextInputType.number,
+                decoration: _dec('e.g. 520', r),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontSize: r.fontSize(13),
+                ),
+              ),
+            ),
+            SizedBox(height: r.spacing(AppDimens.paddingSM + 2)),
+
+            // ── Privacy note ──────────────────────
+            Row(
+              children: [
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: r.value(mobile: AppDimens.iconXS - 2, tablet: AppDimens.iconXS),
+                  color: AppColors.textSecondary,
+                ),
+                SizedBox(width: r.spacing(AppDimens.paddingXS + 1)),
+                Expanded(
+                  child: Text(
+                    'Your information is safe and never shared with third parties.',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontSize: r.fontSize(10),
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: r.spacing(AppDimens.paddingLG)),
+
+            // ── Submit button ─────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: r.value(
+                mobile: AppDimens.buttonHeight,
+                tablet: AppDimens.buttonHeight + 4,
+              ),
+              child: ElevatedButton(
+                onPressed: _loading ? null : _handleSubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimens.buttonRadius),
+                  ),
+                  elevation: 0,
+                ),
+                child: _loading
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                    : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.send_rounded,
+                        size: r.value(
+                          mobile: AppDimens.iconXS + 4,
+                          tablet: AppDimens.iconSM,
+                        )),
+                    SizedBox(width: r.spacing(AppDimens.paddingSM)),
+                    Text(
+                      'Submit & View College Details',
+                      style: AppTextStyles.titleSmall.copyWith(
+                        color: Colors.white,
+                        fontSize: r.fontSize(14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: r.bottomPadding + r.spacing(AppDimens.paddingSM)),
+          ],
+        ),
+      ),
+    );
+  }
+}
