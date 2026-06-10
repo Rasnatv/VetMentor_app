@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
@@ -11,6 +13,7 @@ import '../../../widgets/commonwidget.dart';
 import '../../Colleges/view/Enquiry_form.dart';
 import '../../Colleges/view/collegedtailscreen.dart';
 import '../../Colleges/view/collegescreen.dart';
+import '../../courses/view/coursesscreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -123,6 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       SectionHeader(
                         title: 'Recommended For You',
+                        actionText: 'View All',onAction: ()=>Get.to(CourseListingScreen() ),
                       ),
                       SizedBox(height: r.spacing(AppDimens.paddingMD)),
                       buildRecommendedCard(colleges.first, r),

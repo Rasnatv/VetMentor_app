@@ -82,3 +82,4 @@ class _NavItem {
   final String label;
   const _NavItem({required this.icon, required this.activeIcon, required this.label});
 }
+

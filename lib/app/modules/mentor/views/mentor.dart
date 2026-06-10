@@ -20,7 +20,7 @@ class MentorScreen extends StatelessWidget {
     return NetworkAwareWrapper(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: VetAppBar(showBack: true, title: 'Talk to a Mentor'),
+        appBar: VetAppBar(showBack: false, title: 'Talk to a Mentor'),
         body: ListView(
           padding: EdgeInsets.fromLTRB(
             r.spacing(AppDimens.paddingLG),

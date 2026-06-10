@@ -1,9 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
 import '../../../core/constants/appcolors.dart';
 import '../../onbaoarding/view/openscreen.dart';
-
+import '../../landingview/view/Landingview.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,37 +38,57 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
     );
 
     _scaleAnim = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.55, curve: Curves.elasticOut)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 0.55, curve: Curves.elasticOut)),
     );
 
     _slideAnim = Tween<double>(begin: 30, end: 0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.35, 0.7, curve: Curves.easeOut)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.35, 0.7, curve: Curves.easeOut)),
     );
 
     _taglineAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 0.85, curve: Curves.easeOut)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.5, 0.85, curve: Curves.easeOut)),
     );
 
     _controller.forward();
 
     Future.delayed(const Duration(milliseconds: 2800), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, animation, __) => const OpenScreen(),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 600),
-          ),
-        );
-      }
+      _navigateNext();
     });
+  }
+
+
+
+  Future<void> _navigateNext() async {
+    final box = GetStorage();
+    final bool seenOnboarding = box.read('seen_onboarding') ?? false;
+
+    print('seen_onboarding value: $seenOnboarding'); // ← ADD THIS
+
+    if (seenOnboarding) {
+      Get.offAll(
+            () => const LandingView(),
+        transition: Transition.fade,
+        duration: const Duration(milliseconds: 600),
+      );
+    } else {
+      Get.offAll(
+            () => const OpenScreen(),
+        transition: Transition.fade,
+        duration: const Duration(milliseconds: 600),
+      );
+    }
   }
 
   @override
@@ -133,7 +156,8 @@ class _SplashScreenState extends State<SplashScreen>
               left: 30,
               child: Opacity(
                 opacity: 0.07,
-                child: Icon(Icons.pets_rounded, color: Colors.white, size: 60),
+                child:
+                Icon(Icons.pets_rounded, color: Colors.white, size: 60),
               ),
             ),
             Positioned(
@@ -141,23 +165,26 @@ class _SplashScreenState extends State<SplashScreen>
               right: 40,
               child: Opacity(
                 opacity: 0.07,
-                child: Icon(Icons.pets_rounded, color: Colors.white, size: 40),
+                child:
+                Icon(Icons.pets_rounded, color: Colors.white, size: 40),
               ),
-
             ),
-        Positioned(
-         bottom: 250,
-          right: 100,
-          child: Opacity(
-            opacity: 0.07,
-            child: Icon(Icons.school_sharp, color: Colors.white, size: 40),
-          ),),
             Positioned(
-             top: 180,
+              bottom: 250,
+              right: 100,
+              child: Opacity(
+                opacity: 0.07,
+                child:
+                Icon(Icons.school_sharp, color: Colors.white, size: 40),
+              ),
+            ),
+            Positioned(
+              top: 180,
               left: 30,
               child: Opacity(
                 opacity: 0.07,
-                child: Icon(Icons.school_sharp, color: Colors.white, size: 60),
+                child:
+                Icon(Icons.school_sharp, color: Colors.white, size: 60),
               ),
             ),
 
@@ -187,7 +214,11 @@ class _SplashScreenState extends State<SplashScreen>
                               ),
                             ],
                           ),
-                          child: Image.asset("assets/images/vetmentorlogo.jpeg" ,width: 100,height: 100,),
+                          child: Image.asset(
+                            "assets/images/vetmentorlogo.jpeg",
+                            width: 100,
+                            height: 100,
+                          ),
                         ),
                       ),
                     ),
@@ -222,8 +253,6 @@ class _SplashScreenState extends State<SplashScreen>
                               ),
                             ),
                             const SizedBox(height: 4),
-
-
                           ],
                         ),
                       ),

@@ -1,12 +1,11 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:veterinaryapp/app/core/constants/appimages.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../landingview/view/Landingview.dart';
-import '../../home/view/homescreen.dart';
-
 
 class OpenScreen extends StatefulWidget {
   const OpenScreen({super.key});
@@ -40,27 +39,53 @@ class _OpenScreenState extends State<OpenScreen>
     );
 
     _headerFade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
     );
-    _headerSlide = Tween<Offset>(begin: const Offset(0, -0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.55, curve: Curves.easeOut)),
-    );
+    _headerSlide =
+        Tween<Offset>(begin: const Offset(0, -0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+              parent: _controller,
+              curve: const Interval(0.0, 0.55, curve: Curves.easeOut)),
+        );
 
     _imageFade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.25, 0.65, curve: Curves.easeOut)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.25, 0.65, curve: Curves.easeOut)),
     );
-    _imageSlide = Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.25, 0.7, curve: Curves.easeOut)),
-    );
+    _imageSlide =
+        Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
+          CurvedAnimation(
+              parent: _controller,
+              curve: const Interval(0.25, 0.7, curve: Curves.easeOut)),
+        );
 
     _bottomFade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.55, 1.0, curve: Curves.easeOut)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.55, 1.0, curve: Curves.easeOut)),
     );
-    _bottomSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.55, 1.0, curve: Curves.easeOut)),
-    );
+    _bottomSlide =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+              parent: _controller,
+              curve: const Interval(0.55, 1.0, curve: Curves.easeOut)),
+        );
 
     _controller.forward();
+  }
+
+
+  Future<void> _completeOnboarding() async {
+    final box = GetStorage();
+    box.write('seen_onboarding', true);
+    Get.offAll(
+          () => const LandingView(),
+      transition: Transition.fade,
+      duration: const Duration(milliseconds: 600),
+    );
   }
 
   @override
@@ -99,7 +124,8 @@ class _OpenScreenState extends State<OpenScreen>
             right: 30,
             child: Opacity(
               opacity: 0.12,
-              child: Icon(Icons.pets_rounded, color: AppColors.primary, size: 50),
+              child:
+              Icon(Icons.pets_rounded, color: AppColors.primary, size: 50),
             ),
           ),
           Positioned(
@@ -107,7 +133,8 @@ class _OpenScreenState extends State<OpenScreen>
             left: 20,
             child: Opacity(
               opacity: 0.08,
-              child: Icon(Icons.pets_rounded, color: AppColors.primary, size: 35),
+              child:
+              Icon(Icons.pets_rounded, color: AppColors.primary, size: 35),
             ),
           ),
 
@@ -151,19 +178,21 @@ class _OpenScreenState extends State<OpenScreen>
                             'Explore top veterinary colleges,\ncourses and build your future in\nanimal care and research.',
                             style: TextStyle(
                               fontSize: 14,
-                              color: const Color(0xFF1A1A1A).withOpacity(0.55),
+                              color:
+                              const Color(0xFF1A1A1A).withOpacity(0.55),
                               height: 1.6,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
                           const SizedBox(height: 22),
+
                           // CTA Button
                           SlideTransition(
                             position: _bottomSlide,
                             child: FadeTransition(
                               opacity: _bottomFade,
                               child: GestureDetector(
-                                onTap: () => Get.offAll(() => const LandingView()), // ✅ Fix
+                                onTap: _completeOnboarding,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 24,
@@ -174,7 +203,8 @@ class _OpenScreenState extends State<OpenScreen>
                                     borderRadius: BorderRadius.circular(14),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.35),
+                                        color: AppColors.primary
+                                            .withOpacity(0.35),
                                         blurRadius: 16,
                                         offset: const Offset(0, 6),
                                       ),
@@ -196,8 +226,10 @@ class _OpenScreenState extends State<OpenScreen>
                                       Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.25),
-                                          borderRadius: BorderRadius.circular(6),
+                                          color:
+                                          Colors.white.withOpacity(0.25),
+                                          borderRadius:
+                                          BorderRadius.circular(6),
                                         ),
                                         child: const Icon(
                                           Icons.arrow_forward_rounded,
@@ -269,14 +301,11 @@ class _OpenScreenState extends State<OpenScreen>
   }
 
   Widget _buildHeroImage(Size size) {
-    // Replace this container with an actual Image.asset widget if you have the image
-    // e.g. Image.asset('assets/images/vet_hero.png', fit: BoxFit.contain)
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
-          // Placeholder that mimics the dog+cat image
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
             height: 220,
@@ -289,27 +318,27 @@ class _OpenScreenState extends State<OpenScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: Icon(Icons.cruelty_free_rounded, color: AppColors.primary.withOpacity(0.2), size: 70),
+                    child: Icon(Icons.cruelty_free_rounded,
+                        color: AppColors.primary.withOpacity(0.2), size: 70),
                   ),
                 ],
               ),
             ),
           ),
-          // If using a real image, replace everything above with:
           Image.asset(
             AppImages.openscreenimage,
             fit: BoxFit.contain,
-            height:600
+            height: 600,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFeaturePill({required IconData icon, required String label}) {
+  Widget _buildFeaturePill(
+      {required IconData icon, required String label}) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -346,7 +375,6 @@ class _OpenScreenState extends State<OpenScreen>
   }
 }
 
-/// Custom clipper for the soft curved green background blob
 class _TopBlobClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
