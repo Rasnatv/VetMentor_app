@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
@@ -5,9 +6,12 @@ import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
+import '../../../data/models/collegelistmodel.dart';
 import '../../../widgets/commonwidget.dart';
+import '../../../data/models/college_detailmodel.dart';
+import '../../Colleges/controller/enquirycontroller.dart';
+import '../../Colleges/view/Enquiry_form.dart';
 import '../controller/mentor_controller.dart';
-
 
 class MentorScreen extends StatelessWidget {
   const MentorScreen({super.key});
@@ -15,6 +19,7 @@ class MentorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(MentorController());
+    final enquiryCtrl = Get.find<EnquiryController>();
     final r = Responsive.of(context);
 
     return NetworkAwareWrapper(
@@ -48,58 +53,122 @@ class MentorScreen extends StatelessWidget {
             SizedBox(height: r.spacing(AppDimens.paddingSM)),
             _ContactCard(r: r, controller: controller),
 
-            SizedBox(height: r.spacing(AppDimens.paddingLG)),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _showEnquirySheet(context, r, controller),
-                icon: Icon(Icons.send_outlined, size: r.fontSize(AppDimens.iconXS + 2)),
-                label: Text(
-                  'Send Enquiry',
-                  style: AppTextStyles.titleMedium.copyWith(
-                    fontSize: r.fontSize(13),
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+            // ── Show enquiry button ONLY when NOT registered ──────────
+            Obx(() {
+              if (enquiryCtrl.isAlreadyRegistered) {
+                return const SizedBox.shrink();
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: r.spacing(AppDimens.paddingLG)),
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        _showEnquirySheet(context, r, enquiryCtrl),
+                    icon: Icon(
+                      Icons.send_outlined,
+                      size: r.fontSize(AppDimens.iconXS + 2),
+                    ),
+                    label: Text(
+                      'Send Enquiry',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        fontSize: r.fontSize(13),
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(
+                          vertical: r.spacing(AppDimens.paddingMD)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius.circular(AppDimens.radiusMD),
+                      ),
+                    ),
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(vertical: r.spacing(AppDimens.paddingMD)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                  SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                  Center(
+                    child: Text(
+                      'Typically responds within 24 hours',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: r.fontSize(11),
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
-            SizedBox(height: r.spacing(AppDimens.paddingSM)),
-            Center(
-              child: Text(
-                'Typically responds within 24 hours',
-                style: AppTextStyles.bodySmall.copyWith(
-                  fontSize: r.fontSize(11),
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
+                ],
+              );
+            }),
           ],
         ),
       ),
     );
   }
 
-  void _showEnquirySheet(BuildContext context, Responsive r, MentorController controller) {
-    controller.resetEnquiry();
+  void _showEnquirySheet(
+      BuildContext context, Responsive r, EnquiryController enquiryCtrl) {
+    // Create a CollegeModel instance directly without using .empty()
+    final mentorCollege = CollegeModel(
+      id: 'mentor',
+      type: '0',  // type '0' means enquiry form required
+      collegeName: 'VET Admission Mentor',
+      district: '',
+      state: '',
+    );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _EnquiryBottomSheet(r: r, controller: controller),
+      builder: (_) => EnquiryBottomSheet(
+        college: mentorCollege,
+        onProceed: () {
+          // Show success snackbar after sheet dismisses
+          Future.microtask(() {
+            Get.snackbar(
+              '',
+              '',
+              titleText: Row(
+                children: const [
+                  Icon(Icons.check_circle_rounded,
+                      color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Enquiry Submitted!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              messageText: const Text(
+                'The mentor will get back to you within 24 hours.',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              backgroundColor: const Color(0xFF2E7D32),
+              snackPosition: SnackPosition.TOP,
+              margin: const EdgeInsets.all(16),
+              borderRadius: 12,
+              duration: const Duration(seconds: 3),
+              icon: null,
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            );
+          });
+        },
+      ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Section Label
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SectionLabel extends StatelessWidget {
   final Responsive r;
@@ -120,6 +189,10 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// YouTube Channel Card (with API-driven thumbnail)
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _YouTubeChannelCard extends StatelessWidget {
   final Responsive r;
   final MentorController controller;
@@ -136,79 +209,149 @@ class _YouTubeChannelCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thumbnail
-          GestureDetector(
-            onTap: controller.openYouTubeChannel,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppDimens.radiusLG),
-              ),
-              child: Stack(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: r.spacing(160),
-                    color: const Color(0xFF1A1A2E),
-                    child: Center(
-                      child: Icon(
-                        Icons.play_circle_fill_rounded,
-                        color: Colors.white.withOpacity(0.12),
-                        size: r.fontSize(90),
-                      ),
+          // ── Thumbnail ────────────────────────────────────────────────────
+          Obx(() {
+            final isLoading = controller.isVideosLoading.value;
+            final videos = controller.videos;
+            final firstVideo = videos.isNotEmpty ? videos.first : null;
+
+            return GestureDetector(
+              onTap: firstVideo != null
+                  ? () => controller.openVideo(firstVideo)
+                  : controller.openYouTubeChannel,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppDimens.radiusLG),
+                ),
+                child: Stack(
+                  children: [
+                    // Thumbnail / fallback
+                    SizedBox(
+                      width: double.infinity,
+                      height: r.spacing(180),
+                      child: isLoading
+                          ? _ThumbnailSkeleton(r: r)
+                          : (firstVideo?.thumbnailUrl != null
+                          ? Image.network(
+                        firstVideo!.thumbnailUrl!,
+                        width: double.infinity,
+                        height: r.spacing(180),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _ThumbnailFallback(r: r),
+                      )
+                          : _ThumbnailFallback(r: r)),
                     ),
-                  ),
-                  Positioned(
-                    top: r.spacing(10),
-                    left: r.spacing(10),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: r.spacing(AppDimens.paddingSM + 2),
-                        vertical: r.spacing(3),
+
+                    // Dark scrim
+                    if (!isLoading)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.45),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF0000),
-                        borderRadius: BorderRadius.circular(AppDimens.radiusXS),
+
+                    // YouTube badge – top left
+                    if (!isLoading)
+                      Positioned(
+                        top: r.spacing(10),
+                        left: r.spacing(10),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: r.spacing(AppDimens.paddingSM + 2),
+                            vertical: r.spacing(3),
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF0000),
+                            borderRadius:
+                            BorderRadius.circular(AppDimens.radiusXS),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.play_arrow_rounded,
+                                  color: Colors.white, size: 12),
+                              SizedBox(width: r.spacing(3)),
+                              Text(
+                                'YouTube',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  fontSize: r.fontSize(10),
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 12),
-                          SizedBox(width: r.spacing(3)),
-                          Text(
-                            'YouTube',
+
+                    // Centre play button
+                    if (!isLoading)
+                      Positioned.fill(
+                        child: Center(
+                          child: Container(
+                            width: r.spacing(56),
+                            height: r.spacing(56),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF0000),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.play_arrow_rounded,
+                              color: Colors.white,
+                              size: r.fontSize(AppDimens.iconMD + 6),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Video count badge – bottom right
+                    if (!isLoading && controller.videos.length > 1)
+                      Positioned(
+                        bottom: r.spacing(8),
+                        right: r.spacing(10),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: r.spacing(AppDimens.paddingSM),
+                            vertical: r.spacing(3),
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.65),
+                            borderRadius:
+                            BorderRadius.circular(AppDimens.radiusXS),
+                          ),
+                          child: Text(
+                            '${controller.videos.length} videos',
                             style: AppTextStyles.labelSmall.copyWith(
                               fontSize: r.fontSize(10),
                               color: Colors.white,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Center(
-                      child: Container(
-                        width: r.spacing(52),
-                        height: r.spacing(52),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFF0000),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: r.fontSize(AppDimens.iconMD + 4),
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ),
+            );
+          }),
 
-          // Channel info
+          // ── Channel info row ─────────────────────────────────────────────
           Padding(
             padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
             child: Row(
@@ -230,21 +373,79 @@ class _YouTubeChannelCard extends StatelessWidget {
                     children: [
                       Text(
                         'VET Admission Mentor',
-                        style: AppTextStyles.titleLarge.copyWith(fontSize: r.fontSize(14)),
+                        style: AppTextStyles.titleLarge
+                            .copyWith(fontSize: r.fontSize(14)),
                       ),
                       SizedBox(height: r.spacing(2)),
                       Text(
                         '@vetadmissionmentor',
-                        style: AppTextStyles.bodySmall.copyWith(fontSize: r.fontSize(11)),
+                        style: AppTextStyles.bodySmall
+                            .copyWith(fontSize: r.fontSize(11)),
                       ),
                     ],
+                  ),
+                ),
+                // Refresh button
+                Obx(
+                      () => controller.isVideosLoading.value
+                      ? SizedBox(
+                    width: r.spacing(20),
+                    height: r.spacing(20),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                      : GestureDetector(
+                    onTap: controller.fetchVideos,
+                    child: Icon(
+                      Icons.refresh_rounded,
+                      size: r.fontSize(AppDimens.iconSM),
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
-          // Visit channel button
+          // ── Video list (when API returns multiple) ───────────────────────
+          Obx(() {
+            if (controller.videos.length <= 1) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Divider(height: 1, color: AppColors.border),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: r.spacing(AppDimens.paddingMD),
+                    vertical: r.spacing(AppDimens.paddingSM),
+                  ),
+                  child: Text(
+                    'ALL VIDEOS',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontSize: r.fontSize(10),
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
+                ...controller.videos.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final video = entry.value;
+                  return _VideoListTile(
+                    r: r,
+                    video: video,
+                    index: index,
+                    onTap: () => controller.openVideo(video),
+                  );
+                }),
+                SizedBox(height: r.spacing(AppDimens.paddingSM)),
+              ],
+            );
+          }),
+
           Padding(
             padding: EdgeInsets.fromLTRB(
               r.spacing(AppDimens.paddingMD),
@@ -256,7 +457,8 @@ class _YouTubeChannelCard extends StatelessWidget {
               onTap: controller.openYouTubeChannel,
               child: Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: r.spacing(AppDimens.paddingSM + 2)),
+                padding: EdgeInsets.symmetric(
+                    vertical: r.spacing(AppDimens.paddingSM + 2)),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF0000),
                   borderRadius: BorderRadius.circular(AppDimens.radiusMD),
@@ -264,7 +466,8 @@ class _YouTubeChannelCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.open_in_new_rounded, color: Colors.white, size: 16),
+                    const Icon(Icons.open_in_new_rounded,
+                        color: Colors.white, size: 16),
                     SizedBox(width: r.spacing(AppDimens.paddingXS)),
                     Text(
                       'Visit YouTube Channel',
@@ -284,6 +487,170 @@ class _YouTubeChannelCard extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Thumbnail helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ThumbnailFallback extends StatelessWidget {
+  final Responsive r;
+  const _ThumbnailFallback({required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: r.spacing(180),
+      color: const Color(0xFF1A1A2E),
+      child: Center(
+        child: Icon(
+          Icons.play_circle_fill_rounded,
+          color: Colors.white.withOpacity(0.12),
+          size: r.fontSize(90),
+        ),
+      ),
+    );
+  }
+}
+
+class _ThumbnailSkeleton extends StatefulWidget {
+  final Responsive r;
+  const _ThumbnailSkeleton({required this.r});
+
+  @override
+  State<_ThumbnailSkeleton> createState() => _ThumbnailSkeletonState();
+}
+
+class _ThumbnailSkeletonState extends State<_ThumbnailSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _anim;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.3, end: 0.7).animate(_anim);
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _opacity,
+      builder: (_, __) => Container(
+        width: double.infinity,
+        height: widget.r.spacing(180),
+        color: Color.lerp(
+          const Color(0xFF1A1A2E),
+          const Color(0xFF2A2A3E),
+          _opacity.value,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Video list tile
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _VideoListTile extends StatelessWidget {
+  final Responsive r;
+  final MentorVideo video;
+  final int index;
+  final VoidCallback onTap;
+  const _VideoListTile({
+    required this.r,
+    required this.video,
+    required this.index,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: r.spacing(AppDimens.paddingMD),
+          vertical: r.spacing(AppDimens.paddingXS + 2),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimens.radiusSM),
+              child: video.thumbnailUrl != null
+                  ? Image.network(
+                video.thumbnailUrl!,
+                width: r.spacing(72),
+                height: r.spacing(44),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    _MiniThumbFallback(r: r),
+              )
+                  : _MiniThumbFallback(r: r),
+            ),
+            SizedBox(width: r.spacing(AppDimens.paddingMD)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Video ${index + 1}',
+                    style: AppTextStyles.titleMedium
+                        .copyWith(fontSize: r.fontSize(13)),
+                  ),
+                  SizedBox(height: r.spacing(2)),
+                  Text(
+                    'Tap to watch',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontSize: r.fontSize(11),
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.play_circle_outline_rounded,
+              size: r.fontSize(AppDimens.iconSM),
+              color: const Color(0xFFFF0000),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniThumbFallback extends StatelessWidget {
+  final Responsive r;
+  const _MiniThumbFallback({required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: r.spacing(72),
+      height: r.spacing(44),
+      color: const Color(0xFF1A1A2E),
+      child: const Icon(Icons.play_arrow_rounded,
+          color: Colors.white38, size: 20),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contact Card
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ContactCard extends StatelessWidget {
   final Responsive r;
@@ -310,7 +677,8 @@ class _ContactCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.primarySurface,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primary.withOpacity(0.25)),
+                    border: Border.all(
+                        color: AppColors.primary.withOpacity(0.25)),
                   ),
                   child: Center(
                     child: Text(
@@ -329,12 +697,14 @@ class _ContactCard extends StatelessWidget {
                   children: [
                     Text(
                       'VET Admission Mentor',
-                      style: AppTextStyles.titleLarge.copyWith(fontSize: r.fontSize(14)),
+                      style: AppTextStyles.titleLarge
+                          .copyWith(fontSize: r.fontSize(14)),
                     ),
                     SizedBox(height: r.spacing(2)),
                     Text(
                       'BVSc Admission Consultant · Kerala',
-                      style: AppTextStyles.bodySmall.copyWith(fontSize: r.fontSize(11)),
+                      style: AppTextStyles.bodySmall
+                          .copyWith(fontSize: r.fontSize(11)),
                     ),
                   ],
                 ),
@@ -404,236 +774,30 @@ class _ContactRow extends StatelessWidget {
                 color: iconBg,
                 borderRadius: BorderRadius.circular(AppDimens.radiusMD),
               ),
-              child: Icon(icon, size: r.fontSize(AppDimens.iconXS + 2), color: iconColor),
+              child: Icon(icon,
+                  size: r.fontSize(AppDimens.iconXS + 2), color: iconColor),
             ),
             SizedBox(width: r.spacing(AppDimens.paddingMD)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: AppTextStyles.bodySmall.copyWith(fontSize: r.fontSize(11))),
+                  Text(label,
+                      style: AppTextStyles.bodySmall
+                          .copyWith(fontSize: r.fontSize(11))),
                   SizedBox(height: r.spacing(1)),
-                  Text(value, style: AppTextStyles.titleMedium.copyWith(fontSize: r.fontSize(13))),
+                  Text(value,
+                      style: AppTextStyles.titleMedium
+                          .copyWith(fontSize: r.fontSize(13))),
                 ],
               ),
             ),
             Icon(Icons.arrow_forward_ios_rounded,
-                size: r.fontSize(AppDimens.iconXS), color: AppColors.textSecondary),
+                size: r.fontSize(AppDimens.iconXS),
+                color: AppColors.textSecondary),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _EnquiryBottomSheet extends StatelessWidget {
-  final Responsive r;
-  final MentorController controller;
-  const _EnquiryBottomSheet({required this.r, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.backgroundWhite,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimens.radiusXXL)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: EdgeInsets.only(top: r.spacing(AppDimens.paddingMD)),
-                width: r.spacing(40),
-                height: r.spacing(4),
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusXS),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  r.spacing(AppDimens.paddingXL),
-                  r.spacing(AppDimens.paddingLG),
-                  r.spacing(AppDimens.paddingXL),
-                  r.spacing(AppDimens.paddingSM),
-                ),
-                child: Row(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Send Enquiry',
-                            style: AppTextStyles.headlineLarge
-                                .copyWith(fontSize: r.fontSize(16))),
-                        SizedBox(height: r.spacing(2)),
-                        Text('To VET Admission Mentor',
-                            style: AppTextStyles.bodySmall
-                                .copyWith(fontSize: r.fontSize(12))),
-                      ],
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => Get.back(),
-                      child: Icon(Icons.close_rounded,
-                          color: AppColors.textSecondary,
-                          size: r.fontSize(AppDimens.iconMD)),
-                    ),
-                  ],
-                ),
-              ),
-              const AppDivider(),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  r.spacing(AppDimens.paddingXL),
-                  r.spacing(AppDimens.paddingLG),
-                  r.spacing(AppDimens.paddingXL),
-                  r.spacing(AppDimens.paddingLG),
-                ),
-                child: Column(
-                  children: [
-                    _EnquiryField(
-                      r: r,
-                      label: 'Your Name',
-                      hint: 'Enter your full name',
-                      icon: Icons.person_outline_rounded,
-                      onChanged: (v) => controller.enquiryName.value = v,
-                    ),
-                    SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                    _EnquiryField(
-                      r: r,
-                      label: 'Phone Number',
-                      hint: '+91 XXXXX XXXXX',
-                      icon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      onChanged: (v) => controller.enquiryPhone.value = v,
-                    ),
-                    SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                    _EnquiryField(
-                      r: r,
-                      label: 'Message (optional)',
-                      hint: 'e.g. I need guidance for BVSc admission with 250 NEET score...',
-                      icon: Icons.chat_bubble_outline_rounded,
-                      maxLines: 3,
-                      onChanged: (v) => controller.enquiryMessage.value = v,
-                    ),
-                    SizedBox(height: r.spacing(AppDimens.paddingXL)),
-                    Obx(
-                          () => SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: controller.isLoading.value
-                              ? null
-                              : controller.submitEnquiry,
-                          icon: controller.isLoading.value
-                              ? SizedBox(
-                            width: r.spacing(16),
-                            height: r.spacing(16),
-                            child: const CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                              : Icon(Icons.send_outlined,
-                              size: r.fontSize(AppDimens.iconXS + 2)),
-                          label: Text(
-                            controller.isLoading.value ? 'Sending...' : 'Submit Enquiry',
-                            style: AppTextStyles.titleMedium.copyWith(
-                              fontSize: r.fontSize(13),
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: EdgeInsets.symmetric(
-                                vertical: r.spacing(AppDimens.paddingMD)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius.circular(AppDimens.radiusMD),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).padding.bottom +
-                    r.spacing(AppDimens.paddingSM),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EnquiryField extends StatelessWidget {
-  final Responsive r;
-  final String label;
-  final String hint;
-  final IconData icon;
-  final int maxLines;
-  final TextInputType keyboardType;
-  final ValueChanged<String> onChanged;
-
-  const _EnquiryField({
-    required this.r,
-    required this.label,
-    required this.hint,
-    required this.icon,
-    this.maxLines = 1,
-    this.keyboardType = TextInputType.text,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: AppTextStyles.titleMedium.copyWith(fontSize: r.fontSize(13))),
-        SizedBox(height: r.spacing(AppDimens.paddingXS + 2)),
-        TextField(
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          onChanged: onChanged,
-          style: AppTextStyles.bodyMedium
-              .copyWith(fontSize: r.fontSize(13), color: AppColors.textPrimary),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppTextStyles.bodyMedium.copyWith(
-                fontSize: r.fontSize(13), color: AppColors.textSecondary),
-            prefixIcon: Icon(icon,
-                size: r.fontSize(AppDimens.iconXS + 2),
-                color: AppColors.textSecondary),
-            filled: true,
-            fillColor: AppColors.backgroundGrey,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: r.spacing(AppDimens.paddingMD),
-              vertical: r.spacing(AppDimens.paddingMD - 2),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-              borderSide: BorderSide(color: AppColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

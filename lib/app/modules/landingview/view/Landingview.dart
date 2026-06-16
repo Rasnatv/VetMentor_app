@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -5,7 +6,6 @@ import '../../../widgets/bottomnavbar.dart';
 import '../../careers/careers_Screen.dart';
 import '../../home/view/homescreen.dart';
 import '../../Colleges/view/collegescreen.dart';
-import '../../Saved/view/SavedScreen.dart';
 import '../../mentor/views/mentor.dart';
 import '../../profile/view/profilescreen.dart';
 import '../controller/landingcontroller.dart';
@@ -32,23 +32,38 @@ class LandingView extends StatelessWidget {
         return false;
       },
       child: Obx(
-            () => Scaffold(
-
-          bottomNavigationBar: VetBottomNav(
-            currentIndex: controller.currentIndex.value,
-            onTap: controller.onNavTap,
-          ),
-          body: IndexedStack(
-            index: controller.currentIndex.value,
-            children: const [
-              HomeScreen(),
-              CollegesScreen(),
-              CareersScreen(),
-              MentorScreen (),
-              ProfileScreen(),
-            ],
-          ),
-        ),
+            () {
+          final index = controller.currentIndex.value;
+          return Scaffold(
+            bottomNavigationBar: VetBottomNav(
+              currentIndex: index,
+              onTap: controller.onNavTap,
+            ),
+            body: Stack(
+              children: [
+                // ── These 4 stay alive in IndexedStack ──────
+                Offstage(
+                  offstage: index != 0,
+                  child: const HomeScreen(),
+                ),
+                Offstage(
+                  offstage: index != 1,
+                  child: const AffiliationSelectorScreen(),
+                ),
+                Offstage(
+                  offstage: index != 2,
+                  child: const CareersScreen(),
+                ),
+                Offstage(
+                  offstage: index != 3,
+                  child: const MentorScreen(),
+                ),
+                // ── Profile rebuilds fresh every time ────────
+                if (index == 4) const ProfileScreen(),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-
 import '../modules/Splash/view/splashscreen.dart';
 import 'app_routes.dart';
 

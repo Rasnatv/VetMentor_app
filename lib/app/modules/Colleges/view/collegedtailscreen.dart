@@ -1,629 +1,595 @@
+
 import 'package:flutter/material.dart';
-import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
+import 'package:get/get.dart';
 
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
-import '../../../data/models/modelclass.dart';
+import '../../../data/models/college_detailmodel.dart';
+import '../../../no internetconnection/no_connection.dart';
+import '../../../widgets/appsnackbar.dart';
 import '../../../widgets/commonwidget.dart';
-import 'coursesscreen.dart';
+import '../../Saved/controller/whishlist_controller.dart';
+import '../controller/enquirycontroller.dart';
+
 
 class CollegeDetailScreen extends StatefulWidget {
-  final College college;
-  final bool isSaved;
-  final VoidCallback onSave;
-
-  const CollegeDetailScreen({
-    super.key,
-    required this.college,
-    required this.isSaved,
-    required this.onSave,
-  });
+  const CollegeDetailScreen({super.key});
 
   @override
   State<CollegeDetailScreen> createState() => _CollegeDetailScreenState();
 }
 
 class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
-  late bool _isSaved;
+  late final EnquiryController _ctrl;
+  late final WishlistController _wishlistCtrl; // ← add
+  late String collegeId;
 
   @override
   void initState() {
     super.initState();
-    _isSaved = widget.isSaved;
+    _ctrl = Get.find<EnquiryController>();
+    // putOrFind: reuse existing instance if already registered, else create new
+    _wishlistCtrl = Get.isRegistered<WishlistController>()
+        ? Get.find<WishlistController>()
+        : Get.put(WishlistController());
+    collegeId = Get.arguments;
+    _ctrl.fetchCollegeDetail(collegeId);
+
+    // ── Fetch wishlist so bookmark state is accurate ──────
+    final studentId = _ctrl.studentId;
+    if (studentId > 0) {
+      _wishlistCtrl.fetchWishlist(studentId);
+    }
   }
 
-  void _toggleSave() {
-    setState(() => _isSaved = !_isSaved);
-    widget.onSave();
+  // ── Bookmark tap handler ──────────────────────────────────
+  Future<void> _onBookmarkTap() async {
+    final studentId = _ctrl.studentId;
+
+    // Not registered yet — show snackbar
+    if (studentId <= 0) {
+      AppSnackbar.warning('Please complete the enquiry form to save colleges.');
+      return;
+    }
+
+    final collegeIdInt = int.tryParse(collegeId) ?? 0;
+    if (collegeIdInt <= 0) return;
+
+    await _wishlistCtrl.toggleWishlist(studentId, collegeIdInt);
+
+    // Show feedback snackbar
+    final isNowWishlisted = _wishlistCtrl.isWishlisted(collegeIdInt);
+    if (isNowWishlisted) {
+      AppSnackbar.success('College saved to your wishlist.');
+    } else {
+      AppSnackbar.error('College removed from your wishlist.');
+    }
   }
 
-  void _showApplyDialog() {
-    final user = MockData.userProfile;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => _UserDetailsDialog(
-        user: user,
-        college: widget.college,
-        onProceed: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CoursesScreen(college: widget.college),
-            ),
-          );
-        },
-      ),
-    );
-  }
+  Widget _imageFallback() => Container(
+    color: AppColors.primarySurface,
+    child: const Center(
+      child: Icon(Icons.school_rounded, size: 80, color: AppColors.primary),
+    ),
+  );
 
+  Widget _buildDivider(Responsive r) => Container(
+    width: 1,
+    height: r.spacing(40),
+    color: AppColors.borderLight,
+  );
+
+  // ═══════════════════════════════════════════════
+  //  BUILD
+  // ═══════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    final r = Responsive.of(context); // ← get responsive instance
-    final college = widget.college;
+    final r = Responsive.of(context);
 
     return NetworkAwareWrapper(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          slivers: [
-            // Image App Bar
-            SliverAppBar(
-              expandedHeight: r.value(mobile: 220.0, tablet: 280.0),
-              pinned: true,
-              backgroundColor: AppColors.backgroundWhite,
-              leading: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  margin: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: r.fontSize(AppDimens.iconSM),
-                    color: AppColors.textPrimary,
-                  ),
+        body: Obx(() {
+          // ── Loading ──────────────────────────────────────
+          if (_ctrl.detailLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // ── Error ────────────────────────────────────────
+          if (_ctrl.detailError.value.isNotEmpty) {
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.all(r.spacing(AppDimens.paddingXL)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline_rounded,
+                        size: r.fontSize(48), color: AppColors.error),
+                    SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                    Text(_ctrl.detailError.value,
+                        style: AppTextStyles.bodyMedium,
+                        textAlign: TextAlign.center),
+                    SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                    ElevatedButton.icon(
+                      onPressed: () => _ctrl.fetchCollegeDetail(collegeId),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
                 ),
               ),
-              actions: [
-                GestureDetector(
-                  onTap: () {},
+            );
+          }
+
+          final detail = _ctrl.collegeDetail.value;
+          if (detail == null) return const SizedBox.shrink();
+
+          final collegeIdInt = int.tryParse(collegeId) ?? 0;
+
+          // ── Content ──────────────────────────────────────
+          return CustomScrollView(
+            slivers: [
+              // ── Collapsing Image AppBar ───────────────────
+              SliverAppBar(
+                expandedHeight: r.value(mobile: 220.0, tablet: 280.0),
+                pinned: true,
+                backgroundColor: AppColors.backgroundWhite,
+                leading: GestureDetector(
+                  onTap: () => Navigator.pop(context),
                   child: Container(
                     margin: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
-                    padding: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                      borderRadius:
+                      BorderRadius.circular(AppDimens.radiusMD),
                     ),
                     child: Icon(
-                      Icons.share_outlined,
+                      Icons.arrow_back_ios_new_rounded,
                       size: r.fontSize(AppDimens.iconSM),
                       color: AppColors.textPrimary,
                     ),
                   ),
                 ),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    (college.imageUrl.isNotEmpty)
-                        ? Image.network(
-                      college.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _imageFallback(),
-                    )
-                        : _imageFallback(),
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Color(0x80000000)],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: r.spacing(AppDimens.paddingMD),
-                      right: r.spacing(AppDimens.paddingMD),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: r.spacing(AppDimens.paddingSM + 2),
-                          vertical: r.spacing(AppDimens.paddingXS + 1),
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(AppDimens.radiusSM),
-                        ),
-                        child: Text(
-                          college.tags.isNotEmpty
-                              ? college.tags.first
-                              : 'Public',
-                          style: AppTextStyles.labelSmall.copyWith(
+
+                // ── Bookmark button in top-right ──────────
+                actions: [
+                  Obx(() {
+                    final isLoading =
+                    _wishlistCtrl.isLoading(collegeIdInt);
+                    final isWishlisted =
+                    _wishlistCtrl.isWishlisted(collegeIdInt);
+
+                    return Padding(
+                      padding: EdgeInsets.only(
+                          right: r.spacing(AppDimens.paddingSM)),
+                      child: GestureDetector(
+                        onTap: isLoading ? null : _onBookmarkTap,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          margin: EdgeInsets.all(
+                              r.spacing(AppDimens.paddingSM)),
+                          decoration: BoxDecoration(
                             color: Colors.white,
-                            fontSize: r.fontSize(11),
+                            borderRadius: BorderRadius.circular(
+                                AppDimens.radiusMD),
+                          ),
+                          child: isLoading
+                              ? Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary,
+                            ),
+                          )
+                              : Icon(
+                            isWishlisted
+                                ? Icons.bookmark_rounded
+                                : Icons.bookmark_border_rounded,
+                            size: r.fontSize(AppDimens.iconSM),
+                            color: isWishlisted
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                    );
+                  }),
+                ],
 
-            // Content
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // College header
-                  Padding(
-                    padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CollegeAvatar(
-                          name: college.name,
-                          imageUrl: college.logoUrl,
-                          size: r.spacing(AppDimens.avatarLG), // 56 → scaled
-                        ),
-                        SizedBox(width: r.spacing(AppDimens.paddingMD)),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                college.name,
-                                style: AppTextStyles.headlineLarge.copyWith(
-                                  fontSize: r.fontSize(15),
-                                ),
-                              ),
-                              SizedBox(height: r.spacing(AppDimens.paddingXS)),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on_outlined,
-                                    size: r.fontSize(AppDimens.iconXS - 1),
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  SizedBox(width: r.spacing(3)),
-                                  Text(
-                                    college.location,
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      fontSize: r.fontSize(12),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: r.spacing(AppDimens.paddingSM)),
-                              Wrap(
-                                spacing: r.spacing(AppDimens.paddingXS + 2),
-                                children: [
-                                  ...college.tags.map((t) => TagBadge(
-                                    label: t,
-                                    backgroundColor: AppColors.primarySurface,
-                                    textColor: AppColors.primary,
-                                  )),
-                                  TagBadge(
-                                    label: college.established,
-                                    backgroundColor: AppColors.backgroundGrey,
-                                    textColor: AppColors.textSecondary,
-                                  ),
-                                ],
-                              ),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      (detail.imageUrl != null && detail.imageUrl!.isNotEmpty)
+                          ? Image.network(
+                        detail.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _imageFallback(),
+                      )
+                          : _imageFallback(),
+                      // gradient overlay
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Color(0x80000000),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-
-                  // Stats
-                  Container(
-                    margin: EdgeInsets.symmetric(
-                      horizontal: r.spacing(AppDimens.paddingLG),
-                    ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: r.spacing(AppDimens.paddingLG),
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundWhite,
-                      borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        StatItem(
-                          value: '${college.yearsEstablished}+',
-                          label: 'Years',
-                          icon: Icons.calendar_today_rounded,
-                        ),
-                        _buildDivider(r),
-                        StatItem(
-                          value: '${college.facultyCount}+',
-                          label: 'Faculty',
-                          icon: Icons.person_rounded,
-                        ),
-                        _buildDivider(r),
-                        StatItem(
-                          value: '${college.courseCount}+',
-                          label: 'Courses',
-                          icon: Icons.menu_book_rounded,
-                        ),
-                        _buildDivider(r),
-                        StatItem(
-                          value: '${college.studentCount}+',
-                          label: 'Students',
-                          icon: Icons.groups_rounded,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // About
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      r.spacing(AppDimens.paddingLG),
-                      r.spacing(AppDimens.paddingXL - 2),
-                      r.spacing(AppDimens.paddingLG),
-                      0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'About College',
-                          style: AppTextStyles.headlineMedium.copyWith(
-                            fontSize: r.fontSize(15),
-                          ),
-                        ),
-                        SizedBox(height: r.spacing(AppDimens.paddingSM)),
-                        Text(
-                          college.about.isNotEmpty
-                              ? college.about
-                              : 'This is a premier veterinary institute offering world-class education in veterinary science and animal husbandry.',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            height: 1.6,
-                            fontSize: r.fontSize(13),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              top: r.spacing(AppDimens.paddingXS + 2),
+                      ),
+                      if (detail.affiliationType.isNotEmpty)
+                        Positioned(
+                          bottom: r.spacing(AppDimens.paddingMD),
+                          right: r.spacing(AppDimens.paddingMD),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: r.spacing(AppDimens.paddingSM + 2),
+                              vertical: r.spacing(AppDimens.paddingXS + 1),
                             ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Read More',
-                                  style: AppTextStyles.bodyGreen.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: r.fontSize(13),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius:
+                              BorderRadius.circular(AppDimens.radiusSM),
+                            ),
+                            child: Text(
+                              detail.affiliationType,
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: Colors.white,
+                                fontSize: r.fontSize(11),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── College Header ────────────────────────
+                    Padding(
+                      padding:
+                      EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            detail.collegeName,
+                            style: AppTextStyles.headlineLarge.copyWith(
+                              fontSize: r.fontSize(16),
+                            ),
+                          ),
+                          SizedBox(height: r.spacing(AppDimens.paddingXS)),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: r.fontSize(AppDimens.iconXS),
+                                color: AppColors.textSecondary,
+                              ),
+                              SizedBox(
+                                  width: r.spacing(AppDimens.paddingXS)),
+                              Expanded(
+                                child: Text(
+                                  detail.fullAddress,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    fontSize: r.fontSize(12),
                                   ),
                                 ),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: AppColors.primary,
-                                  size: r.fontSize(AppDimens.iconSM),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                          Row(
+                            children: [
+                              Icon(Icons.star_rounded,
+                                  size: r.fontSize(14),
+                                  color: Colors.amber),
+                              SizedBox(
+                                  width: r.spacing(AppDimens.paddingXS)),
+                              Text(
+                                detail.rating.toStringAsFixed(1),
+                                style: AppTextStyles.titleSmall.copyWith(
+                                  fontSize: r.fontSize(13),
+                                  color: AppColors.textPrimary,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // Popular Courses
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      r.spacing(AppDimens.paddingLG),
-                      r.spacing(AppDimens.paddingXL - 2),
-                      r.spacing(AppDimens.paddingLG),
-                      0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SectionHeader(
-                          title: 'Popular Courses',
-                          actionText: 'View All',
-                          onAction: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => CoursesScreen(college: college),
-                            ),
+                    // ── Stats Row ─────────────────────────────
+                    Container(
+                      margin: EdgeInsets.symmetric(
+                        horizontal: r.spacing(AppDimens.paddingLG),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        vertical: r.spacing(AppDimens.paddingLG),
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundWhite,
+                        borderRadius:
+                        BorderRadius.circular(AppDimens.radiusLG),
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          StatItem(
+                            value: '${detail.years}+',
+                            label: 'Years',
+                            icon: Icons.calendar_today_rounded,
                           ),
-                        ),
-                        SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                        ...college.popularCourses
-                            .map((c) => _buildCourseItem(c, r)),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _imageFallback() {
-    return Container(
-      color: AppColors.primarySurface,
-      child: const Center(
-        child: Icon(Icons.school_rounded, size: 80, color: AppColors.primary),
-      ),
-    );
-  }
-
-  Widget _buildDivider(Responsive r) {
-    return Container(
-      width: 1,
-      height: r.spacing(40),
-      color: AppColors.borderLight,
-    );
-  }
-
-  Widget _buildCourseItem(Course course, Responsive r) {
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CoursesScreen(college: widget.college),
-        ),
-      ),
-      child: Container(
-        margin: EdgeInsets.only(bottom: r.spacing(AppDimens.paddingSM + 2)),
-        padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
-        decoration: BoxDecoration(
-          color: AppColors.backgroundWhite,
-          borderRadius: BorderRadius.circular(AppDimens.radiusMD + 2),
-          border: Border.all(color: AppColors.borderLight),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: r.spacing(AppDimens.avatarMD - 4),  // 44 → scaled
-              height: r.spacing(AppDimens.avatarMD - 4),
-              decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-              ),
-              child: Icon(
-                Icons.school_rounded,
-                color: AppColors.primary,
-                size: r.fontSize(AppDimens.iconMD),
-              ),
-            ),
-            SizedBox(width: r.spacing(AppDimens.paddingMD)),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.name,
-                    style: AppTextStyles.titleLarge.copyWith(
-                      fontSize: r.fontSize(14),
-                    ),
-                  ),
-                  Text(
-                    course.fullName,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: r.fontSize(12),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
-              size: r.fontSize(AppDimens.iconMD - 2),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _UserDetailsDialog extends StatelessWidget {
-  final UserProfile user;
-  final College college;
-  final VoidCallback onProceed;
-
-  const _UserDetailsDialog({
-    required this.user,
-    required this.college,
-    required this.onProceed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final r = Responsive.of(context); // ← get responsive instance
-
-    return Dialog(
-      backgroundColor: AppColors.backgroundWhite,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusXXL),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(r.spacing(AppDimens.paddingXXL)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header icon
-            Container(
-              width: r.spacing(AppDimens.avatarLG),   // 64 → scaled
-              height: r.spacing(AppDimens.avatarLG),
-              decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-              ),
-              child: Icon(
-                Icons.person_rounded,
-                color: AppColors.primary,
-                size: r.fontSize(AppDimens.iconLG),   // 32 → scaled
-              ),
-            ),
-            SizedBox(height: r.spacing(AppDimens.paddingLG)),
-            Text(
-              'Your Details',
-              style: AppTextStyles.headlineLarge.copyWith(
-                fontSize: r.fontSize(16),
-              ),
-            ),
-            SizedBox(height: r.spacing(AppDimens.paddingXS)),
-            Text(
-              'Please confirm your details before applying',
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontSize: r.fontSize(13),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: r.spacing(AppDimens.paddingXL)),
-
-            // Details
-            _DetailRow(icon: Icons.person_outline_rounded,  label: 'Name',          value: user.name),
-            const AppDivider(height: 1),
-            _DetailRow(icon: Icons.email_outlined,          label: 'Email',         value: user.email),
-            const AppDivider(height: 1),
-            _DetailRow(icon: Icons.phone_outlined,          label: 'Phone',         value: user.phone),
-            const AppDivider(height: 1),
-            _DetailRow(icon: Icons.map_outlined,            label: 'State',         value: user.state),
-            const AppDivider(height: 1),
-            _DetailRow(icon: Icons.school_outlined,         label: 'Qualification', value: user.qualification),
-
-            SizedBox(height: r.spacing(AppDimens.paddingXL)),
-
-            // College chip
-            Container(
-              padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
-              decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.school_rounded,
-                    color: AppColors.primary,
-                    size: r.fontSize(AppDimens.iconSM),
-                  ),
-                  SizedBox(width: r.spacing(AppDimens.paddingSM)),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Applying to',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            fontSize: r.fontSize(12),
+                          _buildDivider(r),
+                          StatItem(
+                            value: detail.faculty,
+                            label: 'Faculty',
+                            icon: Icons.person_rounded,
                           ),
-                        ),
-                        Text(
-                          college.name,
-                          style: AppTextStyles.titleSmall.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: r.fontSize(13),
+                          _buildDivider(r),
+                          StatItem(
+                            value: detail.students,
+                            label: 'Students',
+                            icon: Icons.groups_rounded,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                          _buildDivider(r),
+                          StatItem(
+                            value: '${detail.courses.length}',
+                            label: 'Courses',
+                            icon: Icons.menu_book_rounded,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
 
-            SizedBox(height: r.spacing(AppDimens.paddingXL)),
+                    // ── Contact Info ──────────────────────────
+                    _buildSection(
+                      r,
+                      title: 'Contact Information',
+                      child: Column(
+                        children: [
+                          _buildContactRow(r,
+                              icon: Icons.phone_outlined,
+                              label: detail.phone),
+                          SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                          _buildContactRow(r,
+                              icon: Icons.email_outlined,
+                              label: detail.email),
+                          SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                          _buildContactRow(r,
+                              icon: Icons.language_outlined,
+                              label: detail.website,
+                              isLink: true),
+                        ],
+                      ),
+                    ),
 
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    text: 'Cancel',
-                    isOutlined: true,
-                    height: r.spacing(46),
-                    onTap: () => Navigator.pop(context),
-                  ),
+                    // ── About ─────────────────────────────────
+                    if (detail.about.isNotEmpty)
+                      _buildSection(
+                        r,
+                        title: 'About College',
+                        child: _ExpandableText(text: detail.about, r: r),
+                      ),
+
+                    // ── Courses ───────────────────────────────
+                    if (detail.courses.isNotEmpty)
+                      _buildSection(
+                        r,
+                        title: 'Courses Offered',
+                        child: Column(
+                          children: detail.courses
+                              .map((c) => _buildCourseChip(c, r))
+                              .toList(),
+                        ),
+                      ),
+
+                    // ── Facilities ────────────────────────────
+                    if (detail.facilities.isNotEmpty)
+                      _buildSection(
+                        r,
+                        title: 'Facilities',
+                        child: Wrap(
+                          spacing: r.spacing(AppDimens.paddingSM),
+                          runSpacing: r.spacing(AppDimens.paddingSM),
+                          children: detail.facilities
+                              .map((f) => _buildFacilityChip(f, r))
+                              .toList(),
+                        ),
+                      ),
+
+                    const SizedBox(height: 100),
+                  ],
                 ),
-                SizedBox(width: r.spacing(AppDimens.paddingMD)),
-                Expanded(
-                  child: AppButton(
-                    text: 'Proceed',
-                    height: r.spacing(46),
-                    onTap: onProceed,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          );
+        }),
       ),
     );
   }
-}
 
-class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _DetailRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final r = Responsive.of(context); // ← get responsive instance
-
+  Widget _buildSection(Responsive r,
+      {required String title, required Widget child}) {
     return Padding(
-      padding: EdgeInsets.symmetric(
-        vertical: r.spacing(AppDimens.paddingSM + 2),
+      padding: EdgeInsets.fromLTRB(
+        r.spacing(AppDimens.paddingLG),
+        r.spacing(AppDimens.paddingXL - 2),
+        r.spacing(AppDimens.paddingLG),
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: AppTextStyles.headlineMedium
+                  .copyWith(fontSize: r.fontSize(15))),
+          SizedBox(height: r.spacing(AppDimens.paddingMD)),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactRow(Responsive r,
+      {required IconData icon,
+        required String label,
+        bool isLink = false}) {
+    return Row(
+      children: [
+        Icon(icon,
+            size: r.fontSize(AppDimens.iconXS + 2), color: AppColors.primary),
+        SizedBox(width: r.spacing(AppDimens.paddingSM + 2)),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              fontSize: r.fontSize(13),
+              color: isLink ? AppColors.primary : AppColors.textPrimary,
+              decoration:
+              isLink ? TextDecoration.underline : TextDecoration.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCourseChip(String course, Responsive r) {
+    return Container(
+      margin: EdgeInsets.only(bottom: r.spacing(AppDimens.paddingSM + 2)),
+      padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(AppDimens.radiusMD + 2),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: r.fontSize(AppDimens.iconXS + 2),
-            color: AppColors.primary,
-          ),
-          SizedBox(width: r.spacing(AppDimens.paddingSM + 2)),
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              fontSize: r.fontSize(12),
+          Container(
+            width: r.spacing(AppDimens.avatarMD - 4),
+            height: r.spacing(AppDimens.avatarMD - 4),
+            decoration: BoxDecoration(
+              color: AppColors.primarySurface,
+              borderRadius: BorderRadius.circular(AppDimens.radiusMD),
             ),
+            child: Icon(Icons.school_rounded,
+                color: AppColors.primary,
+                size: r.fontSize(AppDimens.iconMD)),
           ),
-          const Spacer(),
-          Text(
-            value,
-            style: AppTextStyles.titleSmall.copyWith(
-              color: AppColors.textPrimary,
-              fontSize: r.fontSize(13),
+          SizedBox(width: r.spacing(AppDimens.paddingMD)),
+          Expanded(
+            child: Text(
+              course,
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: r.fontSize(13),
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFacilityChip(String facility, Responsive r) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: r.spacing(AppDimens.paddingMD),
+        vertical: r.spacing(AppDimens.paddingSM),
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primarySurface,
+        borderRadius: BorderRadius.circular(AppDimens.radiusSM + 2),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+      ),
+      child: Text(
+        facility,
+        style: AppTextStyles.bodySmall.copyWith(
+          fontSize: r.fontSize(12),
+          color: AppColors.primary,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Expandable text widget ────────────────────────────────────
+class _ExpandableText extends StatefulWidget {
+  final String text;
+  final Responsive r;
+
+  const _ExpandableText({required this.text, required this.r});
+
+  @override
+  State<_ExpandableText> createState() => _ExpandableTextState();
+}
+
+class _ExpandableTextState extends State<_ExpandableText> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = widget.r;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AnimatedCrossFade(
+          firstChild: Text(
+            widget.text,
+            style: AppTextStyles.bodyMedium
+                .copyWith(height: 1.6, fontSize: r.fontSize(13)),
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+          ),
+          secondChild: Text(
+            widget.text,
+            style: AppTextStyles.bodyMedium
+                .copyWith(height: 1.6, fontSize: r.fontSize(13)),
+          ),
+          crossFadeState: _expanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 250),
+        ),
+        GestureDetector(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding:
+            EdgeInsets.only(top: r.spacing(AppDimens.paddingXS + 2)),
+            child: Row(
+              children: [
+                Text(
+                  _expanded ? 'Show Less' : 'Read More',
+                  style: AppTextStyles.bodyGreen.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: r.fontSize(13),
+                  ),
+                ),
+                Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.primary,
+                  size: r.fontSize(AppDimens.iconSM),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -75,7 +75,6 @@ class CareerData {
 
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
 
 class CareersScreen extends StatelessWidget {
   const CareersScreen({super.key});
@@ -185,11 +184,7 @@ class _CareerCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: r.fontSize(AppDimens.iconXS),
-              color: AppColors.textSecondary,
-            ),
+
           ],
         ),
       ),
