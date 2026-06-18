@@ -112,7 +112,7 @@ class MentorScreen extends StatelessWidget {
       BuildContext context, Responsive r, EnquiryController enquiryCtrl) {
     // Create a CollegeModel instance directly without using .empty()
     final mentorCollege = CollegeModel(
-      id: 'mentor',
+      id: '',
       type: '0',  // type '0' means enquiry form required
       collegeName: 'VET Admission Mentor',
       district: '',

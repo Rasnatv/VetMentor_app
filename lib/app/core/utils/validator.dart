@@ -75,9 +75,9 @@ class DValidator {
       return 'Phone number is required';
     }
     final phoneRegExp = RegExp(r'^\d{10}$');
-    if (!phoneRegExp.hasMatch(value.trim())) {
-      return 'Enter a valid 10-digit phone number';
-    }
+    // if (!phoneRegExp.hasMatch(value.trim())) {
+    //   return 'Enter a valid 10-digit phone number';
+    // }
     return null;
   }
 

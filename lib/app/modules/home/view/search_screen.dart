@@ -1,5 +1,3 @@
-
-import 'dart:io';
 import 'package:flutter/material.dart' hide SearchController;
 import 'package:get/get.dart';
 import '../../../core/constants/appcolors.dart';
@@ -21,7 +19,7 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  final SearchController _ctrl = Get.put(SearchController());
+  final SearchController  _ctrl        = Get.put(SearchController());
   final EnquiryController _enquiryCtrl = Get.find<EnquiryController>();
   final TextEditingController _textCtrl = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -49,7 +47,7 @@ class _SearchScreenState extends State<SearchScreen> {
   CollegeModel _toCollegeModel(SearchCollegeModel s) {
     return CollegeModel(
       id:          s.id.toString(),
-      type:        '0', // default: enquiry required (no type field in search API)
+      type:        s.type, // ✅ FIXED: use actual type from API, not hardcoded '0'
       collegeName: s.collegeName,
       district:    s.district,
       state:       s.state,
@@ -60,29 +58,27 @@ class _SearchScreenState extends State<SearchScreen> {
   void _openCollegeDetail(SearchCollegeModel searchCollege) {
     final college = _toCollegeModel(searchCollege);
 
-    final bool shouldSkip;
-
-    if (Platform.isIOS) {
-      shouldSkip =
-          _enquiryCtrl.isAlreadyRegistered || !college.isEnquiryRequired;
+    // ✅ Single source of truth — all platform + registration + type logic
+    // lives inside shouldShowEnquiryForm()
+    //
+    // Android not registered type=0 → show form
+    // Android not registered type=1 → show form
+    // iOS     not registered type=0 → show form
+    // iOS     not registered type=1 → skip form, go directly to detail
+    // Any platform, registered      → skip form, go directly to detail
+    if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => EnquiryBottomSheet(
+          college: college,
+          onProceed: () => _pushDetail(searchCollege.id.toString()),
+        ),
+      );
     } else {
-      shouldSkip = _enquiryCtrl.isAlreadyRegistered;
-    }
-
-    if (shouldSkip) {
       _pushDetail(searchCollege.id.toString());
-      return;
     }
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => EnquiryBottomSheet(
-        college: college, // ✅ now passing CollegeModel, not SearchCollegeModel
-        onProceed: () => _pushDetail(searchCollege.id.toString()),
-      ),
-    );
   }
 
   void _pushDetail(String collegeId) {
@@ -125,10 +121,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildBody(Responsive r) {
-    if (_ctrl.isIdle) return _buildIdle(r);
+    if (_ctrl.isIdle)    return _buildIdle(r);
     if (_ctrl.isLoading) return _buildLoading(r);
-    if (_ctrl.hasError) return _buildError(r);
-    if (_ctrl.isEmpty) return _buildEmpty(r);
+    if (_ctrl.hasError)  return _buildError(r);
+    if (_ctrl.isEmpty)   return _buildEmpty(r);
     return _buildResults(r);
   }
 
@@ -263,9 +259,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           )),
         ),
-
         const Divider(height: 1, color: AppColors.borderLight),
-
         Expanded(
           child: ListView.separated(
             padding: EdgeInsets.fromLTRB(
@@ -282,7 +276,7 @@ class _SearchScreenState extends State<SearchScreen> {
               return CollegeCard(
                 collegeName: college.collegeName,
                 location: '${college.district}, ${college.state}',
-                onTap: () => _openCollegeDetail(college), // ✅ passes SearchCollegeModel
+                onTap: () => _openCollegeDetail(college),
               );
             },
           ),
@@ -291,11 +285,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────
-// Search field widget
-// ─────────────────────────────────────────────────────────────
-
 class _SearchField extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;

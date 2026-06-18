@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:veterinaryapp/app/widgets/appsnackbar.dart';
@@ -31,7 +30,6 @@ class ProfileController extends GetxController {
   final RxBool isUpdating                = false.obs;
 
   // ── Dropdowns ─────────────────────────────────────────────
-  final RxList<StateModel>   states   = <StateModel>[].obs;
   final RxList<ProgramModel> programs = <ProgramModel>[].obs;
   final RxBool dropdownsLoading = false.obs;
 
@@ -56,7 +54,6 @@ class ProfileController extends GetxController {
     super.onInit();
     fetchProfile();
     _fetchDropdowns();
-    // ✅ Re-fetch when internet comes back
     Get.find<NetworkService>().register(_onReconnect);
   }
 
@@ -66,7 +63,7 @@ class ProfileController extends GetxController {
     super.onClose();
   }
 
-  // ── reconnect callback ────────────────────────────────────
+  // ── Reconnect callback ────────────────────────────────────
   Future<void> _onReconnect() async {
     await fetchProfile();
     await _fetchDropdowns();
@@ -78,7 +75,8 @@ class ProfileController extends GetxController {
 
     if (studentId.isEmpty) {
       profileState.value = ProfileState.error;
-      profileError.value = 'No registration found. Please submit an enquiry first.';
+      profileError.value =
+      'No registration found. Please submit an enquiry first.';
       return;
     }
 
@@ -107,7 +105,6 @@ class ProfileController extends GetxController {
       }
     } on DioException catch (e) {
       if (ApiErrorHandler.isNetworkError(e)) {
-        // ✅ Network error — stay idle, NetworkAwareWrapper shows offline page
         profileState.value = ProfileState.idle;
         profileError.value = '';
       } else {
@@ -122,48 +119,44 @@ class ProfileController extends GetxController {
     }
   }
 
-  // ── Fetch Dropdowns ───────────────────────────────────────
+  // ── Fetch Dropdowns (programs only — state is free text) ──
   Future<void> _fetchDropdowns() async {
     dropdownsLoading.value = true;
 
     try {
-      final results = await Future.wait([
-        _dio.get('/get-states'),
-        _dio.get('/get-programs'),
-      ]);
-
-      final statesRes = StatesResponse.fromJson(
-        results[0].data as Map<String, dynamic>,
-      );
-
+      final res = await _dio.get('/get-programs');
       final programsRes = ProgramsResponse.fromJson(
-        results[1].data as Map<String, dynamic>,
-      );
-
-      if (statesRes.isSuccess) states.assignAll(statesRes.data);
+          res.data as Map<String, dynamic>);
       if (programsRes.isSuccess) programs.assignAll(programsRes.data);
-
     } on DioException catch (e) {
       if (!ApiErrorHandler.isNetworkError(e)) {
-        // ✅ Only show snackbar for non-network errors
         AppSnackbar.error(ApiErrorHandler.handleDioError(e));
       }
     } catch (e) {
-      AppSnackbar.error('Failed to load dropdown data.');
+      AppSnackbar.error('Failed to load programs.');
     } finally {
       dropdownsLoading.value = false;
     }
   }
 
   // ── Update Profile ────────────────────────────────────────
+  // Matches the student-update API exactly:
+  // id, first_name, last_name, gender, email, country_code,
+  // phone_no, state, district, country, address, pincode,
+  // program_id, net_score
   Future<bool> updateProfile({
     required String id,
     required String firstName,
     required String lastName,
     required String gender,
     required String email,
+    required String countryCode,
     required String phoneNo,
-    required String stateId,
+    required String state,
+    required String district,
+    required String country,
+    required String address,
+    required String pincode,
     required String programId,
     required String netScore,
   }) async {
@@ -173,15 +166,20 @@ class ProfileController extends GetxController {
       final res = await _dio.put(
         '/student-update',
         data: {
-          'id':         id,
-          'first_name': firstName,
-          'last_name':  lastName,
-          'gender':     gender,
-          'email':      email,
-          'phone_no':   phoneNo,
-          'state_id':   stateId,
-          'program_id': programId,
-          'net_score':  netScore,
+          'id':          id,
+          'first_name':  firstName,
+          'last_name':   lastName,
+          'gender':      gender,
+          'email':       email,
+          'country_code': countryCode,
+          'phone_no':    phoneNo,
+          'state':       state,
+          'district':    district,
+          'country':     country,
+          'address':     address,
+          'pincode':     pincode,
+          'program_id':  programId,
+          'net_score':   netScore,
         },
       );
 

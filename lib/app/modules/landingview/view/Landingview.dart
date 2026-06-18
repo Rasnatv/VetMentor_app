@@ -59,7 +59,7 @@ class LandingView extends StatelessWidget {
                   child: const MentorScreen(),
                 ),
                 // ── Profile rebuilds fresh every time ────────
-                if (index == 4) const ProfileScreen(),
+                 if (index == 4) const ProfileScreen(),
               ],
             ),
           );

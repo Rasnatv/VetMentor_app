@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
@@ -13,7 +12,6 @@ import '../controller/profilecontroller.dart';
 import '../../../data/models/studentprofilemodel.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
 import 'updateprofilescreen.dart';
-
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -37,7 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     ctrl = Get.put(ProfileController());
   }
 
-  /// Resolve studentId from EnquiryController (mirrors _storedStudentId logic)
   int get _studentId {
     try {
       final enquiry = Get.find<EnquiryController>();
@@ -52,68 +49,68 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.build(context);
     final Responsive r = Responsive.of(context);
 
-    return NetworkAwareWrapper(child: Scaffold(
-      backgroundColor: AppColors.backgroundGrey,
-      appBar: VetAppBar(
-        title: 'My Profile',
-        showBack: false,
-        actions: [
-          Obx(() {
-            if (!ctrl.isSuccess) return const SizedBox.shrink();
-            return Padding(
-              padding: EdgeInsets.only(right: r.spacing(AppDimens.paddingMD)),
-              child: GestureDetector(
-                onTap: () {
-                  if (ctrl.profile.value != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => UpdateProfileScreen(
-                          profile: ctrl.profile.value!,
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundGrey,
+        appBar: VetAppBar(
+          title: 'My Profile',
+          showBack: false,
+          actions: [
+            Obx(() {
+              if (!ctrl.isSuccess) return const SizedBox.shrink();
+              return Padding(
+                padding: EdgeInsets.only(right: r.spacing(AppDimens.paddingMD)),
+                child: GestureDetector(
+                  onTap: () {
+                    if (ctrl.profile.value != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => UpdateProfileScreen(
+                            profile: ctrl.profile.value!,
+                          ),
                         ),
-                      ),
-                    ).then((_) => ctrl.fetchProfile());
-                  }
-                },
-                child: Container(
-                  width: r.spacing(AppDimens.avatarSM),
-                  height: r.spacing(AppDimens.avatarSM),
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundGrey,
-                    borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-                    border: Border.all(color: AppColors.borderLight),
-                  ),
-                  child: Icon(
-                    Icons.edit_outlined,
-                    color: AppColors.textPrimary,
-                    size: r.fontSize(AppDimens.iconSM),
+                      ).then((_) => ctrl.fetchProfile());
+                    }
+                  },
+                  child: Container(
+                    width: r.spacing(AppDimens.avatarSM),
+                    height: r.spacing(AppDimens.avatarSM),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundGrey,
+                      borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Icon(
+                      Icons.edit_outlined,
+                      color: AppColors.textPrimary,
+                      size: r.fontSize(AppDimens.iconSM),
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
-        ],
+              );
+            }),
+          ],
+        ),
+        body: Obx(() {
+          if (ctrl.isLoading) return _buildLoading();
+          if (ctrl.hasError) return _buildError(r, ctrl);
+          if (ctrl.isSuccess && ctrl.profile.value != null) {
+            return _buildProfile(context, r, ctrl.profile.value!);
+          }
+          return const SizedBox.shrink();
+        }),
       ),
-      body: Obx(() {
-        if (ctrl.isLoading) return _buildLoading(r);
-        if (ctrl.hasError) return _buildError(r, ctrl);
-        if (ctrl.isSuccess && ctrl.profile.value != null) {
-          return _buildProfile(context, r, ctrl.profile.value!);
-        }
-        return const SizedBox.shrink();
-      }),
-    ));
+    );
   }
 
-  // ── Loading ───────────────────────────────────────────────
-  Widget _buildLoading(Responsive r) => const Center(
+  Widget _buildLoading() => const Center(
     child: CircularProgressIndicator(
       color: AppColors.primary,
       strokeWidth: 2,
     ),
   );
 
-  // ── Error ─────────────────────────────────────────────────
   Widget _buildError(Responsive r, ProfileController ctrl) => Center(
     child: Padding(
       padding: EdgeInsets.all(r.spacing(AppDimens.paddingXL)),
@@ -144,13 +141,24 @@ class _ProfileScreenState extends State<ProfileScreen>
               fontSize: r.fontSize(13),
             ),
           ),
-          SizedBox(height: r.spacing(AppDimens.paddingXL)),
+          SizedBox(height: r.spacing(AppDimens.paddingMD)),
+          ElevatedButton(
+            onPressed: ctrl.fetchProfile,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimens.buttonRadius),
+              ),
+            ),
+            child: const Text('Retry'),
+          ),
         ],
       ),
     ),
   );
 
-  // ── Profile ───────────────────────────────────────────────
   Widget _buildProfile(
       BuildContext context,
       Responsive r,
@@ -172,18 +180,17 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: _ProfileHeroBanner(profile: p),
             ),
 
-            // ── Saved Colleges Button ────────────────────────
+            // ── My Collections ───────────────────────────────
             _SectionHeader(title: 'My Collections'),
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: r.spacing(AppDimens.paddingLG)),
               child: _SavedCollegesButton(
                 onTap: () {
-                  final studentId = _studentId;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => WishlistScreen(studentId: studentId),
+                      builder: (_) => WishlistScreen(studentId: _studentId),
                     ),
                   );
                 },
@@ -208,7 +215,53 @@ class _ProfileScreenState extends State<ProfileScreen>
                   iconColor: const Color(0xFF0F6E56),
                   iconBg: const Color(0xFFE1F5EE),
                   label: 'Phone number',
-                  value: p.phoneNo.isNotEmpty ? '+91 ${p.phoneNo}' : '—',
+                  value: p.phoneNo.isNotEmpty
+                      ? '${p.countryCode} ${p.phoneNo}'
+                      : '—',
+                ),
+              ]),
+            ),
+
+            // ── Location Details ─────────────────────────────
+            _SectionHeader(title: 'Location Details'),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: r.spacing(AppDimens.paddingLG)),
+              child: _InfoCard(rows: [
+                _InfoRowData(
+                  icon: Icons.location_city_outlined,
+                  iconColor: const Color(0xFF534AB7),
+                  iconBg: const Color(0xFFEEEDFE),
+                  label: 'District',
+                  value: p.district.isNotEmpty ? p.district : '—',
+                ),
+                _InfoRowData(
+                  icon: Icons.map_outlined,
+                  iconColor: const Color(0xFF993C1D),
+                  iconBg: const Color(0xFFFAECE7),
+                  label: 'State',
+                  value: p.state.isNotEmpty ? p.state : '—',
+                ),
+                _InfoRowData(
+                  icon: Icons.public_outlined,
+                  iconColor: const Color(0xFF0F6E56),
+                  iconBg: const Color(0xFFE1F5EE),
+                  label: 'Country',
+                  value: p.country.isNotEmpty ? p.country : '—',
+                ),
+                _InfoRowData(
+                  icon: Icons.home_outlined,
+                  iconColor: const Color(0xFF185FA5),
+                  iconBg: const Color(0xFFE6F1FB),
+                  label: 'Address',
+                  value: p.address.isNotEmpty ? p.address : '—',
+                ),
+                _InfoRowData(
+                  icon: Icons.pin_drop_outlined,
+                  iconColor: const Color(0xFFBA7517),
+                  iconBg: const Color(0xFFFAEEDA),
+                  label: 'Pincode',
+                  value: p.pincode.isNotEmpty ? p.pincode : '—',
                 ),
               ]),
             ),
@@ -225,13 +278,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                   iconBg: const Color(0xFFEEEDFE),
                   label: 'Program',
                   value: p.program.isNotEmpty ? p.program : '—',
-                ),
-                _InfoRowData(
-                  icon: Icons.public_outlined,
-                  iconColor: const Color(0xFF993C1D),
-                  iconBg: const Color(0xFFFAECE7),
-                  label: 'State',
-                  value: p.state.isNotEmpty ? p.state : '—',
                 ),
               ]),
             ),
@@ -287,7 +333,6 @@ class _SavedCollegesButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -310,13 +355,13 @@ class _SavedCollegesButton extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Icon container
               Container(
                 width: r.spacing(AppDimens.avatarSM),
                 height: r.spacing(AppDimens.avatarSM),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusMD - 2),
+                  borderRadius:
+                  BorderRadius.circular(AppDimens.radiusMD - 2),
                 ),
                 child: Icon(
                   Icons.bookmark_rounded,
@@ -325,17 +370,14 @@ class _SavedCollegesButton extends StatelessWidget {
                 ),
               ),
               SizedBox(width: r.spacing(AppDimens.paddingMD)),
-
-              // Label
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Saved Colleges',
-                      style: AppTextStyles.titleLarge.copyWith(
-                        fontSize: r.fontSize(14),
-                      ),
+                      style: AppTextStyles.titleLarge
+                          .copyWith(fontSize: r.fontSize(14)),
                     ),
                     SizedBox(height: r.spacing(2)),
                     Text(
@@ -348,8 +390,6 @@ class _SavedCollegesButton extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Arrow
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: r.fontSize(AppDimens.iconXS),
@@ -466,10 +506,15 @@ class _ProfileHeroBanner extends StatelessWidget {
                                   ? Icons.female_rounded
                                   : Icons.male_rounded,
                             ),
+                          if (profile.district.isNotEmpty)
+                            _WhiteChip(
+                              label: profile.district,
+                              icon: Icons.location_on_outlined,
+                            ),
                           if (profile.state.isNotEmpty)
                             _WhiteChip(
                               label: profile.state,
-                              icon: Icons.location_on_outlined,
+                              icon: Icons.map_outlined,
                             ),
                         ],
                       ),
@@ -550,6 +595,9 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Info Card
+// ─────────────────────────────────────────────────────────────
 class _InfoRowData {
   final IconData icon;
   final Color iconColor, iconBg;
@@ -636,8 +684,7 @@ class _InfoCard extends StatelessWidget {
               if (!isLast)
                 Divider(
                   height: 1,
-                  indent: r.spacing(
-                      AppDimens.paddingLG + AppDimens.avatarSM),
+                  indent: r.spacing(AppDimens.paddingLG + AppDimens.avatarSM),
                   color: AppColors.borderLight,
                 ),
             ],
@@ -751,6 +798,14 @@ class _NeetCard extends StatelessWidget {
                               color: Color(0xFF3B6D11),
                             ),
                             SizedBox(width: r.spacing(AppDimens.paddingXS)),
+                            Text(
+                              'Recorded',
+                              style: TextStyle(
+                                fontSize: r.fontSize(11),
+                                color: const Color(0xFF3B6D11),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
                         ),
                       ),
