@@ -6,7 +6,7 @@ import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
-import '../courses_controller.dart';
+import '../controller/courses_controller.dart';
 import 'coursesdetailscreen.dart'; // ← add this import
 
 class CourseListingScreen extends StatelessWidget {

@@ -1,11 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
-import '../../../core/utils/responsive utiliteclass.dart';
+import '../../../core/utils/responsive utiliteclass.dart'; // ← add this
+import '../../../core/utils/validator.dart';
 import '../../../data/models/studentprofilemodel.dart';
 import '../../../data/models/studentregistermodel.dart';
 import '../../../widgets/fieldwrapper.dart';
@@ -44,12 +44,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _neetCtrl  = TextEditingController(text: widget.profile.netScore);
     _gender    = widget.profile.gender.isNotEmpty ? widget.profile.gender : 'Male';
 
-    // Pre-select state & program once dropdowns are ready
     WidgetsBinding.instance.addPostFrameCallback((_) => _preselectDropdowns());
   }
 
   void _preselectDropdowns() {
-    // Match by name since the profile returns name strings, not IDs
     final matchedState = _ctrl.states.firstWhereOrNull(
           (s) => s.stateName == widget.profile.state,
     );
@@ -74,7 +72,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     super.dispose();
   }
 
-  // ── Input decoration (mirrors EnquiryBottomSheet) ─────────
   InputDecoration _dec(String hint, Responsive r) => InputDecoration(
     hintText: hint,
     hintStyle: AppTextStyles.bodySmall.copyWith(
@@ -111,7 +108,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     isDense: true,
   );
 
-  // ── Submit ────────────────────────────────────────────────
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -130,9 +126,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     if (success && mounted) Navigator.pop(context);
   }
 
-  // ═══════════════════════════════════════════════
-  //  BUILD
-  // ═══════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final r      = Responsive.of(context);
@@ -141,7 +134,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
       appBar: VetAppBar(
-
         title: 'Update Profile',
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
@@ -160,7 +152,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
               ),
             ),
           ),
-        ),),
+        ),
+      ),
 
       body: Stack(
         children: [
@@ -177,7 +170,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  // ── Section header ────────────────────────
                   _SectionLabel(
                     r: r,
                     title: 'Personal Information',
@@ -195,12 +187,13 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                             controller: _firstCtrl,
                             textCapitalization: TextCapitalization.words,
                             decoration: _dec('Arjun', r),
+                            inputFormatters: DValidator.lettersOnly, // ← added
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.textPrimary,
                               fontSize: r.fontSize(13),
                             ),
                             validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                                DValidator.validateName('First Name', v), // ← replaced
                           ),
                         ),
                       ),
@@ -212,10 +205,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                             controller: _lastCtrl,
                             textCapitalization: TextCapitalization.words,
                             decoration: _dec('Kumar', r),
+                            inputFormatters: DValidator.lettersOnly, // ← added
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.textPrimary,
                               fontSize: r.fontSize(13),
                             ),
+                            // no validator — last name is optional
                           ),
                         ),
                       ),
@@ -246,9 +241,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                 color: active
                                     ? AppColors.primarySurface
                                     : AppColors.backgroundGrey,
-                                borderRadius: BorderRadius.circular(
-                                  AppDimens.inputRadius,
-                                ),
+                                borderRadius:
+                                BorderRadius.circular(AppDimens.inputRadius),
                                 border: Border.all(
                                   color: active
                                       ? AppColors.primary
@@ -273,9 +267,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                                         ? AppColors.primary
                                         : AppColors.textSecondary,
                                   ),
-                                  SizedBox(
-                                      width:
-                                      r.spacing(AppDimens.paddingXS)),
+                                  SizedBox(width: r.spacing(AppDimens.paddingXS)),
                                   Text(
                                     g,
                                     style: AppTextStyles.bodySmall.copyWith(
@@ -305,18 +297,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
                       decoration: _dec('arjun@email.com', r),
+                      inputFormatters: DValidator.textWithLimit, // ← added
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.textPrimary,
                         fontSize: r.fontSize(13),
                       ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Required';
-                        if (!RegExp(r'^[\w.+\-]+@[\w\-]+\.[a-zA-Z]+$')
-                            .hasMatch(v.trim())) {
-                          return 'Enter a valid email';
-                        }
-                        return null;
-                      },
+                      validator: (v) => DValidator.validateEmail(v), // ← replaced
                     ),
                   ),
                   SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
@@ -356,17 +342,13 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                             maxLength: 10,
                             decoration: _dec('98765 43210', r)
                                 .copyWith(counterText: ''),
+                            inputFormatters: DValidator.digitsOnly, // ← added
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.textPrimary,
                               fontSize: r.fontSize(13),
                             ),
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty)
-                                return 'Required';
-                              if (v.trim().length < 10)
-                                return 'Enter 10-digit number';
-                              return null;
-                            },
+                            validator: (v) =>
+                                DValidator.validatePhoneNumber(v), // ← replaced
                           ),
                         ),
                       ],
@@ -413,17 +395,16 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           color: AppColors.textSecondary,
                         ),
                         validator: (v) =>
-                        v == null ? 'Please select a state' : null,
+                            DValidator.validateDropdown('state', v), // ← replaced
                         items: _ctrl.states
                             .map((s) => DropdownMenuItem(
                           value: s,
                           child: Text(s.stateName,
-                              style: TextStyle(
-                                  fontSize: r.fontSize(13))),
+                              style:
+                              TextStyle(fontSize: r.fontSize(13))),
                         ))
                             .toList(),
-                        onChanged: (v) =>
-                            setState(() => _selectedState = v),
+                        onChanged: (v) => setState(() => _selectedState = v),
                       );
                     }),
                   ),
@@ -460,17 +441,16 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           color: AppColors.textSecondary,
                         ),
                         validator: (v) =>
-                        v == null ? 'Please select a program' : null,
+                            DValidator.validateDropdown('program', v), // ← replaced
                         items: _ctrl.programs
                             .map((p) => DropdownMenuItem(
                           value: p,
                           child: Text(p.programName,
-                              style: TextStyle(
-                                  fontSize: r.fontSize(13))),
+                              style:
+                              TextStyle(fontSize: r.fontSize(13))),
                         ))
                             .toList(),
-                        onChanged: (v) =>
-                            setState(() => _selectedProgram = v),
+                        onChanged: (v) => setState(() => _selectedProgram = v),
                       );
                     }),
                   ),
@@ -483,10 +463,16 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       controller: _neetCtrl,
                       keyboardType: TextInputType.number,
                       decoration: _dec('e.g. 520', r),
+                      inputFormatters: DValidator.digitsOnly, // ← added
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.textPrimary,
                         fontSize: r.fontSize(13),
                       ),
+                      // ← added: only validates if the user actually types something
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        return DValidator.validateNeetScore(v);
+                      },
                     ),
                   ),
                   SizedBox(height: r.spacing(AppDimens.paddingSM + 2)),
@@ -550,8 +536,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           ),
                         )
                             : Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.check_circle_outline_rounded,
@@ -561,12 +546,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                               ),
                             ),
                             SizedBox(
-                                width: r.spacing(
-                                    AppDimens.paddingSM)),
+                                width: r.spacing(AppDimens.paddingSM)),
                             Text(
                               'Save Changes',
-                              style:
-                              AppTextStyles.titleSmall.copyWith(
+                              style: AppTextStyles.titleSmall.copyWith(
                                 color: Colors.white,
                                 fontSize: r.fontSize(14),
                               ),
@@ -593,8 +576,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius:
-                    BorderRadius.circular(AppDimens.radiusMD),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusMD),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.10),
@@ -668,7 +650,8 @@ class _SectionLabel extends StatelessWidget {
         child: Icon(
           icon,
           color: AppColors.primary,
-          size: r.value(mobile: AppDimens.iconXS + 2, tablet: AppDimens.iconSM),
+          size: r.value(
+              mobile: AppDimens.iconXS + 2, tablet: AppDimens.iconSM),
         ),
       ),
       SizedBox(width: r.spacing(AppDimens.paddingSM)),

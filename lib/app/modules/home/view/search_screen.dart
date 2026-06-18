@@ -86,7 +86,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _pushDetail(String collegeId) {
-    Get.to(() => const CollegeDetailScreen(), arguments: collegeId);
+    Get.to(
+          () => CollegeDetailScreen(collegeId: collegeId),
+      transition: Transition.rightToLeft,
+    );
   }
 
   @override

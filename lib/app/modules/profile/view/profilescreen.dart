@@ -2,13 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
+import '../../Saved/view/SavedScreen.dart';
 import '../controller/profilecontroller.dart';
 import '../../../data/models/studentprofilemodel.dart';
+import '../../Colleges/controller/enquirycontroller.dart';
 import 'updateprofilescreen.dart';
 
 
@@ -25,7 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   late final ProfileController ctrl;
 
   @override
-  bool get wantKeepAlive => false; // always rebuild when tab switches
+  bool get wantKeepAlive => false;
 
   @override
   void initState() {
@@ -34,12 +37,22 @@ class _ProfileScreenState extends State<ProfileScreen>
     ctrl = Get.put(ProfileController());
   }
 
+  /// Resolve studentId from EnquiryController (mirrors _storedStudentId logic)
+  int get _studentId {
+    try {
+      final enquiry = Get.find<EnquiryController>();
+      final id = enquiry.studentId;
+      if (id != 0) return id;
+    } catch (_) {}
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final Responsive r = Responsive.of(context);
 
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: AppColors.backgroundGrey,
       appBar: VetAppBar(
         title: 'My Profile',
@@ -89,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
         return const SizedBox.shrink();
       }),
-    );
+    ));
   }
 
   // ── Loading ───────────────────────────────────────────────
@@ -132,8 +145,6 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
           ),
           SizedBox(height: r.spacing(AppDimens.paddingXL)),
-
-
         ],
       ),
     ),
@@ -159,6 +170,24 @@ class _ProfileScreenState extends State<ProfileScreen>
                 0,
               ),
               child: _ProfileHeroBanner(profile: p),
+            ),
+
+            // ── Saved Colleges Button ────────────────────────
+            _SectionHeader(title: 'My Collections'),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: r.spacing(AppDimens.paddingLG)),
+              child: _SavedCollegesButton(
+                onTap: () {
+                  final studentId = _studentId;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => WishlistScreen(studentId: studentId),
+                    ),
+                  );
+                },
+              ),
             ),
 
             // ── Contact Details ──────────────────────────────
@@ -246,6 +275,92 @@ class _ProfileScreenState extends State<ProfileScreen>
           ],
         ),
       );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Saved Colleges Button
+// ─────────────────────────────────────────────────────────────
+class _SavedCollegesButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _SavedCollegesButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+          border: Border.all(color: AppColors.borderLight),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: r.spacing(AppDimens.paddingLG),
+            vertical: r.spacing(AppDimens.paddingMD + 1),
+          ),
+          child: Row(
+            children: [
+              // Icon container
+              Container(
+                width: r.spacing(AppDimens.avatarSM),
+                height: r.spacing(AppDimens.avatarSM),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMD - 2),
+                ),
+                child: Icon(
+                  Icons.bookmark_rounded,
+                  size: r.fontSize(AppDimens.iconSM),
+                  color: const Color(0xFF1D9E75),
+                ),
+              ),
+              SizedBox(width: r.spacing(AppDimens.paddingMD)),
+
+              // Label
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Saved Colleges',
+                      style: AppTextStyles.titleLarge.copyWith(
+                        fontSize: r.fontSize(14),
+                      ),
+                    ),
+                    SizedBox(height: r.spacing(2)),
+                    Text(
+                      'View your bookmarked colleges',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: r.fontSize(12),
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Arrow
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: r.fontSize(AppDimens.iconXS),
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -435,9 +550,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Info Card
-// ─────────────────────────────────────────────────────────────
 class _InfoRowData {
   final IconData icon;
   final Color iconColor, iconBg;

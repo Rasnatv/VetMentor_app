@@ -166,10 +166,6 @@ class MentorScreen extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Section Label
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _SectionLabel extends StatelessWidget {
   final Responsive r;
   final String label;

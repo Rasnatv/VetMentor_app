@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'app/no internetconnection/network_service.dart';
 import 'app/routes/apppages.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Get.put(NetworkService());
   await GetStorage.init();
   runApp(const MyApp());
 }

@@ -1,8 +1,11 @@
 
-import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:veterinaryapp/app/core/network/api_constants.dart';
+import '../../../data/errors/ApiErrotHandler.dart';
+import '../../../no internetconnection/network_service.dart';
+import '../../../widgets/appsnackbar.dart';
 
 class MentorVideo {
   final String id;
@@ -36,13 +39,15 @@ class MentorVideo {
 class MentorController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isVideosLoading = false.obs;
+  final RxBool videosError = false.obs; // ✅ Added to track non-network errors
   final RxString enquiryName = ''.obs;
   final RxString enquiryPhone = ''.obs;
   final RxString enquiryMessage = ''.obs;
   final RxList<MentorVideo> videos = <MentorVideo>[].obs;
 
-  static const String _videosApiUrl =
-      'https://rasma.astradevelops.in/vetniaryapp/public/api/get-videos';
+  final _dio = Dio();
+
+  static const String _videosApiUrl = '${ApiConstants.baseUrl}/get-videos';
   static const String youtubeChannelUrl =
       'https://youtube.com/@vetadmissionmentor?si=Phnp_C-Z8dr32Gh0';
   static const String mentorPhone = '+9195447 33000';
@@ -52,22 +57,52 @@ class MentorController extends GetxController {
   void onInit() {
     super.onInit();
     fetchVideos();
+    // ✅ Re-fetch when internet comes back
+    Get.find<NetworkService>().register(_onReconnect);
   }
+
+  @override
+  void onClose() {
+    Get.find<NetworkService>().unregister(_onReconnect);
+    super.onClose();
+  }
+
+  // ── reconnect callback ────────────────────────────────────
+  Future<void> _onReconnect() => fetchVideos();
 
   Future<void> fetchVideos() async {
     isVideosLoading.value = true;
+    videosError.value = false;
+
     try {
-      final response = await http
-          .get(Uri.parse(_videosApiUrl))
-          .timeout(const Duration(seconds: 15));
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        if (json['status_code'] == '200') {
-          final list = (json['data'] as List)
-              .map((e) => MentorVideo.fromJson(e as Map<String, dynamic>))
-              .toList();
-          videos.assignAll(list);
-        }
+      final res = await _dio.get(
+        _videosApiUrl,
+        options: Options(
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+        ),
+      );
+
+      final body = res.data as Map<String, dynamic>;
+
+      if (body['status_code'] == '200') {
+        final list = (body['data'] as List)
+            .map((e) => MentorVideo.fromJson(e as Map<String, dynamic>))
+            .toList();
+        videos.assignAll(list);
+      } else {
+        // API returned failure — show snackbar
+        AppSnackbar.error(
+          body['message']?.toString() ?? 'Failed to load videos.',
+        );
+      }
+    } on DioException catch (e) {
+      if (ApiErrorHandler.isNetworkError(e)) {
+        // ✅ Network error — stay silent, NetworkAwareWrapper handles it
+        videosError.value = false;
+      } else {
+        // ✅ Real API error — show snackbar
+        AppSnackbar.error(ApiErrorHandler.handleDioError(e));
       }
     } catch (_) {
       // Silently fail — UI falls back to the static channel card
@@ -81,8 +116,7 @@ class MentorController extends GetxController {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      Get.snackbar('Error', 'Could not open video',
-          snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.error('Could not open video.');
     }
   }
 
@@ -91,8 +125,7 @@ class MentorController extends GetxController {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      Get.snackbar('Error', 'Could not open YouTube',
-          snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.error('Could not open YouTube.');
     }
   }
 
@@ -101,8 +134,7 @@ class MentorController extends GetxController {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      Get.snackbar('Error', 'Could not make call',
-          snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.error('Could not make call.');
     }
   }
 
@@ -113,23 +145,24 @@ class MentorController extends GetxController {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      Get.snackbar('Error', 'Could not open WhatsApp',
-          snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.error('Could not open WhatsApp.');
     }
   }
 
   Future<void> submitEnquiry() async {
-    if (enquiryName.value.trim().isEmpty || enquiryPhone.value.trim().isEmpty) {
-      Get.snackbar('Required', 'Please fill name and phone number',
-          snackPosition: SnackPosition.BOTTOM);
+    if (enquiryName.value.trim().isEmpty ||
+        enquiryPhone.value.trim().isEmpty) {
+      AppSnackbar.warning('Please fill name and phone number.');
       return;
     }
+
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
     isLoading.value = false;
+
     Get.back();
-    Get.snackbar('Enquiry Sent!', 'Mentor will contact you within 24 hours.',
-        snackPosition: SnackPosition.BOTTOM);
+    AppSnackbar.success(
+        'Enquiry sent! Mentor will contact you within 24 hours.');
     resetEnquiry();
   }
 

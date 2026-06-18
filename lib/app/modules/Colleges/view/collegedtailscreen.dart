@@ -1,21 +1,25 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
-import '../../../data/models/college_detailmodel.dart';
 import '../../../no internetconnection/no_connection.dart';
 import '../../../widgets/appsnackbar.dart';
 import '../../../widgets/commonwidget.dart';
 import '../../Saved/controller/whishlist_controller.dart';
 import '../controller/enquirycontroller.dart';
 
-
 class CollegeDetailScreen extends StatefulWidget {
-  const CollegeDetailScreen({super.key});
+  final String collegeId;
+  final bool showBookmark;
+
+  const CollegeDetailScreen({
+    super.key,
+    required this.collegeId,
+    this.showBookmark = true,
+  });
 
   @override
   State<CollegeDetailScreen> createState() => _CollegeDetailScreenState();
@@ -23,24 +27,26 @@ class CollegeDetailScreen extends StatefulWidget {
 
 class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
   late final EnquiryController _ctrl;
-  late final WishlistController _wishlistCtrl; // ← add
-  late String collegeId;
+  late final WishlistController _wishlistCtrl;
 
   @override
   void initState() {
     super.initState();
     _ctrl = Get.find<EnquiryController>();
-    // putOrFind: reuse existing instance if already registered, else create new
-    _wishlistCtrl = Get.isRegistered<WishlistController>()
-        ? Get.find<WishlistController>()
-        : Get.put(WishlistController());
-    collegeId = Get.arguments;
-    _ctrl.fetchCollegeDetail(collegeId);
 
-    // ── Fetch wishlist so bookmark state is accurate ──────
-    final studentId = _ctrl.studentId;
-    if (studentId > 0) {
-      _wishlistCtrl.fetchWishlist(studentId);
+    if (widget.showBookmark) {
+      _wishlistCtrl = Get.isRegistered<WishlistController>()
+          ? Get.find<WishlistController>()
+          : Get.put(WishlistController());
+    }
+
+    _ctrl.fetchCollegeDetail(widget.collegeId);
+
+    if (widget.showBookmark) {
+      final studentId = _ctrl.studentId;
+      if (studentId > 0) {
+        _wishlistCtrl.fetchWishlist(studentId, silent: true);
+      }
     }
   }
 
@@ -48,23 +54,18 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
   Future<void> _onBookmarkTap() async {
     final studentId = _ctrl.studentId;
 
-    // Not registered yet — show snackbar
     if (studentId <= 0) {
       AppSnackbar.warning('Please complete the enquiry form to save colleges.');
       return;
     }
 
-    final collegeIdInt = int.tryParse(collegeId) ?? 0;
-    if (collegeIdInt <= 0) return;
+    await _wishlistCtrl.toggleWishlist(studentId, widget.collegeId);
 
-    await _wishlistCtrl.toggleWishlist(studentId, collegeIdInt);
-
-    // Show feedback snackbar
-    final isNowWishlisted = _wishlistCtrl.isWishlisted(collegeIdInt);
+    final isNowWishlisted = _wishlistCtrl.isWishlisted(widget.collegeId);
     if (isNowWishlisted) {
       AppSnackbar.success('College saved to your wishlist.');
     } else {
-      AppSnackbar.error('College removed from your wishlist.');
+      AppSnackbar.warning('College removed from your wishlist.');
     }
   }
 
@@ -81,9 +82,6 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
     color: AppColors.borderLight,
   );
 
-  // ═══════════════════════════════════════════════
-  //  BUILD
-  // ═══════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
@@ -108,12 +106,15 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                     Icon(Icons.error_outline_rounded,
                         size: r.fontSize(48), color: AppColors.error),
                     SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                    Text(_ctrl.detailError.value,
-                        style: AppTextStyles.bodyMedium,
-                        textAlign: TextAlign.center),
+                    Text(
+                      _ctrl.detailError.value,
+                      style: AppTextStyles.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
                     SizedBox(height: r.spacing(AppDimens.paddingMD)),
                     ElevatedButton.icon(
-                      onPressed: () => _ctrl.fetchCollegeDetail(collegeId),
+                      onPressed: () =>
+                          _ctrl.fetchCollegeDetail(widget.collegeId),
                       icon: const Icon(Icons.refresh),
                       label: const Text('Retry'),
                     ),
@@ -126,12 +127,9 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
           final detail = _ctrl.collegeDetail.value;
           if (detail == null) return const SizedBox.shrink();
 
-          final collegeIdInt = int.tryParse(collegeId) ?? 0;
-
           // ── Content ──────────────────────────────────────
           return CustomScrollView(
             slivers: [
-              // ── Collapsing Image AppBar ───────────────────
               SliverAppBar(
                 expandedHeight: r.value(mobile: 220.0, tablet: 280.0),
                 pinned: true,
@@ -142,8 +140,7 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                     margin: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius:
-                      BorderRadius.circular(AppDimens.radiusMD),
+                      borderRadius: BorderRadius.circular(AppDimens.radiusMD),
                     ),
                     child: Icon(
                       Icons.arrow_back_ios_new_rounded,
@@ -153,50 +150,48 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                   ),
                 ),
 
-                // ── Bookmark button in top-right ──────────
+                // ── Bookmark button ───────────────────────
                 actions: [
-                  Obx(() {
-                    final isLoading =
-                    _wishlistCtrl.isLoading(collegeIdInt);
-                    final isWishlisted =
-                    _wishlistCtrl.isWishlisted(collegeIdInt);
+                  if (widget.showBookmark)
+                    Obx(() {
+                      final isLoading    = _wishlistCtrl.isLoading(widget.collegeId);
+                      final isWishlisted = _wishlistCtrl.isWishlisted(widget.collegeId);
 
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          right: r.spacing(AppDimens.paddingSM)),
-                      child: GestureDetector(
-                        onTap: isLoading ? null : _onBookmarkTap,
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          margin: EdgeInsets.all(
-                              r.spacing(AppDimens.paddingSM)),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                                AppDimens.radiusMD),
-                          ),
-                          child: isLoading
-                              ? Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.primary,
+                      return Padding(
+                        padding: EdgeInsets.only(
+                            right: r.spacing(AppDimens.paddingSM)),
+                        child: GestureDetector(
+                          onTap: isLoading ? null : _onBookmarkTap,
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            margin: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                              BorderRadius.circular(AppDimens.radiusMD),
                             ),
-                          )
-                              : Icon(
-                            isWishlisted
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_border_rounded,
-                            size: r.fontSize(AppDimens.iconSM),
-                            color: isWishlisted
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                            child: isLoading
+                                ? const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
+                              ),
+                            )
+                                : Icon(
+                              isWishlisted
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              size: r.fontSize(AppDimens.iconSM),
+                              color: isWishlisted
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
                 ],
 
                 flexibleSpace: FlexibleSpaceBar(
@@ -210,7 +205,6 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                         errorBuilder: (_, __, ___) => _imageFallback(),
                       )
                           : _imageFallback(),
-                      // gradient overlay
                       Container(
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
@@ -257,8 +251,7 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                   children: [
                     // ── College Header ────────────────────────
                     Padding(
-                      padding:
-                      EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
+                      padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -271,19 +264,15 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                           SizedBox(height: r.spacing(AppDimens.paddingXS)),
                           Row(
                             children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: r.fontSize(AppDimens.iconXS),
-                                color: AppColors.textSecondary,
-                              ),
-                              SizedBox(
-                                  width: r.spacing(AppDimens.paddingXS)),
+                              Icon(Icons.location_on_outlined,
+                                  size: r.fontSize(AppDimens.iconXS),
+                                  color: AppColors.textSecondary),
+                              SizedBox(width: r.spacing(AppDimens.paddingXS)),
                               Expanded(
                                 child: Text(
                                   detail.fullAddress,
                                   style: AppTextStyles.bodySmall.copyWith(
-                                    fontSize: r.fontSize(12),
-                                  ),
+                                      fontSize: r.fontSize(12)),
                                 ),
                               ),
                             ],
@@ -292,10 +281,8 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                           Row(
                             children: [
                               Icon(Icons.star_rounded,
-                                  size: r.fontSize(14),
-                                  color: Colors.amber),
-                              SizedBox(
-                                  width: r.spacing(AppDimens.paddingXS)),
+                                  size: r.fontSize(14), color: Colors.amber),
+                              SizedBox(width: r.spacing(AppDimens.paddingXS)),
                               Text(
                                 detail.rating.toStringAsFixed(1),
                                 style: AppTextStyles.titleSmall.copyWith(
@@ -312,11 +299,9 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                     // ── Stats Row ─────────────────────────────
                     Container(
                       margin: EdgeInsets.symmetric(
-                        horizontal: r.spacing(AppDimens.paddingLG),
-                      ),
+                          horizontal: r.spacing(AppDimens.paddingLG)),
                       padding: EdgeInsets.symmetric(
-                        vertical: r.spacing(AppDimens.paddingLG),
-                      ),
+                          vertical: r.spacing(AppDimens.paddingLG)),
                       decoration: BoxDecoration(
                         color: AppColors.backgroundWhite,
                         borderRadius:
@@ -360,12 +345,10 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                       child: Column(
                         children: [
                           _buildContactRow(r,
-                              icon: Icons.phone_outlined,
-                              label: detail.phone),
+                              icon: Icons.phone_outlined, label: detail.phone),
                           SizedBox(height: r.spacing(AppDimens.paddingSM)),
                           _buildContactRow(r,
-                              icon: Icons.email_outlined,
-                              label: detail.email),
+                              icon: Icons.email_outlined, label: detail.email),
                           SizedBox(height: r.spacing(AppDimens.paddingSM)),
                           _buildContactRow(r,
                               icon: Icons.language_outlined,
@@ -443,9 +426,7 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
   }
 
   Widget _buildContactRow(Responsive r,
-      {required IconData icon,
-        required String label,
-        bool isLink = false}) {
+      {required IconData icon, required String label, bool isLink = false}) {
     return Row(
       children: [
         Icon(icon,
@@ -526,7 +507,6 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
   }
 }
 
-// ── Expandable text widget ────────────────────────────────────
 class _ExpandableText extends StatefulWidget {
   final String text;
   final Responsive r;
@@ -567,8 +547,7 @@ class _ExpandableTextState extends State<_ExpandableText> {
         GestureDetector(
           onTap: () => setState(() => _expanded = !_expanded),
           child: Padding(
-            padding:
-            EdgeInsets.only(top: r.spacing(AppDimens.paddingXS + 2)),
+            padding: EdgeInsets.only(top: r.spacing(AppDimens.paddingXS + 2)),
             child: Row(
               children: [
                 Text(

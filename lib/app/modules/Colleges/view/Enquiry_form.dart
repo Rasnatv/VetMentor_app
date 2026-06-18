@@ -1,10 +1,12 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
+import '../../../core/utils/validator.dart';
 import '../../../data/models/college_detailmodel.dart';
 import '../../../data/models/collegelistmodel.dart';
 import '../../../data/models/studentregistermodel.dart';
@@ -12,9 +14,9 @@ import '../../../widgets/fieldwrapper.dart';
 import '../../profile/controller/profilecontroller.dart';
 import '../controller/enquirycontroller.dart';
 
-
 class EnquiryBottomSheet extends StatefulWidget {
   final CollegeModel college;
+
   /// Called ONLY after a successful submit — navigates to detail page
   final VoidCallback onProceed;
 
@@ -31,16 +33,27 @@ class EnquiryBottomSheet extends StatefulWidget {
 class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
   final EnquiryController _ctrl = Get.find<EnquiryController>();
 
-  final _formKey    = GlobalKey<FormState>();
-  final _firstCtrl  = TextEditingController();
-  final _lastCtrl   = TextEditingController();
-  final _emailCtrl  = TextEditingController();
-  final _phoneCtrl  = TextEditingController();
-  final _neetCtrl   = TextEditingController();
+  final _formKey   = GlobalKey<FormState>();
+  final _firstCtrl = TextEditingController();
+  final _lastCtrl  = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _neetCtrl  = TextEditingController();
 
   String        _gender          = 'Male';
   StateModel?   _selectedState;
   ProgramModel? _selectedProgram;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-select program when only one option is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_ctrl.programs.length == 1) {
+        setState(() => _selectedProgram = _ctrl.programs.first);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -66,6 +79,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
     ),
     filled: true,
     fillColor: AppColors.backgroundGrey,
+    counterText: '', // hides the maxLength counter on all fields
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppDimens.inputRadius),
       borderSide: const BorderSide(color: AppColors.border),
@@ -94,26 +108,26 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     final request = StudentRegisterRequest(
-      firstName:  _firstCtrl.text.trim(),
-      lastName:   _lastCtrl.text.trim(),
-      gender:     _gender,
-      email:      _emailCtrl.text.trim(),
-      phoneNo:    _phoneCtrl.text.trim(),
-      stateId:    _selectedState?.id ?? '',
-      programId:  _selectedProgram?.id ?? '',
-      neetScore:  _neetCtrl.text.trim(),
+      firstName: _firstCtrl.text.trim(),
+      lastName:  _lastCtrl.text.trim(),
+      gender:    _gender,
+      email:     _emailCtrl.text.trim(),
+      phoneNo:   _phoneCtrl.text.trim(),
+      stateId:   _selectedState?.id ?? '',
+      programId: _selectedProgram?.id ?? '',
+      neetScore: _neetCtrl.text.trim(),
     );
 
     await _ctrl.submitEnquiry(request);
 
     if (_ctrl.isFormSuccess && mounted) {
-      // Wait for GetStorage to flush to disk before ProfileController reads it
       await Future.delayed(const Duration(milliseconds: 100));
       Get.delete<ProfileController>(force: true);
       Navigator.pop(context);
       widget.onProceed();
     }
   }
+
   // ═══════════════════════════════════════════════
   //  BUILD
   // ═══════════════════════════════════════════════
@@ -125,11 +139,13 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimens.radiusXXL)),
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimens.radiusXXL)),
       ),
       padding: EdgeInsets.only(bottom: bottom),
       constraints: BoxConstraints(
-        maxWidth: r.value(mobile: double.infinity, tablet: 560, desktop: 640),
+        maxWidth:
+        r.value(mobile: double.infinity, tablet: 560, desktop: 640),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -150,7 +166,8 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
       bottom: r.spacing(AppDimens.paddingXS + 2),
     ),
     child: Container(
-      width: 38, height: 4,
+      width: 38,
+      height: 4,
       decoration: BoxDecoration(
         color: AppColors.border,
         borderRadius: BorderRadius.circular(AppDimens.radiusXS),
@@ -178,7 +195,8 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
           child: Icon(
             Icons.edit_note_rounded,
             color: AppColors.primary,
-            size: r.value(mobile: AppDimens.iconMD, tablet: AppDimens.iconLG),
+            size: r.value(
+                mobile: AppDimens.iconMD, tablet: AppDimens.iconLG),
           ),
         ),
         SizedBox(width: r.spacing(AppDimens.paddingMD)),
@@ -205,11 +223,11 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
             ],
           ),
         ),
-        // ── Close: only dismisses the sheet, does NOT go to detail ──
         GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
-            width: 32, height: 32,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: AppColors.backgroundGrey,
               borderRadius: BorderRadius.circular(AppDimens.radiusSM),
@@ -218,7 +236,9 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
             child: Icon(
               Icons.close_rounded,
               color: AppColors.textSecondary,
-              size: r.value(mobile: AppDimens.iconXS + 2, tablet: AppDimens.iconSM),
+              size: r.value(
+                  mobile: AppDimens.iconXS + 2,
+                  tablet: AppDimens.iconSM),
             ),
           ),
         ),
@@ -253,12 +273,15 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                     child: TextFormField(
                       controller: _firstCtrl,
                       textCapitalization: TextCapitalization.words,
+                      maxLength: DValidator.maxTextLength,
+                      inputFormatters: DValidator.lettersOnly,
                       decoration: _dec('Arjun', r),
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textPrimary, fontSize: r.fontSize(13),
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
                       ),
                       validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          DValidator.validateName('First name', v),
                     ),
                   ),
                 ),
@@ -269,10 +292,14 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                     child: TextFormField(
                       controller: _lastCtrl,
                       textCapitalization: TextCapitalization.words,
+                      maxLength: DValidator.maxTextLength,
+                      inputFormatters: DValidator.lettersOnly,
                       decoration: _dec('Kumar', r),
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textPrimary, fontSize: r.fontSize(13),
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
                       ),
+                      // Last name is optional — no validator
                     ),
                   ),
                 ),
@@ -291,7 +318,9 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                       onTap: () => setState(() => _gender = g),
                       child: Container(
                         margin: EdgeInsets.only(
-                          right: g != 'Other' ? r.spacing(AppDimens.paddingSM) : 0,
+                          right: g != 'Other'
+                              ? r.spacing(AppDimens.paddingSM)
+                              : 0,
                         ),
                         height: r.value(
                           mobile: AppDimens.buttonHeightSM + 2,
@@ -301,9 +330,12 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                           color: active
                               ? AppColors.primarySurface
                               : AppColors.backgroundGrey,
-                          borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+                          borderRadius:
+                          BorderRadius.circular(AppDimens.inputRadius),
                           border: Border.all(
-                            color: active ? AppColors.primary : AppColors.border,
+                            color: active
+                                ? AppColors.primary
+                                : AppColors.border,
                             width: active ? 1.5 : 1,
                           ),
                         ),
@@ -324,7 +356,8 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                                   ? AppColors.primary
                                   : AppColors.textSecondary,
                             ),
-                            SizedBox(width: r.spacing(AppDimens.paddingXS)),
+                            SizedBox(
+                                width: r.spacing(AppDimens.paddingXS)),
                             Text(
                               g,
                               style: AppTextStyles.bodySmall.copyWith(
@@ -353,16 +386,14 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
               child: TextFormField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
+                maxLength: DValidator.maxTextLength,
+                inputFormatters: DValidator.textWithLimit,
                 decoration: _dec('arjun@email.com', r),
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textPrimary, fontSize: r.fontSize(13),
+                  color: AppColors.textPrimary,
+                  fontSize: r.fontSize(13),
                 ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Required';
-                  if (!RegExp(r'^[\w.+\-]+@[\w\-]+\.[a-zA-Z]+$')
-                      .hasMatch(v.trim())) return 'Enter a valid email';
-                  return null;
-                },
+                validator: (v) => DValidator.validateEmail(v),
               ),
             ),
             SizedBox(height: hGap),
@@ -381,7 +412,8 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: AppColors.backgroundGrey,
-                      borderRadius: BorderRadius.circular(AppDimens.inputRadius),
+                      borderRadius:
+                      BorderRadius.circular(AppDimens.inputRadius),
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Text(
@@ -399,15 +431,14 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                       controller: _phoneCtrl,
                       keyboardType: TextInputType.phone,
                       maxLength: 10,
-                      decoration: _dec('98765 43210', r).copyWith(counterText: ''),
+                      inputFormatters: DValidator.digitsOnly,
+                      decoration: _dec('98765 43210', r),
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textPrimary, fontSize: r.fontSize(13),
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
                       ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Required';
-                        if (v.trim().length < 10) return 'Enter 10-digit number';
-                        return null;
-                      },
+                      validator: (v) =>
+                          DValidator.validatePhoneNumber(v),
                     ),
                   ),
                 ],
@@ -424,7 +455,8 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                     height: 40,
                     child: Center(
                       child: SizedBox(
-                        width: 18, height: 18,
+                        width: 18,
+                        height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
@@ -435,25 +467,31 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                   hint: Text(
                     'Select state',
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary, fontSize: r.fontSize(12),
+                      color: AppColors.textSecondary,
+                      fontSize: r.fontSize(12),
                     ),
                   ),
                   decoration: _dec('', r),
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary, fontSize: r.fontSize(13),
+                    color: AppColors.textPrimary,
+                    fontSize: r.fontSize(13),
                   ),
                   isExpanded: true,
                   icon: Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    size: r.value(mobile: AppDimens.iconXS + 4, tablet: AppDimens.iconSM),
+                    size: r.value(
+                        mobile: AppDimens.iconXS + 4,
+                        tablet: AppDimens.iconSM),
                     color: AppColors.textSecondary,
                   ),
-                  validator: (v) => v == null ? 'Please select a state' : null,
+                  validator: (v) =>
+                      DValidator.validateDropdown('state', v),
                   items: _ctrl.states
                       .map((s) => DropdownMenuItem(
                     value: s,
                     child: Text(s.stateName,
-                        style: TextStyle(fontSize: r.fontSize(13))),
+                        style:
+                        TextStyle(fontSize: r.fontSize(13))),
                   ))
                       .toList(),
                   onChanged: (v) => setState(() => _selectedState = v),
@@ -462,7 +500,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
             ),
             SizedBox(height: hGap),
 
-            // ── Program dropdown ──────────────────────────
+            // ── Program dropdown (show only if more than 1) ──
             FieldWrapper(
               label: 'Program Studied *',
               child: Obx(() {
@@ -471,54 +509,130 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                     height: 40,
                     child: Center(
                       child: SizedBox(
-                        width: 18, height: 18,
+                        width: 18,
+                        height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
                   );
                 }
+
+                // If only 1 program, auto-select and show as plain text
+                if (_ctrl.programs.length == 1) {
+                  // Ensure it's selected for form submission
+                  if (_selectedProgram != _ctrl.programs.first) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      setState(
+                              () => _selectedProgram = _ctrl.programs.first);
+                    });
+                  }
+                  return Container(
+                    width: double.infinity,
+                    height: r.value(
+                      mobile: AppDimens.inputHeight - 4,
+                      tablet: AppDimens.inputHeight,
+                    ),
+                    alignment: Alignment.centerLeft,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: r.spacing(AppDimens.paddingMD),
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundGrey,
+                      borderRadius:
+                      BorderRadius.circular(AppDimens.inputRadius),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Text(
+                      _ctrl.programs.first.programName,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: r.fontSize(13),
+                      ),
+                    ),
+                  );
+                }
+
+                if (_ctrl.programs.isEmpty) {
+                  return Container(
+                    width: double.infinity,
+                    height: r.value(
+                      mobile: AppDimens.inputHeight - 4,
+                      tablet: AppDimens.inputHeight,
+                    ),
+                    alignment: Alignment.centerLeft,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: r.spacing(AppDimens.paddingMD),
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundGrey,
+                      borderRadius:
+                      BorderRadius.circular(AppDimens.inputRadius),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Text(
+                      'No programs available',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: r.fontSize(13),
+                      ),
+                    ),
+                  );
+                }
+
+                // More than 1 program — show dropdown
                 return DropdownButtonFormField<ProgramModel>(
                   value: _selectedProgram,
                   hint: Text(
                     'Select program',
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary, fontSize: r.fontSize(12),
+                      color: AppColors.textSecondary,
+                      fontSize: r.fontSize(12),
                     ),
                   ),
                   decoration: _dec('', r),
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary, fontSize: r.fontSize(13),
+                    color: AppColors.textPrimary,
+                    fontSize: r.fontSize(13),
                   ),
                   isExpanded: true,
                   icon: Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    size: r.value(mobile: AppDimens.iconXS + 4, tablet: AppDimens.iconSM),
+                    size: r.value(
+                        mobile: AppDimens.iconXS + 4,
+                        tablet: AppDimens.iconSM),
                     color: AppColors.textSecondary,
                   ),
-                  validator: (v) => v == null ? 'Please select a program' : null,
+                  validator: (v) =>
+                      DValidator.validateDropdown('program', v),
                   items: _ctrl.programs
                       .map((p) => DropdownMenuItem(
                     value: p,
                     child: Text(p.programName,
-                        style: TextStyle(fontSize: r.fontSize(13))),
+                        style:
+                        TextStyle(fontSize: r.fontSize(13))),
                   ))
                       .toList(),
-                  onChanged: (v) => setState(() => _selectedProgram = v),
+                  onChanged: (v) =>
+                      setState(() => _selectedProgram = v),
                 );
               }),
             ),
             SizedBox(height: hGap),
 
-            // ── NEET Score ────────────────────────────────
+            // ── NEET Score (mandatory) ────────────────────
             FieldWrapper(
-              label: 'NEET Score (optional)',
+              label: 'NEET Score *',
               child: TextFormField(
                 controller: _neetCtrl,
                 keyboardType: TextInputType.number,
+                maxLength: 3,
+                inputFormatters: DValidator.digitsOnly,
                 decoration: _dec('e.g. 520', r),
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textPrimary, fontSize: r.fontSize(13),
+                  color: AppColors.textPrimary,
+                  fontSize: r.fontSize(13),
                 ),
+                validator: (v) => DValidator.validateNeetScore(v),
               ),
             ),
             SizedBox(height: r.spacing(AppDimens.paddingSM + 2)),
@@ -528,7 +642,9 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
               children: [
                 Icon(
                   Icons.lock_outline_rounded,
-                  size: r.value(mobile: AppDimens.iconXS - 2, tablet: AppDimens.iconXS),
+                  size: r.value(
+                      mobile: AppDimens.iconXS - 2,
+                      tablet: AppDimens.iconXS),
                   color: AppColors.textSecondary,
                 ),
                 SizedBox(width: r.spacing(AppDimens.paddingXS + 1)),
@@ -546,13 +662,16 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
 
             // ── API error message ─────────────────────────
             Obx(() {
-              if (_ctrl.formError.value.isEmpty) return const SizedBox.shrink();
+              if (_ctrl.formError.value.isEmpty)
+                return const SizedBox.shrink();
               return Padding(
-                padding: EdgeInsets.only(top: r.spacing(AppDimens.paddingSM)),
+                padding:
+                EdgeInsets.only(top: r.spacing(AppDimens.paddingSM)),
                 child: Text(
                   _ctrl.formError.value,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.error, fontSize: r.fontSize(12),
+                    color: AppColors.error,
+                    fontSize: r.fontSize(12),
                   ),
                 ),
               );
@@ -584,18 +703,23 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
                   ),
                   child: loading
                       ? const SizedBox(
-                    width: 20, height: 20,
+                    width: 20,
+                    height: 20,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2),
                   )
                       : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.send_rounded,
-                          size: r.value(
-                              mobile: AppDimens.iconXS + 4,
-                              tablet: AppDimens.iconSM)),
-                      SizedBox(width: r.spacing(AppDimens.paddingSM)),
+                      Icon(
+                        Icons.send_rounded,
+                        size: r.value(
+                            mobile: AppDimens.iconXS + 4,
+                            tablet: AppDimens.iconSM),
+                      ),
+                      SizedBox(
+                          width:
+                          r.spacing(AppDimens.paddingSM)),
                       Text(
                         'Submit & View College Details',
                         style: AppTextStyles.titleSmall.copyWith(
@@ -609,7 +733,9 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
               );
             }),
 
-            SizedBox(height: r.bottomPadding + r.spacing(AppDimens.paddingSM)),
+            SizedBox(
+                height: r.bottomPadding +
+                    r.spacing(AppDimens.paddingSM)),
           ],
         ),
       ),

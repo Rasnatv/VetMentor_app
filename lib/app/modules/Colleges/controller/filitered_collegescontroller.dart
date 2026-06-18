@@ -1,175 +1,57 @@
-// import 'dart:async';
-// import 'dart:convert';
-// import 'package:get/get.dart';
-// import 'package:http/http.dart' as http;
-//
-// import '../../../core/network/api_constants.dart';
-//
-// class FiliteredCollegescontroller extends GetxController {
-//   // ── State ──────────────────────────────────────────────────────────────────
-//   final RxList<dynamic> colleges = <dynamic>[].obs;
-//   final RxList<dynamic> displayedColleges = <dynamic>[].obs;
-//   final RxList<String> states = <String>[].obs;
-//   final RxString selectedState = 'All States'.obs;
-//   final RxBool isLoading = false.obs;
-//   final RxBool isSearching = false.obs;
-//   final RxString error = ''.obs;
-//   final RxString searchQuery = ''.obs;
-//
-//   Timer? _debounce;
-//
-//   // static const _base = 'https://rasma.astradevelops.in/vetniaryapp/public/api';
-//
-//   Future<void> init(String type) async {
-//     await Future.wait([
-//       fetchColleges(type),
-//       fetchStates(),
-//     ]);
-//   }
-//
-//   // ── Fetch colleges (temporary / permanent) ─────────────────────────────────
-//   Future<void> fetchColleges(String type) async {
-//     isLoading.value = true;
-//     error.value = '';
-//     // try {
-//       // final endpoint = type == 'temporary'
-//       //     ? '$_base/temporary-colleges'
-//       //     : '$_base/permanent-colleges';
-//       try {
-//         final endpoint = type == 'temporary'
-//             ? '${ApiConstants.baseUrl}/temporary-colleges'
-//             : '${ApiConstants.baseUrl}/permanent-colleges';
-//
-//         final res = await http.get(Uri.parse(endpoint));
-//       if (res.statusCode == 200) {
-//         final json = jsonDecode(res.body);
-//         colleges.value = json['data'] ?? [];
-//         displayedColleges.value = List.from(colleges);
-//       } else {
-//         error.value = 'Server error: ${res.statusCode}';
-//       }
-//     } catch (e) {
-//       error.value = 'Failed to load. Check your connection.';
-//     } finally {
-//       isLoading.value = false;
-//     }
-//   }
-//
-//   // ── Fetch states ───────────────────────────────────────────────────────────
-//   Future<void> fetchStates() async {
-//     try {
-//       final res = await http.get
-//         (Uri.parse('${ApiConstants.baseUrl}/get-college-states'),);
-//       if (res.statusCode == 200) {
-//         final json = jsonDecode(res.body);
-//         final list = List<String>.from(json['data'] ?? []);
-//         states.value = ['All States', ...list];
-//       }
-//     } catch (_) {}
-//   }
-//
-//   // ── Search (POST, debounced) ───────────────────────────────────────────────
-//   void onSearchChanged(String query) {
-//     searchQuery.value = query;
-//     if (_debounce?.isActive ?? false) _debounce!.cancel();
-//     _debounce = Timer(const Duration(milliseconds: 500), () {
-//       if (query.trim().isEmpty) {
-//         // Reset to full list (respecting any active state filter)
-//         if (selectedState.value == 'All States') {
-//           displayedColleges.value = List.from(colleges);
-//         } else {
-//           fetchByState(selectedState.value);
-//         }
-//       } else {
-//         searchColleges(query.trim());
-//       }
-//     });
-//   }
-//
-//   Future<void> searchColleges(String name) async {
-//     isSearching.value = true;
-//     try {
-//       final res = await http.post(
-//         Uri.parse('$_base/search-colleges'),
-//         headers: {'Content-Type': 'application/json'},
-//         body: jsonEncode({'college_name': name}),
-//       );
-//       if (res.statusCode == 200) {
-//         final json = jsonDecode(res.body);
-//         displayedColleges.value = json['data'] ?? [];
-//       }
-//     } catch (_) {} finally {
-//       isSearching.value = false;
-//     }
-//   }
-//
-//   // ── Filter by state (POST) ─────────────────────────────────────────────────
-//   Future<void> fetchByState(String state) async {
-//     if (state == 'All States') {
-//       selectedState.value = 'All States';
-//       displayedColleges.value = List.from(colleges);
-//       return;
-//     }
-//     selectedState.value = state;
-//     isLoading.value = true;
-//     try {
-//       final res = await http.post(
-//         Uri.parse('$_base/colleges-by-state'),
-//         headers: {'Content-Type': 'application/json'},
-//         body: jsonEncode({'state': state}),
-//       );
-//       if (res.statusCode == 200) {
-//         final json = jsonDecode(res.body);
-//         displayedColleges.value = json['data'] ?? [];
-//       }
-//     } catch (_) {} finally {
-//       isLoading.value = false;
-//     }
-//   }
-//
-//   void clearStateFilter(String type) {
-//     selectedState.value = 'All States';
-//     displayedColleges.value = List.from(colleges);
-//     // If there's an active search, re-run it
-//     if (searchQuery.value.trim().isNotEmpty) {
-//       searchColleges(searchQuery.value.trim());
-//     }
-//   }
-//
-//   @override
-//   void onClose() {
-//     _debounce?.cancel();
-//     super.onClose();
-//   }
-// }
-//
+
 import 'dart:async';
-import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
+
 import '../../../core/network/api_constants.dart';
+import '../../../data/errors/ApiErrotHandler.dart';
+import '../../../no internetconnection/network_service.dart';
 
 class FiliteredCollegescontroller extends GetxController {
-  // ── State ──────────────────────────────────────────────────────────────────
-  final RxList<dynamic> colleges = <dynamic>[].obs;
+  final Dio _dio = Dio();
+
+  // ── State ─────────────────────────────────────────────────
+  final RxList<dynamic> colleges          = <dynamic>[].obs;
   final RxList<dynamic> displayedColleges = <dynamic>[].obs;
-  final RxList<String> states = <String>[].obs;
-  final RxString selectedState = 'All States'.obs;
-  final RxBool isLoading = false.obs;
-  final RxBool isSearching = false.obs;
-  final RxString error = ''.obs;
-  final RxString searchQuery = ''.obs;
+  final RxList<String>  states            = <String>[].obs;
+  final RxString selectedState            = 'All States'.obs;
+  final RxBool   isLoading                = false.obs;
+  final RxBool   isSearching              = false.obs;
+  final RxString error                    = ''.obs;
+  final RxString searchQuery              = ''.obs;
+
+  // Keep track of current type for reconnect
+  String _currentType = '';
 
   Timer? _debounce;
 
   Future<void> init(String type) async {
+    _currentType = type;
     await Future.wait([
       fetchColleges(type),
       fetchStates(),
     ]);
+    // ✅ Re-fetch when internet comes back
+    Get.find<NetworkService>().register(_onReconnect);
   }
 
-  // ── Fetch colleges (temporary / permanent) ─────────────────────────────────
+  @override
+  void onClose() {
+    _debounce?.cancel();
+    Get.find<NetworkService>().unregister(_onReconnect);
+    super.onClose();
+  }
+
+  // ── reconnect callback ────────────────────────────────────
+  Future<void> _onReconnect() async {
+    if (_currentType.isEmpty) return;
+    await Future.wait([
+      fetchColleges(_currentType),
+      fetchStates(),
+    ]);
+  }
+
+  // ── Fetch colleges ────────────────────────────────────────
   Future<void> fetchColleges(String type) async {
     isLoading.value = true;
     error.value = '';
@@ -179,45 +61,53 @@ class FiliteredCollegescontroller extends GetxController {
           ? '${ApiConstants.baseUrl}/temporary-colleges'
           : '${ApiConstants.baseUrl}/permanent-colleges';
 
-      final res = await http.get(Uri.parse(endpoint));
+      final response = await _dio.get(endpoint);
 
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body);
-        colleges.value = json['data'] ?? [];
+      if (response.statusCode == 200) {
+        final json = response.data;
+        colleges.value         = List.from(json['data'] ?? []);
         displayedColleges.value = List.from(colleges);
       } else {
-        error.value = 'Server error: ${res.statusCode}';
+        error.value = 'Server error: ${response.statusCode}';
+      }
+    } on DioException catch (e) {
+      if (ApiErrorHandler.isNetworkError(e)) {
+        // ✅ Network error — stay silent, NetworkAwareWrapper handles it
+        error.value = '';
+      } else {
+        error.value = ApiErrorHandler.handleDioError(e);
       }
     } catch (e) {
-      error.value = 'Failed to load. Check your connection.';
+      error.value = 'Failed to load. Please try again.';
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ── Fetch states ───────────────────────────────────────────────────────────
+  // ── Fetch states ──────────────────────────────────────────
   Future<void> fetchStates() async {
     try {
-      final res = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/get-college-states'),
+      final response = await _dio.get(
+        '${ApiConstants.baseUrl}/get-college-states',
       );
 
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body);
+      if (response.statusCode == 200) {
+        final json = response.data;
         final list = List<String>.from(json['data'] ?? []);
         states.value = ['All States', ...list];
+      }
+    } on DioException catch (e) {
+      // ✅ Silently ignore network errors
+      if (!ApiErrorHandler.isNetworkError(e)) {
+        // Non-network error — silently fail, states just won't populate
       }
     } catch (_) {}
   }
 
-  // ── Search (POST, debounced) ───────────────────────────────────────────────
+  // ── Search (debounced) ────────────────────────────────────
   void onSearchChanged(String query) {
     searchQuery.value = query;
-
-    if (_debounce?.isActive ?? false) {
-      _debounce!.cancel();
-    }
-
+    _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.trim().isEmpty) {
         if (selectedState.value == 'All States') {
@@ -235,68 +125,65 @@ class FiliteredCollegescontroller extends GetxController {
     isSearching.value = true;
 
     try {
-      final res = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/search-colleges'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'college_name': name,
-        }),
+      final response = await _dio.post(
+        '${ApiConstants.baseUrl}/search-colleges',
+        data: {'college_name': name},
       );
 
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body);
-        displayedColleges.value = json['data'] ?? [];
+      if (response.statusCode == 200) {
+        final json = response.data;
+        displayedColleges.value = List.from(json['data'] ?? []);
+      }
+    } on DioException catch (e) {
+      // ✅ Silently ignore network errors
+      if (!ApiErrorHandler.isNetworkError(e)) {
+        // Non-network errors — silently fail for search
       }
     } catch (_) {
-      //
+      // Silently fail
     } finally {
       isSearching.value = false;
     }
   }
 
-  // ── Filter by state (POST) ─────────────────────────────────────────────────
+  // ── Filter by state ───────────────────────────────────────
   Future<void> fetchByState(String state) async {
     if (state == 'All States') {
-      selectedState.value = 'All States';
+      selectedState.value      = 'All States';
       displayedColleges.value = List.from(colleges);
       return;
     }
 
     selectedState.value = state;
-    isLoading.value = true;
+    isLoading.value     = true;
 
     try {
-      final res = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/colleges-by-state'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'state': state,
-        }),
+      final response = await _dio.post(
+        '${ApiConstants.baseUrl}/colleges-by-state',
+        data: {'state': state},
       );
 
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body);
-        displayedColleges.value = json['data'] ?? [];
+      if (response.statusCode == 200) {
+        final json = response.data;
+        displayedColleges.value = List.from(json['data'] ?? []);
+      }
+    } on DioException catch (e) {
+      // ✅ Silently ignore network errors
+      if (!ApiErrorHandler.isNetworkError(e)) {
+        // Non-network errors — silently fail for filter
       }
     } catch (_) {
-      //
+      // Silently fail
     } finally {
       isLoading.value = false;
     }
   }
 
   void clearStateFilter(String type) {
-    selectedState.value = 'All States';
+    selectedState.value      = 'All States';
     displayedColleges.value = List.from(colleges);
-
     if (searchQuery.value.trim().isNotEmpty) {
       searchColleges(searchQuery.value.trim());
     }
-  }
-
-  @override
-  void onClose() {
-    _debounce?.cancel();
-    super.onClose();
   }
 }

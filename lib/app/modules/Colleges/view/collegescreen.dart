@@ -4,6 +4,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:veterinaryapp/app/modules/Colleges/view/permanent_affiliatedcollegslist.dart';
 import 'package:veterinaryapp/app/modules/Colleges/view/tempoary_affilaiatedcollegelist.dart';
+import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
@@ -17,7 +18,7 @@ class AffiliationSelectorScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
 
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: VetAppBar(title: "Veterinary Colleges",showBack: false,),
       body: Padding(
@@ -70,7 +71,7 @@ class AffiliationSelectorScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

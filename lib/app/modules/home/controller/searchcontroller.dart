@@ -1,14 +1,16 @@
+
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../data/errors/ApiErrotHandler.dart';
+import '../../../no internetconnection/network_service.dart';
 
 class SearchCollegeModel {
   final int id;
   final String collegeName;
   final String district;
   final String state;
-  final  String type;
+  final String type;
 
   const SearchCollegeModel({
     required this.id,
@@ -24,7 +26,7 @@ class SearchCollegeModel {
         collegeName: json['college_name']?.toString() ?? '',
         district:    json['district']?.toString() ?? '',
         state:       json['state']?.toString() ?? '',
-        type:        json['type']?.toString() ?? '0', // ← add this
+        type:        json['type']?.toString() ?? '0',
       );
 }
 
@@ -40,10 +42,10 @@ class SearchController extends GetxController {
     ),
   );
 
-  final RxList<SearchCollegeModel> results   = <SearchCollegeModel>[].obs;
-  final Rx<SearchState>            state     = SearchState.idle.obs;
-  final RxString                   errorMsg  = ''.obs;
-  final RxString                   query     = ''.obs;
+  final RxList<SearchCollegeModel> results  = <SearchCollegeModel>[].obs;
+  final Rx<SearchState>            state    = SearchState.idle.obs;
+  final RxString                   errorMsg = ''.obs;
+  final RxString                   query    = ''.obs;
 
   bool get isIdle    => state.value == SearchState.idle;
   bool get isLoading => state.value == SearchState.loading;
@@ -51,13 +53,11 @@ class SearchController extends GetxController {
   bool get isEmpty   => state.value == SearchState.empty;
   bool get hasError  => state.value == SearchState.error;
 
-  // Debounce timer
   Worker? _debounce;
 
   @override
   void onInit() {
     super.onInit();
-    // Auto-search whenever query changes (300ms debounce)
     _debounce = debounce(
       query,
           (String q) {
@@ -69,19 +69,29 @@ class SearchController extends GetxController {
       },
       time: const Duration(milliseconds: 300),
     );
+
+    // ✅ Re-run last search when internet comes back
+    Get.find<NetworkService>().register(_onReconnect);
   }
 
   @override
   void onClose() {
     _debounce?.dispose();
+    Get.find<NetworkService>().unregister(_onReconnect);
     super.onClose();
+  }
+
+  // ── reconnect callback ────────────────────────────────────
+  Future<void> _onReconnect() async {
+    final q = query.value.trim();
+    if (q.length >= 2) await search(q);
   }
 
   void onQueryChanged(String value) => query.value = value;
 
   void _reset() {
     results.clear();
-    state.value  = SearchState.idle;
+    state.value    = SearchState.idle;
     errorMsg.value = '';
   }
 
@@ -103,7 +113,7 @@ class SearchController extends GetxController {
         data: {'college_name': q.trim()},
       );
 
-      final json = res.data as Map<String, dynamic>;
+      final json       = res.data as Map<String, dynamic>;
       final status     = json['status']?.toString() ?? '0';
       final statusCode = json['status_code'] as int? ?? 0;
       final raw        = json['data'];
@@ -117,11 +127,17 @@ class SearchController extends GetxController {
         results.assignAll(list);
         state.value = list.isEmpty ? SearchState.empty : SearchState.success;
       } else {
-        state.value    = SearchState.empty;
+        state.value = SearchState.empty;
       }
     } on DioException catch (e) {
-      errorMsg.value = ApiErrorHandler.handleDioError(e);
-      state.value    = SearchState.error;
+      if (ApiErrorHandler.isNetworkError(e)) {
+        // ✅ Network error — go back to idle, NetworkAwareWrapper handles it
+        state.value    = SearchState.idle;
+        errorMsg.value = '';
+      } else {
+        errorMsg.value = ApiErrorHandler.handleDioError(e);
+        state.value    = SearchState.error;
+      }
     } catch (e) {
       errorMsg.value = e.toString();
       state.value    = SearchState.error;
