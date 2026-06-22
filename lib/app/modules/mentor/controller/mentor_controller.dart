@@ -148,27 +148,4 @@ class MentorController extends GetxController {
       AppSnackbar.error('Could not open WhatsApp.');
     }
   }
-
-  Future<void> submitEnquiry() async {
-    if (enquiryName.value.trim().isEmpty ||
-        enquiryPhone.value.trim().isEmpty) {
-      AppSnackbar.warning('Please fill name and phone number.');
-      return;
-    }
-
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-    isLoading.value = false;
-
-    Get.back();
-    AppSnackbar.success(
-        'Enquiry sent! Mentor will contact you within 24 hours.');
-    resetEnquiry();
-  }
-
-  void resetEnquiry() {
-    enquiryName.value = '';
-    enquiryPhone.value = '';
-    enquiryMessage.value = '';
-  }
-}
+ }

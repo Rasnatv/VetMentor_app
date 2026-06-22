@@ -18,64 +18,171 @@ class AffiliationSelectorScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
 
-    return NetworkAwareWrapper(child: Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: VetAppBar(title: "Veterinary Colleges",showBack: false,),
-      body: Padding(
-        padding: EdgeInsets.fromLTRB(
-          r.spacing(AppDimens.paddingLG),
-          r.spacing(AppDimens.paddingMD),
-          r.spacing(AppDimens.paddingLG),
-          0,
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: VetAppBar(title: "Veterinary Colleges", showBack: false),
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            r.spacing(AppDimens.paddingLG),
+            r.spacing(AppDimens.paddingMD),
+            r.spacing(AppDimens.paddingLG),
+            r.spacing(AppDimens.paddingLG),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Hero banner ───────────────────────────────────────
+              _HeroBanner(r: r),
+
+              SizedBox(height: r.spacing(AppDimens.paddingLG)),
+
+              Text(
+                'Select affiliation type',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontSize: r.fontSize(14),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingMD)),
+
+              // ── Temporary Affiliated Card ────────────────────────
+              _AffiliationCard(
+                r: r,
+                icon: Icons.access_time_rounded,
+                title: 'Temporary affiliated',
+                subtitle: 'Colleges with provisional recognition',
+                badgeLabel: 'Temporary',
+                gradientColors: AppColors.cardGradient,
+                //gradientColors: const [Color(0xFFFFA726), AppColors.badgeStateText],
+                iconColor: AppColors.badgeStateText,
+                badgeBgColor: const Color(0xFFE1F5EE),
+                badgeTextColor: const Color(0xFF0F6E56),
+                onTap: () => Get.to(() => const TemporaryAffiliatedScreen()),
+              ),
+
+              SizedBox(height: r.spacing(AppDimens.paddingMD)),
+
+              // ── Permanent Affiliated Card ────────────────────────
+              _AffiliationCard(
+                r: r,
+                icon: Icons.verified_outlined,
+                title: 'Permanent affiliated',
+                subtitle: 'Colleges with full & permanent recognition',
+                badgeLabel: 'Permanent',
+                 gradientColors: AppColors.cardGradient,
+                //gradientColors: const [Color(0xFF4DA3E0), Color(0xFF185FA5)],
+                iconColor: AppColors.iconPrimary,
+                badgeBgColor: const Color(0xFFE6F1FB),
+               badgeTextColor: const Color(0xFF185FA5),
+                onTap: () => Get.to(() => const PermanentAffiliatedScreen()),
+              ),
+
+              SizedBox(height: r.spacing(AppDimens.paddingLG)),
+
+              // ── Helper note ───────────────────────────────────────
+              _InfoFooter(r: r),
+            ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+    );
+  }
+}
+
+// ─── Hero Banner ────────────────────────────────────────────────────────────
+
+class _HeroBanner extends StatelessWidget {
+  final Responsive r;
+  const _HeroBanner({required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppColors.cardGradient,
+          ),
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Text(
-              'Select affiliation type',
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontSize: r.fontSize(13),
+            // Decorative circles for depth
+            Positioned(
+              right: -r.spacing(20),
+              top: -r.spacing(30),
+              child: Container(
+                width: r.spacing(110),
+                height: r.spacing(110),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.08),
+                ),
               ),
             ),
-            SizedBox(height: r.spacing(AppDimens.paddingMD)),
-
-            // ── Temporary Affiliated Card ──────────────────────────
-            _AffiliationCard(
-              r: r,
-              icon: Icons.access_time_rounded,
-              title: 'Temporary affiliated',
-              subtitle: 'Colleges with provisional recognition',
-              badgeLabel: 'Temporary',
-              iconBgColor: const Color(0xFFE1F5EE),
-              iconColor: const Color(0xFF0F6E56),
-              badgeBgColor: const Color(0xFFE1F5EE),
-              badgeTextColor: const Color(0xFF0F6E56),
-              onTap: () => Get.to(() => const TemporaryAffiliatedScreen()),
+            Positioned(
+              right: r.spacing(40),
+              bottom: -r.spacing(45),
+              child: Container(
+                width: r.spacing(70),
+                height: r.spacing(70),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.06),
+                ),
+              ),
             ),
 
-            SizedBox(height: r.spacing(AppDimens.paddingSM + 2)),
-
-            // ── Permanent Affiliated Card ──────────────────────────
-            _AffiliationCard(
-              r: r,
-              icon: Icons.verified_outlined,
-              title: 'Permanent affiliated',
-              subtitle: 'Colleges with full & permanent recognition',
-              badgeLabel: 'Permanent',
-              iconBgColor: const Color(0xFFE6F1FB),
-              iconColor: const Color(0xFF185FA5),
-              badgeBgColor: const Color(0xFFE6F1FB),
-              badgeTextColor: const Color(0xFF185FA5),
-              onTap: () => Get.to(() => const PermanentAffiliatedScreen()),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(r.spacing(AppDimens.paddingSM + 2)),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.16),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                  ),
+                  child: Icon(
+                    Icons.school_rounded,
+                    size: r.fontSize(AppDimens.iconMD),
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                Text(
+                  'Veterinary Colleges',
+                  style: AppTextStyles.titleLarge.copyWith(
+                    color: Colors.white,
+                    fontSize: r.fontSize(19),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: r.spacing(AppDimens.paddingXS)),
+                Text(
+                  'Browse affiliated colleges by recognition status',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white.withOpacity(0.88),
+                    fontSize: r.fontSize(12),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
-    ));
+    );
   }
 }
 
-// ─── Affiliation Card ─────────────────────────────────────────────────────────
+// ─── Affiliation Card ───────────────────────────────────────────────────────
 
 class _AffiliationCard extends StatelessWidget {
   final Responsive r;
@@ -83,7 +190,7 @@ class _AffiliationCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String badgeLabel;
-  final Color iconBgColor;
+  final List<Color> gradientColors;
   final Color iconColor;
   final Color badgeBgColor;
   final Color badgeTextColor;
@@ -95,7 +202,7 @@ class _AffiliationCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.badgeLabel,
-    required this.iconBgColor,
+    required this.gradientColors,
     required this.iconColor,
     required this.badgeBgColor,
     required this.badgeTextColor,
@@ -104,73 +211,165 @@ class _AffiliationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
-        decoration: BoxDecoration(
-          color: AppColors.backgroundWhite,
-          borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            // Icon box
-            Container(
-              width: r.spacing(48),
-              height: r.spacing(48),
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-              ),
-              child: Icon(
-                icon,
-                size: r.fontSize(AppDimens.iconMD),
-                color: iconColor,
-              ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+      child: Material(
+        color: AppColors.backgroundWhite,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: iconColor.withOpacity(0.08),
+          highlightColor: iconColor.withOpacity(0.04),
+          child: Container(
+            padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadowMedium,
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            SizedBox(width: r.spacing(AppDimens.paddingMD)),
-
-            // Text + badge
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: AppTextStyles.titleLarge),
-                  SizedBox(height: r.spacing(AppDimens.paddingXS - 2)),
-                  Text(subtitle, style: AppTextStyles.bodySmall),
-                  SizedBox(height: r.spacing(AppDimens.paddingXS + 2)),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: r.spacing(AppDimens.paddingSM + 2),
-                      vertical: r.spacing(AppDimens.paddingXS - 1),
+            child: Row(
+              children: [
+                // Icon box with gradient
+                Container(
+                  width: r.spacing(52),
+                  height: r.spacing(52),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: gradientColors,
                     ),
-                    decoration: BoxDecoration(
-                      color: badgeBgColor,
-                      borderRadius:
-                      BorderRadius.circular(AppDimens.radiusFull),
-                    ),
-                    child: Text(
-                      badgeLabel,
-                      style: AppTextStyles.labelSmall.copyWith(
-                        fontSize: r.fontSize(10),
-                        color: badgeTextColor,
-                        fontWeight: FontWeight.w600,
+                    borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconColor.withOpacity(0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                  child: Icon(
+                    icon,
+                    size: r.fontSize(AppDimens.iconMD),
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: r.spacing(AppDimens.paddingMD)),
+
+                // Text + badge
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyles.titleLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: r.spacing(AppDimens.paddingXS - 2)),
+                      Text(subtitle, style: AppTextStyles.bodySmall),
+                      SizedBox(height: r.spacing(AppDimens.paddingXS + 2)),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: r.spacing(AppDimens.paddingSM + 2),
+                          vertical: r.spacing(AppDimens.paddingXS - 1),
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeBgColor,
+                          borderRadius:
+                          BorderRadius.circular(AppDimens.radiusFull),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              size: r.fontSize(6),
+                              color: badgeTextColor,
+                            ),
+                            SizedBox(width: r.spacing(4)),
+                            Text(
+                              badgeLabel,
+                              style: AppTextStyles.labelSmall.copyWith(
+                                fontSize: r.fontSize(10),
+                                color: badgeTextColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(width: r.spacing(AppDimens.paddingXS)),
+
+                // Arrow in a soft circular backdrop
+                Container(
+                  width: r.spacing(32),
+                  height: r.spacing(32),
+                  decoration: const BoxDecoration(
+                    color: AppColors.backgroundGrey,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: r.fontSize(AppDimens.iconXS),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Info Footer ────────────────────────────────────────────────────────────
+
+class _InfoFooter extends StatelessWidget {
+  final Responsive r;
+  const _InfoFooter({required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundWhite,
+        borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: r.fontSize(AppDimens.iconXS + 2),
+            color: AppColors.textSecondary,
+          ),
+          SizedBox(width: r.spacing(AppDimens.paddingSM)),
+          Expanded(
+            child: Text(
+              'Tap a category above to view the full list of colleges under that affiliation type.',
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: r.fontSize(12),
+                color: AppColors.textSecondary,
               ),
             ),
-
-            SizedBox(width: r.spacing(AppDimens.paddingXS)),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: r.fontSize(AppDimens.iconXS),
-              color: AppColors.textSecondary,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

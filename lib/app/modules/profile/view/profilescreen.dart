@@ -142,18 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
           ),
           SizedBox(height: r.spacing(AppDimens.paddingMD)),
-          ElevatedButton(
-            onPressed: ctrl.fetchProfile,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimens.buttonRadius),
-              ),
-            ),
-            child: const Text('Retry'),
-          ),
+
         ],
       ),
     ),

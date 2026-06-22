@@ -21,6 +21,14 @@ import '../../courses/view/coursesscreen.dart';
 import '../../courses/controller/courses_controller.dart';
 import 'search_screen.dart';
 
+const Color _kAccentRose = Color(0xFFEF6C57);
+Color _shade(Color base, double lightnessDelta) {
+  final hsl = HSLColor.fromColor(base);
+  return hsl
+      .withLightness((hsl.lightness + lightnessDelta).clamp(0.0, 1.0))
+      .toColor();
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -78,14 +86,6 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Navigation helpers ────────────────────────────────────
 
   void _openCollegeDetail(CollegeModel college) {
-    // ✅ Single source of truth — all platform + registration + type logic
-    // lives inside shouldShowEnquiryForm()
-    //
-    // Android not registered type=0 → show form
-    // Android not registered type=1 → show form
-    // iOS     not registered type=0 → show form
-    // iOS     not registered type=1 → skip form, go directly to detail
-    // Any platform, registered      → skip form, go directly to detail
     if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
       showModalBottomSheet(
         context: context,
@@ -152,6 +152,82 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _buildAppBar(Responsive r) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        r.spacing(AppDimens.paddingLG),
+        r.spacing(AppDimens.paddingLG),
+        r.spacing(AppDimens.paddingLG),
+        0,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hello, Vet Aspirant 👋',
+                  style: AppTextStyles.headlineLarge.copyWith(
+                    fontSize: r.fontSize(19),
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                SizedBox(height: r.spacing(2)),
+                Text(
+                  'Find the right path into veterinary science',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontSize: r.fontSize(12.5),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: r.spacing(AppDimens.paddingMD)),
+          // Container(
+          //   width: r.spacing(42),
+          //   height: r.spacing(42),
+          //   decoration: const BoxDecoration(
+          //     color: AppColors.primarySurface,
+          //     shape: BoxShape.circle,
+          //   ),
+          //   child: Stack(
+          //     children: [
+          //       Center(
+          //         child: Icon(
+          //           Icons.notifications_none_rounded,
+          //           color: AppColors.primary,
+          //           size: r.fontSize(20),
+          //         ),
+          //       ),
+          //       Positioned(
+          //         top: r.spacing(9),
+          //         right: r.spacing(9),
+          //         child: Container(
+          //           width: r.spacing(7),
+          //           height: r.spacing(7),
+          //           decoration: const BoxDecoration(
+          //             color: _kAccentRose,
+          //             shape: BoxShape.circle,
+          //             border: Border.fromBorderSide(
+          //                 BorderSide(color: Colors.white, width: 1.5)),
+          //           ),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  // SEARCH BAR (updated design — custom pill)
+  // ════════════════════════════════════════════════════════
+
   Widget _buildSearchBar(Responsive r) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -162,16 +238,209 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       child: GestureDetector(
         onTap: () => Get.to(() => const SearchScreen()),
-        child: AbsorbPointer(
-          child: AppSearchBar(
-            hintText: 'Search colleges, courses, locations...',
-            controller: _searchCtrl,
-            onChanged: (_) {},
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: r.spacing(AppDimens.paddingMD),
+            vertical: r.spacing(13),
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppDimens.radiusLG + 4),
+            border: Border.all(color: AppColors.borderLight),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadowLight,
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.search_rounded,
+                  color: AppColors.textSecondary, size: r.fontSize(20)),
+              SizedBox(width: r.spacing(AppDimens.paddingSM)),
+              Expanded(
+                child: Text(
+                  'Search colleges...',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontSize: r.fontSize(13),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.all(r.spacing(7)),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+                ),
+                child: Icon(Icons.tune_rounded,
+                    color: AppColors.primary, size: r.fontSize(16)),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  // ════════════════════════════════════════════════════════
+  // HERO BANNER (updated design — gradient banner with CTA)
+  // ════════════════════════════════════════════════════════
+
+  Widget _buildHeroBanner(Responsive r) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        r.spacing(AppDimens.paddingLG),
+        r.spacing(AppDimens.paddingXL),
+        r.spacing(AppDimens.paddingLG),
+        0,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [_shade(AppColors.primary, -0.08), AppColors.primary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppDimens.radiusXL + 4),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.28),
+              blurRadius: 22,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimens.radiusXL + 4),
+          child: Stack(
+            children: [
+              // Decorative circles
+              Positioned(
+                top: -26,
+                right: -18,
+                child: Container(
+                  width: r.spacing(110),
+                  height: r.spacing(110),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 38,
+                right: 70,
+                child: Container(
+                  width: r.spacing(70),
+                  height: r.spacing(70),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.06),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+
+              // Vet image — anchored to bottom-right, bleeds to edge
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: SizedBox(
+                  height: r.value(
+                      mobile: r.spacing(150), tablet: r.spacing(200)),
+                  child: Image.asset(
+                    'assets/images/vetapp.png',
+                    fit: BoxFit.contain,
+                    alignment: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+
+              // Text content + CTA
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  r.spacing(AppDimens.paddingXL),
+                  r.spacing(AppDimens.paddingXL),
+                  r.spacing(AppDimens.paddingXL),
+                  r.spacing(AppDimens.paddingLG),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: r.value(
+                          mobile: r.spacing(190), tablet: r.spacing(260)),
+                      child: Text(
+                        'Build a Better\nFuture for Animals',
+                        style: AppTextStyles.displayWhite.copyWith(
+                          fontSize: r.fontSize(19),
+                          fontWeight: FontWeight.w800,
+                          height: 1.18,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                    SizedBox(
+                      width: r.value(
+                          mobile: r.spacing(190), tablet: r.spacing(260)),
+                      child: Text(
+                        'Discover and compare the best veterinary colleges across India.',
+                        style: AppTextStyles.bodyWhite.copyWith(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: r.fontSize(12),
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                    GestureDetector(
+                      onTap: () => Get.to(() => CollegeListScreen()),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: r.spacing(16),
+                          vertical: r.spacing(9),
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                          BorderRadius.circular(AppDimens.radiusLG),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Explore Colleges',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: r.fontSize(12),
+                              ),
+                            ),
+                            SizedBox(width: r.spacing(4)),
+                            Icon(Icons.arrow_forward_rounded,
+                                color: AppColors.primary,
+                                size: r.fontSize(14)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  // EVERYTHING BELOW THIS LINE IS UNCHANGED FROM THE ORIGINAL
+  // ════════════════════════════════════════════════════════
 
   Widget _buildSavedCollegesSliver(Responsive r) {
     final saved = _ctrl.savedColleges;
@@ -333,10 +602,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  // CARD / WIDGET BUILDERS
-  // ════════════════════════════════════════════════════════
-
   Widget _buildSavedCollegeChip(CollegeModel college, Responsive r) {
     return GestureDetector(
       onTap: () => _openCollegeDetail(college),
@@ -459,134 +724,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildAppBar(Responsive r) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(r.spacing(AppDimens.paddingLG),
-          r.spacing(AppDimens.paddingMD), r.spacing(AppDimens.paddingLG), 0),
-      child: Row(
-        children: [
-          SizedBox(width: r.spacing(AppDimens.paddingMD)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Hello, Vet Aspirant! 👋',
-                    style: AppTextStyles.headlineLarge
-                        .copyWith(fontSize: r.fontSize(15))),
-                Text('What would you like to explore today?',
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(fontSize: r.fontSize(12))),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _buildHeroBanner(Responsive r) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(r.spacing(AppDimens.paddingLG),
-          r.spacing(AppDimens.paddingLG), r.spacing(AppDimens.paddingLG), 0),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: AppColors.cardGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(AppDimens.radiusXL),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimens.radiusXL),
-          child: Stack(
-            children: [
-              // Decorative circles
-              Positioned(
-                top: -20,
-                right: -20,
-                child: Container(
-                  width: r.spacing(100),
-                  height: r.spacing(100),
-                  decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      shape: BoxShape.circle),
-                ),
-              ),
-              Positioned(
-                bottom: -30,
-                right: 60,
-                child: Container(
-                  width: r.spacing(80),
-                  height: r.spacing(80),
-                  decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
-                      shape: BoxShape.circle),
-                ),
-              ),
-
-              // Vet image — anchored to bottom-right, bleeds to edge
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: SizedBox(
-                  height: r.value(
-                    mobile: r.spacing(160),
-                    tablet: r.spacing(220),
-                  ),
-                  child: Image.asset(
-                    'assets/images/vetapp.png',
-                    fit: BoxFit.contain,
-                    alignment: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-
-              // Text content
-              Padding(
-                padding: EdgeInsets.all(r.spacing(AppDimens.paddingXL)),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Build a Better Future\nFor Animals',
-                            style: AppTextStyles.displayWhite
-                                .copyWith(fontSize: r.fontSize(18)),
-                          ),
-                          SizedBox(height: r.spacing(AppDimens.paddingSM)),
-                          Text(
-                            'Find the Best Veterinary Colleges\nAcross India.',
-                            style: AppTextStyles.bodyWhite.copyWith(
-                                color: Colors.white70,
-                                fontSize: r.fontSize(12)),
-                          ),
-                          SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                        ],
-                      ),
-                    ),
-
-                    // Spacer to keep text from running under the image
-                    SizedBox(
-                      width: r.value(
-                        mobile: r.spacing(120),
-                        tablet: r.spacing(180),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
   Future<void> _onRefresh() async {
     await Future.wait([
       _ctrl.fetchTopCollegesFromApi(),
@@ -594,1023 +731,3 @@ class _HomeScreenState extends State<HomeScreen>
     ]);
   }
 }
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import '../../../core/constants/appcolors.dart';
-// import '../../../core/style/dimens.dart';
-// import '../../../core/style/textstyle.dart';
-// import '../../../core/utils/responsive utiliteclass.dart';
-// import '../../../data/models/collegelistmodel.dart';
-// import '../../../data/models/coursemodel.dart';
-// import '../../../no internetconnection/no_connection.dart';
-// import '../../../widgets/commonwidget.dart';
-// import '../../../widgets/shimmer_widget.dart';
-// import '../../Colleges/controller/college_controller.dart';
-// import '../../Colleges/controller/enquirycontroller.dart';
-// import '../../Colleges/view/Enquiry_form.dart';
-// import '../../Colleges/view/allcollegelistingscreen.dart';
-// import '../../Colleges/view/collegedtailscreen.dart';
-// import '../../courses/view/coursesdetailscreen.dart';
-// import '../../courses/view/coursesscreen.dart';
-// import '../../courses/controller/courses_controller.dart';
-// import 'search_screen.dart';
-//
-// // ════════════════════════════════════════════════════════════════════
-// // DESIGN TOKENS — screen-local accents that sit on top of AppColors.
-// // These give the quick-access shortcuts and rank badges a warm,
-// // multi-tonal feel without touching your shared color file. Promote
-// // them into appcolors.dart later if you want them reused elsewhere.
-// // ════════════════════════════════════════════════════════════════════
-// const Color _kAccentTeal = Color(0xFF0EA5A4);
-// const Color _kAccentGold = Color(0xFFF5A623);
-// const Color _kAccentRose = Color(0xFFEF6C57);
-// const Color _kRankGold = Color(0xFFFFC107);
-// const Color _kRankSilver = Color(0xFFB0BEC5);
-// const Color _kRankBronze = Color(0xFFD7913C);
-//
-// /// Lightens/darkens a color while preserving hue + saturation. Used to
-// /// build a richer two-stop hero gradient from your existing brand color
-// /// without needing to know its exact hex value.
-// Color _shade(Color base, double lightnessDelta) {
-//   final hsl = HSLColor.fromColor(base);
-//   return hsl
-//       .withLightness((hsl.lightness + lightnessDelta).clamp(0.0, 1.0))
-//       .toColor();
-// }
-//
-// class _QuickCategory {
-//   final IconData icon;
-//   final String label;
-//   final Color color;
-//   final VoidCallback onTap;
-//   const _QuickCategory({
-//     required this.icon,
-//     required this.label,
-//     required this.color,
-//     required this.onTap,
-//   });
-// }
-//
-// class HomeScreen extends StatefulWidget {
-//   const HomeScreen({super.key});
-//
-//   @override
-//   State<HomeScreen> createState() => _HomeScreenState();
-// }
-//
-// class _HomeScreenState extends State<HomeScreen>
-//     with SingleTickerProviderStateMixin {
-//   final CollegeController _ctrl = Get.put(CollegeController());
-//   final EnquiryController _enquiryCtrl = Get.put(EnquiryController());
-//   final CourseController _courseCtrl = Get.put(CourseController());
-//
-//   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-//   final TextEditingController _searchCtrl = TextEditingController();
-//
-//   // Fade + subtle rise-in for the real content
-//   late final AnimationController _fadeCtrl;
-//   late final Animation<double> _fadeAnim;
-//   late final Animation<Offset> _slideAnim;
-//   bool _contentVisible = false;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//
-//     _fadeCtrl = AnimationController(
-//       vsync: this,
-//       duration: const Duration(milliseconds: 550),
-//     );
-//     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
-//     _slideAnim = Tween<Offset>(begin: const Offset(0, 0.035), end: Offset.zero)
-//         .animate(CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOutCubic));
-//
-//     _searchCtrl.addListener(() {
-//       _ctrl.onSearchChanged(_searchCtrl.text);
-//     });
-//
-//     // ✅ Reset fade when loading starts again (reconnect), fade in when done
-//     ever(_ctrl.topCollegesLoading, (bool loading) {
-//       if (loading) {
-//         _contentVisible = false;
-//         _fadeCtrl.reset();
-//       } else if (!_contentVisible) {
-//         _contentVisible = true;
-//         _fadeCtrl.forward();
-//       }
-//     });
-//   }
-//
-//   @override
-//   void dispose() {
-//     _searchCtrl.dispose();
-//     _fadeCtrl.dispose();
-//     super.dispose();
-//   }
-//
-//   // ── Navigation helpers (logic unchanged) ──────────────────────────
-//
-//   void _openCollegeDetail(CollegeModel college) {
-//     if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
-//       showModalBottomSheet(
-//         context: context,
-//         isScrollControlled: true,
-//         backgroundColor: Colors.transparent,
-//         builder: (_) => EnquiryBottomSheet(
-//           college: college,
-//           onProceed: () => _pushDetail(college),
-//         ),
-//       );
-//     } else {
-//       _pushDetail(college);
-//     }
-//   }
-//
-//   void _pushDetail(CollegeModel college) => Get.to(
-//         () => CollegeDetailScreen(collegeId: college.id),
-//     transition: Transition.rightToLeft,
-//   );
-//
-//   void _openCourseDetail(CourseModel course) =>
-//       Get.to(() => CourseDetailScreen(courseId: course.id));
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final r = Responsive.of(context);
-//
-//     return NetworkAwareWrapper(
-//       child: Scaffold(
-//         key: _scaffoldKey,
-//         backgroundColor: AppColors.background,
-//         body: Obx(() {
-//           final isLoading =
-//               _ctrl.topCollegesLoading.value || _courseCtrl.isLoading.value;
-//
-//           // ── Shimmer phase ───────────────────────────────────────
-//           if (isLoading) {
-//             return const HomeScreenShimmer();
-//           }
-//
-//           // ── Real content (fades + rises in) ─────────────────────
-//           return FadeTransition(
-//             opacity: _fadeAnim,
-//             child: SlideTransition(
-//               position: _slideAnim,
-//               child: SafeArea(
-//                 child: RefreshIndicator(
-//                   color: AppColors.primary,
-//                   onRefresh: _onRefresh,
-//                   child: CustomScrollView(
-//                     physics: const BouncingScrollPhysics(
-//                         parent: AlwaysScrollableScrollPhysics()),
-//                     slivers: [
-//                       SliverToBoxAdapter(child: _buildAppBar(r)),
-//                       SliverToBoxAdapter(child: _buildSearchBar(r)),
-//                       SliverToBoxAdapter(child: _buildHeroBanner(r)),
-//                       SliverToBoxAdapter(child: _buildTrustStrip(r)),
-//                       _buildSavedCollegesSliver(r),
-//                       _buildRecommendedSliver(r),
-//                       _buildTopCollegesHeader(r),
-//                       _buildTopCollegesSliver(r),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           );
-//         }),
-//       ),
-//     );
-//   }
-//
-//   // ════════════════════════════════════════════════════════════════
-//   // APP BAR
-//   // ════════════════════════════════════════════════════════════════
-//
-//   Widget _buildAppBar(Responsive r) {
-//     return Padding(
-//       padding: EdgeInsets.fromLTRB(
-//         r.spacing(AppDimens.paddingLG),
-//         r.spacing(AppDimens.paddingLG),
-//         r.spacing(AppDimens.paddingLG),
-//         0,
-//       ),
-//       child: Row(
-//         children: [
-//           Expanded(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   'Hello, Vet Aspirant 👋',
-//                   style: AppTextStyles.headlineLarge.copyWith(
-//                     fontSize: r.fontSize(19),
-//                     fontWeight: FontWeight.w800,
-//                     letterSpacing: -0.3,
-//                   ),
-//                 ),
-//                 SizedBox(height: r.spacing(2)),
-//                 Text(
-//                   'Find the right path into veterinary science',
-//                   style: AppTextStyles.bodyMedium.copyWith(
-//                     fontSize: r.fontSize(12.5),
-//                     color: AppColors.textSecondary,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           SizedBox(width: r.spacing(AppDimens.paddingMD)),
-//           Container(
-//             width: r.spacing(42),
-//             height: r.spacing(42),
-//             decoration: const BoxDecoration(
-//               color: AppColors.primarySurface,
-//               shape: BoxShape.circle,
-//             ),
-//             child: Stack(
-//               children: [
-//                 Center(
-//                   child: Icon(
-//                     Icons.notifications_none_rounded,
-//                     color: AppColors.primary,
-//                     size: r.fontSize(20),
-//                   ),
-//                 ),
-//                 Positioned(
-//                   top: r.spacing(9),
-//                   right: r.spacing(9),
-//                   child: Container(
-//                     width: r.spacing(7),
-//                     height: r.spacing(7),
-//                     decoration: const BoxDecoration(
-//                       color: _kAccentRose,
-//                       shape: BoxShape.circle,
-//                       border: Border.fromBorderSide(
-//                           BorderSide(color: Colors.white, width: 1.5)),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   // ════════════════════════════════════════════════════════════════
-//   // SEARCH BAR — fully custom pill, replaces the old AppSearchBar look
-//   // ════════════════════════════════════════════════════════════════
-//
-//   Widget _buildSearchBar(Responsive r) {
-//     return Padding(
-//       padding: EdgeInsets.fromLTRB(
-//         r.spacing(AppDimens.paddingLG),
-//         r.spacing(AppDimens.paddingLG),
-//         r.spacing(AppDimens.paddingLG),
-//         0,
-//       ),
-//       child: GestureDetector(
-//         onTap: () => Get.to(() => const SearchScreen()),
-//         child: Container(
-//           padding: EdgeInsets.symmetric(
-//             horizontal: r.spacing(AppDimens.paddingMD),
-//             vertical: r.spacing(13),
-//           ),
-//           decoration: BoxDecoration(
-//             color: AppColors.cardBackground,
-//             borderRadius: BorderRadius.circular(AppDimens.radiusLG + 4),
-//             border: Border.all(color: AppColors.borderLight),
-//             boxShadow: [
-//               BoxShadow(
-//                 color: AppColors.shadowLight,
-//                 blurRadius: 14,
-//                 offset: const Offset(0, 6),
-//               ),
-//             ],
-//           ),
-//           child: Row(
-//             children: [
-//               Icon(Icons.search_rounded,
-//                   color: AppColors.textSecondary, size: r.fontSize(20)),
-//               SizedBox(width: r.spacing(AppDimens.paddingSM)),
-//               Expanded(
-//                 child: Text(
-//                   'Search colleges, courses, locations...',
-//                   style: AppTextStyles.bodyMedium.copyWith(
-//                     fontSize: r.fontSize(13),
-//                     color: AppColors.textSecondary,
-//                   ),
-//                 ),
-//               ),
-//               Container(
-//                 padding: EdgeInsets.all(r.spacing(7)),
-//                 decoration: BoxDecoration(
-//                   color: AppColors.primarySurface,
-//                   borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-//                 ),
-//                 child: Icon(Icons.tune_rounded,
-//                     color: AppColors.primary, size: r.fontSize(16)),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   // ════════════════════════════════════════════════════════════════
-//   // HERO — signature element: gradient banner with a clear next action
-//   // ════════════════════════════════════════════════════════════════
-//
-//   Widget _buildHeroBanner(Responsive r) {
-//     return Padding(
-//       padding: EdgeInsets.fromLTRB(
-//         r.spacing(AppDimens.paddingLG),
-//         r.spacing(AppDimens.paddingXL),
-//         r.spacing(AppDimens.paddingLG),
-//         0,
-//       ),
-//       child: Container(
-//         decoration: BoxDecoration(
-//           gradient: LinearGradient(
-//             colors: [_shade(AppColors.primary, -0.08), AppColors.primary],
-//             begin: Alignment.topLeft,
-//             end: Alignment.bottomRight,
-//           ),
-//           borderRadius: BorderRadius.circular(AppDimens.radiusXL + 4),
-//           boxShadow: [
-//             BoxShadow(
-//               color: AppColors.primary.withOpacity(0.28),
-//               blurRadius: 22,
-//               offset: const Offset(0, 12),
-//             ),
-//           ],
-//         ),
-//         child: ClipRRect(
-//           borderRadius: BorderRadius.circular(AppDimens.radiusXL + 4),
-//           child: Stack(
-//             children: [
-//               Positioned(
-//                 top: -26,
-//                 right: -18,
-//                 child: Container(
-//                   width: r.spacing(110),
-//                   height: r.spacing(110),
-//                   decoration: BoxDecoration(
-//                     color: Colors.white.withOpacity(0.08),
-//                     shape: BoxShape.circle,
-//                   ),
-//                 ),
-//               ),
-//               Positioned(
-//                 bottom: 38,
-//                 right: 70,
-//                 child: Container(
-//                   width: r.spacing(70),
-//                   height: r.spacing(70),
-//                   decoration: BoxDecoration(
-//                     color: Colors.white.withOpacity(0.06),
-//                     shape: BoxShape.circle,
-//                   ),
-//                 ),
-//               ),
-//               Positioned(
-//                 right: 0,
-//                 bottom: 0,
-//                 child: SizedBox(
-//                   height: r.value(
-//                       mobile: r.spacing(150), tablet: r.spacing(200)),
-//                   child: Image.asset(
-//                     'assets/images/vetapp.png',
-//                     fit: BoxFit.contain,
-//                     alignment: Alignment.bottomRight,
-//                   ),
-//                 ),
-//               ),
-//               Padding(
-//                 padding: EdgeInsets.fromLTRB(
-//                   r.spacing(AppDimens.paddingXL),
-//                   r.spacing(AppDimens.paddingXL),
-//                   r.spacing(AppDimens.paddingXL),
-//                   r.spacing(AppDimens.paddingLG),
-//                 ),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   mainAxisSize: MainAxisSize.min,
-//                   children: [
-//                     SizedBox(
-//                       width: r.value(
-//                           mobile: r.spacing(190), tablet: r.spacing(260)),
-//                       child: Text(
-//                         'Build a Better\nFuture for Animals',
-//                         style: AppTextStyles.displayWhite.copyWith(
-//                           fontSize: r.fontSize(19),
-//                           fontWeight: FontWeight.w800,
-//                           height: 1.18,
-//                           letterSpacing: -0.4,
-//                         ),
-//                       ),
-//                     ),
-//                     SizedBox(height: r.spacing(AppDimens.paddingSM)),
-//                     SizedBox(
-//                       width: r.value(
-//                           mobile: r.spacing(190), tablet: r.spacing(260)),
-//                       child: Text(
-//                         'Discover and compare the best veterinary colleges across India.',
-//                         style: AppTextStyles.bodyWhite.copyWith(
-//                           color: Colors.white.withOpacity(0.85),
-//                           fontSize: r.fontSize(12),
-//                           height: 1.35,
-//                         ),
-//                       ),
-//                     ),
-//                     SizedBox(height: r.spacing(AppDimens.paddingMD)),
-//                     GestureDetector(
-//                       onTap: () => Get.to(() => CollegeListScreen()),
-//                       child: Container(
-//                         padding: EdgeInsets.symmetric(
-//                           horizontal: r.spacing(16),
-//                           vertical: r.spacing(9),
-//                         ),
-//                         decoration: BoxDecoration(
-//                           color: Colors.white,
-//                           borderRadius:
-//                           BorderRadius.circular(AppDimens.radiusLG),
-//                         ),
-//                         child: Row(
-//                           mainAxisSize: MainAxisSize.min,
-//                           children: [
-//                             Text(
-//                               'Explore Colleges',
-//                               style: TextStyle(
-//                                 color: AppColors.primary,
-//                                 fontWeight: FontWeight.w700,
-//                                 fontSize: r.fontSize(12),
-//                               ),
-//                             ),
-//                             SizedBox(width: r.spacing(4)),
-//                             Icon(Icons.arrow_forward_rounded,
-//                                 color: AppColors.primary,
-//                                 size: r.fontSize(14)),
-//                           ],
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   // ════════════════════════════════════════════════════════════════
-//   // TRUST STRIP — quick credibility signal under the hero
-//   // ════════════════════════════════════════════════════════════════
-//
-//   Widget _buildTrustStrip(Responsive r) {
-//     final stats = <List<String>>[
-//       ['500+', 'Colleges'],
-//       ['50+', 'Courses'],
-//       ['10k+', 'Students Guided'],
-//     ];
-//
-//     final children = <Widget>[];
-//     for (var i = 0; i < stats.length; i++) {
-//       if (i > 0) {
-//         children.add(Container(
-//           width: 1,
-//           height: r.spacing(30),
-//           color: AppColors.borderLight,
-//         ));
-//       }
-//       children.add(
-//         Expanded(
-//           child: Column(
-//             children: [
-//               Text(
-//                 stats[i][0],
-//                 style: AppTextStyles.titleLarge.copyWith(
-//                   fontSize: r.fontSize(15),
-//                   fontWeight: FontWeight.w800,
-//                   color: AppColors.primary,
-//                 ),
-//               ),
-//               SizedBox(height: r.spacing(2)),
-//               Text(
-//                 stats[i][1],
-//                 style: AppTextStyles.bodySmall.copyWith(
-//                   fontSize: r.fontSize(10),
-//                   color: AppColors.textSecondary,
-//                 ),
-//                 textAlign: TextAlign.center,
-//               ),
-//             ],
-//           ),
-//         ),
-//       );
-//     }
-//
-//     return Padding(
-//       padding: EdgeInsets.fromLTRB(
-//         r.spacing(AppDimens.paddingLG),
-//         r.spacing(AppDimens.paddingMD),
-//         r.spacing(AppDimens.paddingLG),
-//         0,
-//       ),
-//       child: Container(
-//         padding: EdgeInsets.symmetric(vertical: r.spacing(14)),
-//         decoration: BoxDecoration(
-//           color: AppColors.cardBackground,
-//           borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-//           border: Border.all(color: AppColors.borderLight),
-//         ),
-//         child: Row(children: children),
-//       ),
-//     );
-//   }
-//
-//
-//   Widget _buildSavedCollegesSliver(Responsive r) {
-//     final saved = _ctrl.savedColleges;
-//     if (saved.isEmpty) {
-//       return const SliverToBoxAdapter(child: SizedBox.shrink());
-//     }
-//
-//     return SliverToBoxAdapter(
-//       child: Padding(
-//         padding: EdgeInsets.fromLTRB(
-//           r.spacing(AppDimens.paddingLG),
-//           r.spacing(AppDimens.paddingXL),
-//           r.spacing(AppDimens.paddingLG),
-//           0,
-//         ),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             SectionHeader(
-//               title: 'Saved Colleges',
-//               actionText: 'View All',
-//               onAction: () => Get.to(() => CollegeListScreen()),
-//             ),
-//             SizedBox(height: r.spacing(AppDimens.paddingMD)),
-//             SizedBox(
-//               height: r.spacing(122),
-//               child: ListView.separated(
-//                 scrollDirection: Axis.horizontal,
-//                 itemCount: saved.length,
-//                 separatorBuilder: (_, __) =>
-//                     SizedBox(width: r.spacing(AppDimens.paddingMD)),
-//                 itemBuilder: (_, i) => _buildSavedCollegeChip(saved[i], r),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildSavedCollegeChip(CollegeModel college, Responsive r) {
-//     final initial =
-//     college.collegeName.isNotEmpty ? college.collegeName[0].toUpperCase() : '?';
-//
-//     return GestureDetector(
-//       onTap: () => _openCollegeDetail(college),
-//       child: Container(
-//         width: r.spacing(168),
-//         padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
-//         decoration: BoxDecoration(
-//           color: AppColors.cardBackground,
-//           borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-//           border: Border.all(color: AppColors.borderLight),
-//           boxShadow: [
-//             BoxShadow(
-//               color: AppColors.shadowLight,
-//               blurRadius: 10,
-//               offset: const Offset(0, 4),
-//             ),
-//           ],
-//         ),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             Row(
-//               children: [
-//                 Container(
-//                   width: r.spacing(32),
-//                   height: r.spacing(32),
-//                   decoration: const BoxDecoration(
-//                     color: AppColors.primarySurface,
-//                     shape: BoxShape.circle,
-//                   ),
-//                   alignment: Alignment.center,
-//                   child: Text(
-//                     initial,
-//                     style: TextStyle(
-//                       color: AppColors.primary,
-//                       fontWeight: FontWeight.w800,
-//                       fontSize: r.fontSize(13),
-//                     ),
-//                   ),
-//                 ),
-//                 const Spacer(),
-//                 GestureDetector(
-//                   onTap: () => _ctrl.toggleSave(college),
-//                   child: Icon(Icons.close_rounded,
-//                       color: AppColors.textSecondary, size: r.fontSize(16)),
-//                 ),
-//               ],
-//             ),
-//             SizedBox(height: r.spacing(AppDimens.paddingSM)),
-//             Text(
-//               college.collegeName,
-//               style: AppTextStyles.titleLarge.copyWith(
-//                 fontSize: r.fontSize(12.5),
-//                 fontWeight: FontWeight.w700,
-//               ),
-//               maxLines: 2,
-//               overflow: TextOverflow.ellipsis,
-//             ),
-//             SizedBox(height: r.spacing(4)),
-//             Row(
-//               children: [
-//                 Icon(Icons.location_on_outlined,
-//                     size: r.fontSize(11), color: AppColors.textSecondary),
-//                 SizedBox(width: r.spacing(2)),
-//                 Expanded(
-//                   child: Text(
-//                     college.location,
-//                     style: AppTextStyles.bodySmall.copyWith(
-//                       fontSize: r.fontSize(10),
-//                       color: AppColors.textSecondary,
-//                     ),
-//                     maxLines: 1,
-//                     overflow: TextOverflow.ellipsis,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   // ════════════════════════════════════════════════════════════════
-//   // RECOMMENDED COURSES
-//   // ════════════════════════════════════════════════════════════════
-//
-//   Widget _buildRecommendedSliver(Responsive r) {
-//     if (_courseCtrl.hasError.value) {
-//       return const SliverToBoxAdapter(child: SizedBox.shrink());
-//     }
-//
-//     final bvscCourses = _courseCtrl.courses
-//         .where((c) =>
-//     c.courseName.toLowerCase().contains('bvsc') ||
-//         c.courseName.toLowerCase().contains('b.v.sc') ||
-//         c.courseName.toLowerCase().contains('bachelor of veterinary science'))
-//         .toList();
-//
-//     if (bvscCourses.isEmpty) {
-//       return const SliverToBoxAdapter(child: SizedBox.shrink());
-//     }
-//
-//     return SliverToBoxAdapter(
-//       child: Padding(
-//         padding: EdgeInsets.fromLTRB(
-//           r.spacing(AppDimens.paddingLG),
-//           r.spacing(AppDimens.paddingXL),
-//           r.spacing(AppDimens.paddingLG),
-//           0,
-//         ),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             SectionHeader(
-//               title: 'Recommended For You',
-//               actionText: 'View All',
-//               onAction: () => Get.to(() => CourseListingScreen()),
-//             ),
-//             SizedBox(height: r.spacing(AppDimens.paddingMD)),
-//             ...bvscCourses.map((course) => Padding(
-//               padding: EdgeInsets.only(bottom: r.spacing(AppDimens.paddingMD)),
-//               child: _buildCourseCard(course, r),
-//             )),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildCourseCard(CourseModel course, Responsive r) {
-//     return GestureDetector(
-//       onTap: () => _openCourseDetail(course),
-//       child: Container(
-//         padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
-//         decoration: BoxDecoration(
-//           color: AppColors.cardBackground,
-//           borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-//           border: Border.all(color: AppColors.borderLight),
-//           boxShadow: [
-//             BoxShadow(
-//               color: AppColors.shadowLight,
-//               blurRadius: 10,
-//               offset: const Offset(0, 4),
-//             ),
-//           ],
-//         ),
-//         child: Row(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Container(
-//               width: r.spacing(48),
-//               height: r.spacing(48),
-//               decoration: BoxDecoration(
-//                 color: AppColors.primarySurface,
-//                 borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-//               ),
-//               child: Icon(Icons.menu_book_rounded,
-//                   color: AppColors.primary, size: r.fontSize(22)),
-//             ),
-//             SizedBox(width: r.spacing(AppDimens.paddingMD)),
-//             Expanded(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Container(
-//                     padding: EdgeInsets.symmetric(
-//                       horizontal: r.spacing(8),
-//                       vertical: r.spacing(3),
-//                     ),
-//                     decoration: BoxDecoration(
-//                       color: _kAccentGold.withOpacity(0.14),
-//                       borderRadius: BorderRadius.circular(20),
-//                     ),
-//                     child: Text(
-//                       'Recommended',
-//                       style: TextStyle(
-//                         color: _kAccentGold,
-//                         fontSize: r.fontSize(9.5),
-//                         fontWeight: FontWeight.w700,
-//                       ),
-//                     ),
-//                   ),
-//                   SizedBox(height: r.spacing(6)),
-//                   Text(
-//                     course.courseName,
-//                     style: AppTextStyles.titleLarge.copyWith(
-//                       fontSize: r.fontSize(13.5),
-//                       fontWeight: FontWeight.w700,
-//                     ),
-//                     maxLines: 2,
-//                     overflow: TextOverflow.ellipsis,
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             Icon(Icons.chevron_right_rounded,
-//                 color: AppColors.textSecondary, size: r.fontSize(20)),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   // ════════════════════════════════════════════════════════════════
-//   // TOP COLLEGES — ranked list (gold / silver / bronze for top 3)
-//   // ════════════════════════════════════════════════════════════════
-//
-//   Widget _buildTopCollegesHeader(Responsive r) {
-//     return SliverToBoxAdapter(
-//       child: Padding(
-//         padding: EdgeInsets.fromLTRB(
-//           r.spacing(AppDimens.paddingLG),
-//           r.spacing(AppDimens.paddingXL),
-//           r.spacing(AppDimens.paddingLG),
-//           0,
-//         ),
-//         child: SectionHeader(
-//           title: 'Top Veterinary Colleges',
-//           actionText: 'View All',
-//           onAction: () => Get.to(() => CollegeListScreen()),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildTopCollegesSliver(Responsive r) {
-//     if (_ctrl.topCollegesError.value) {
-//       return SliverFillRemaining(
-//         hasScrollBody: false,
-//         child: Center(
-//           child: Padding(
-//             padding: EdgeInsets.symmetric(horizontal: r.spacing(AppDimens.paddingXL)),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 Container(
-//                   width: r.spacing(72),
-//                   height: r.spacing(72),
-//                   decoration: const BoxDecoration(
-//                     color: AppColors.primarySurface,
-//                     shape: BoxShape.circle,
-//                   ),
-//                   child: Icon(Icons.wifi_off_rounded,
-//                       size: r.fontSize(30), color: AppColors.primary),
-//                 ),
-//                 SizedBox(height: r.spacing(AppDimens.paddingMD)),
-//                 Text('Failed to load colleges',
-//                     style: AppTextStyles.bodyMedium
-//                         .copyWith(fontWeight: FontWeight.w600)),
-//                 SizedBox(height: r.spacing(6)),
-//                 Text(
-//                   'Check your connection and try again',
-//                   style: AppTextStyles.bodySmall.copyWith(
-//                     color: AppColors.textSecondary,
-//                     fontSize: r.fontSize(11.5),
-//                   ),
-//                   textAlign: TextAlign.center,
-//                 ),
-//                 SizedBox(height: r.spacing(AppDimens.paddingMD)),
-//                 ElevatedButton.icon(
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: AppColors.primary,
-//                     foregroundColor: Colors.white,
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-//                     ),
-//                     padding: EdgeInsets.symmetric(
-//                       horizontal: r.spacing(20),
-//                       vertical: r.spacing(12),
-//                     ),
-//                   ),
-//                   onPressed: _ctrl.fetchTopCollegesFromApi,
-//                   icon: const Icon(Icons.refresh_rounded),
-//                   label: const Text('Retry'),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       );
-//     }
-//
-//     if (_ctrl.topColleges.isEmpty) {
-//       return SliverFillRemaining(
-//         hasScrollBody: false,
-//         child: Center(
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               Container(
-//                 width: r.spacing(72),
-//                 height: r.spacing(72),
-//                 decoration: const BoxDecoration(
-//                   color: AppColors.primarySurface,
-//                   shape: BoxShape.circle,
-//                 ),
-//                 child: Icon(Icons.search_off_rounded,
-//                     size: r.fontSize(28), color: AppColors.primary),
-//               ),
-//               SizedBox(height: r.spacing(AppDimens.paddingMD)),
-//               Text('No colleges found',
-//                   style:
-//                   AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-//             ],
-//           ),
-//         ),
-//       );
-//     }
-//
-//     return SliverPadding(
-//       padding: EdgeInsets.fromLTRB(
-//         r.spacing(AppDimens.paddingLG),
-//         r.spacing(AppDimens.paddingMD),
-//         r.spacing(AppDimens.paddingLG),
-//         100,
-//       ),
-//       sliver: SliverList(
-//         delegate: SliverChildBuilderDelegate(
-//               (ctx, i) {
-//             final college = _ctrl.topColleges[i];
-//             return Padding(
-//               padding: EdgeInsets.only(bottom: r.spacing(AppDimens.paddingMD)),
-//               child: _buildTopCollegeCard(college, i + 1, r),
-//             );
-//           },
-//           childCount: _ctrl.topColleges.length,
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildTopCollegeCard(CollegeModel college, int rank, Responsive r) {
-//     Color badgeColor;
-//     Color badgeText = Colors.white;
-//     if (rank == 1) {
-//       badgeColor = _kRankGold;
-//     } else if (rank == 2) {
-//       badgeColor = _kRankSilver;
-//     } else if (rank == 3) {
-//       badgeColor = _kRankBronze;
-//     } else {
-//       badgeColor = AppColors.primarySurface;
-//       badgeText = AppColors.primary;
-//     }
-//
-//     return GestureDetector(
-//       onTap: () => _openCollegeDetail(college),
-//       child: Container(
-//         padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
-//         decoration: BoxDecoration(
-//           color: AppColors.cardBackground,
-//           borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-//           border: Border.all(color: AppColors.borderLight),
-//           boxShadow: [
-//             BoxShadow(
-//               color: AppColors.shadowLight,
-//               blurRadius: 10,
-//               offset: const Offset(0, 4),
-//             ),
-//           ],
-//         ),
-//         child: Row(
-//           children: [
-//             Container(
-//               width: r.spacing(34),
-//               height: r.spacing(34),
-//               decoration: BoxDecoration(color: badgeColor, shape: BoxShape.circle),
-//               alignment: Alignment.center,
-//               child: Text(
-//                 '$rank',
-//                 style: TextStyle(
-//                   color: badgeText,
-//                   fontWeight: FontWeight.w800,
-//                   fontSize: r.fontSize(13),
-//                 ),
-//               ),
-//             ),
-//             SizedBox(width: r.spacing(AppDimens.paddingMD)),
-//             Expanded(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     college.collegeName,
-//                     style: AppTextStyles.titleLarge.copyWith(
-//                       fontSize: r.fontSize(13.5),
-//                       fontWeight: FontWeight.w700,
-//                     ),
-//                     maxLines: 2,
-//                     overflow: TextOverflow.ellipsis,
-//                   ),
-//                   SizedBox(height: r.spacing(4)),
-//                   Row(
-//                     children: [
-//                       Icon(Icons.location_on_outlined,
-//                           size: r.fontSize(12), color: AppColors.textSecondary),
-//                       SizedBox(width: r.spacing(3)),
-//                       Expanded(
-//                         child: Text(
-//                           college.location,
-//                           style: AppTextStyles.bodySmall.copyWith(
-//                             fontSize: r.fontSize(11),
-//                             color: AppColors.textSecondary,
-//                           ),
-//                           maxLines: 1,
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             Container(
-//               padding: EdgeInsets.all(r.spacing(6)),
-//               decoration: const BoxDecoration(
-//                 color: AppColors.primarySurface,
-//                 shape: BoxShape.circle,
-//               ),
-//               child: Icon(Icons.arrow_forward_rounded,
-//                   color: AppColors.primary, size: r.fontSize(14)),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Future<void> _onRefresh() async {
-//     await Future.wait([
-//       _ctrl.fetchTopCollegesFromApi(),
-//       _courseCtrl.fetchCourses(),
-//     ]);
-//   }
-// }

@@ -104,7 +104,6 @@ class FiliteredCollegescontroller extends GetxController {
     } catch (_) {}
   }
 
-  // ── Search (debounced) ────────────────────────────────────
   void onSearchChanged(String query) {
     searchQuery.value = query;
     _debounce?.cancel();

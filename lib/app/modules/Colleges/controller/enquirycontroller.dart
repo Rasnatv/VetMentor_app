@@ -24,13 +24,10 @@ class EnquiryController extends GetxController {
     ),
   );
 
-  // ── College detail ────────────────────────────────────────────────────────
   final Rx<CollegeDetailModel?> collegeDetail = Rx(null);
   final RxBool detailLoading = false.obs;
   final RxString detailError = ''.obs;
 
-  // ── Enquiry form — programs dropdown only ─────────────────────────────────
-  // State / district are now free-text fields; no state dropdown needed.
   final RxList<ProgramModel> programs = <ProgramModel>[].obs;
   final RxBool dropdownsLoading = false.obs;
 
@@ -43,8 +40,6 @@ class EnquiryController extends GetxController {
   bool get isAlreadyRegistered => _registered.value;
   bool get isFormLoading => formState.value == EnquiryFormState.loading;
   bool get isFormSuccess => formState.value == EnquiryFormState.success;
-
-  // ── Stored student id ─────────────────────────────────────────────────────
   String get _storedStudentId =>
       Storage.getValue<String>(_kRegisteredStudentId) ?? '';
 
@@ -79,14 +74,6 @@ class EnquiryController extends GetxController {
     }
   }
 
-  // ── Enquiry form visibility logic ─────────────────────────────────────────
-  ///
-  /// Rules:
-  ///   • Already registered (any platform, any type) → false (skip form)
-  ///   • Android, type=0 → true  (show form)
-  ///   • Android, type=1 → true  (show form)
-  ///   • iOS,     type=0 → true  (show form)
-  ///   • iOS,     type=1 → false (skip form, go directly to college detail)
   bool shouldShowEnquiryForm(String collegeType) {
     if (_registered.value) return false;
     if (Platform.isAndroid) return true;

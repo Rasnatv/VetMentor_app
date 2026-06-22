@@ -11,7 +11,6 @@ import '../../../no internetconnection/network_service.dart';
 
 enum CollegeLoadState { initial, loading, success, error }
 
-const _kCollegeListCache = 'college_list_cache';
 const _kSavedCollegeIds = 'saved_college_ids';
 
 class CollegeController extends GetxController {
@@ -60,8 +59,6 @@ class CollegeController extends GetxController {
   }
 
   Future<void> fetchColleges({bool forceRefresh = false}) async {
-    if (!forceRefresh && _loadFromCache()) return;
-
     loadState.value = CollegeLoadState.loading;
     errorMessage.value = '';
 
@@ -75,19 +72,16 @@ class CollegeController extends GetxController {
       if (result.isSuccess) {
         colleges.assignAll(result.data);
         _applyFilter();
-        _saveToCache(result.data);
         loadState.value = CollegeLoadState.success;
       } else {
         _handleError(result.message);
       }
     } on DioException catch (e) {
-      if (!_loadFromCache()) {
-        if (ApiErrorHandler.isNetworkError(e)) {
-          loadState.value = CollegeLoadState.initial;
-        } else {
-          ApiErrorHandler.showError(e); // ✅ handles 508 + others
-          _handleError(ApiErrorHandler.handleDioError(e));
-        }
+      if (ApiErrorHandler.isNetworkError(e)) {
+        loadState.value = CollegeLoadState.initial;
+      } else {
+        ApiErrorHandler.showError(e); // ✅ handles 508 + others
+        _handleError(ApiErrorHandler.handleDioError(e));
       }
     } catch (e) {
       _handleError('Unexpected error occurred.');
@@ -157,26 +151,6 @@ class CollegeController extends GetxController {
     errorMessage.value = msg;
     loadState.value = CollegeLoadState.error;
   }
-
-  bool _loadFromCache() {
-    final raw = Storage.getValue<String>(_kCollegeListCache);
-    if (raw == null || raw.isEmpty) return false;
-    try {
-      final list = (jsonDecode(raw) as List<dynamic>)
-          .map((e) => CollegeModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-      if (list.isEmpty) return false;
-      colleges.assignAll(list);
-      _applyFilter();
-      loadState.value = CollegeLoadState.success;
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  void _saveToCache(List<CollegeModel> data) => Storage.saveValueForce(
-      _kCollegeListCache, jsonEncode(data.map((e) => e.toJson()).toList()));
 
   void _loadSavedIds() {
     final raw = Storage.getValue<String>(_kSavedCollegeIds);
