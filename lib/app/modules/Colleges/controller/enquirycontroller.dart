@@ -159,7 +159,7 @@ class EnquiryController extends GetxController {
     _fetchPrograms();
   }
 
-  // ── Private — fetch programs only (state is now free text) ───────────────
+  // ── Private — fetch programs ──────────────────────────────────────────────
   Future<void> _fetchPrograms() async {
     dropdownsLoading.value = true;
     try {

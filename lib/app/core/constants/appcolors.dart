@@ -82,4 +82,9 @@ class AppColors {
     Color( 0xFF003300),
     Color(0xFF2E7D32),
   ];
+  static const List<Color> smallGradient = [
+
+    Color(0xFF074511),
+    Color(0xFF092959),
+  ];
 }

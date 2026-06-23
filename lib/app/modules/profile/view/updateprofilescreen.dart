@@ -541,7 +541,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       ),
                     );
                   }),
-                  SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                   SizedBox(height: r.spacing(AppDimens.paddingXXXL)),
+
                 ],
               ),
             ),

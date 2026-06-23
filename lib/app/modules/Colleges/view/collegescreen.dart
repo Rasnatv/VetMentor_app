@@ -55,9 +55,9 @@ class AffiliationSelectorScreen extends StatelessWidget {
                 title: 'Temporary affiliated',
                 subtitle: 'Colleges with provisional recognition',
                 badgeLabel: 'Temporary',
-                gradientColors: AppColors.cardGradient,
+                gradientColors: AppColors.smallGradient,
                 //gradientColors: const [Color(0xFFFFA726), AppColors.badgeStateText],
-                iconColor: AppColors.badgeStateText,
+                iconColor: AppColors.iconPrimary,
                 badgeBgColor: const Color(0xFFE1F5EE),
                 badgeTextColor: const Color(0xFF0F6E56),
                 onTap: () => Get.to(() => const TemporaryAffiliatedScreen()),
@@ -65,14 +65,13 @@ class AffiliationSelectorScreen extends StatelessWidget {
 
               SizedBox(height: r.spacing(AppDimens.paddingMD)),
 
-              // ── Permanent Affiliated Card ────────────────────────
               _AffiliationCard(
                 r: r,
                 icon: Icons.verified_outlined,
                 title: 'Permanent affiliated',
                 subtitle: 'Colleges with full & permanent recognition',
                 badgeLabel: 'Permanent',
-                 gradientColors: AppColors.cardGradient,
+                 gradientColors: AppColors.smallGradient,
                 //gradientColors: const [Color(0xFF4DA3E0), Color(0xFF185FA5)],
                 iconColor: AppColors.iconPrimary,
                 badgeBgColor: const Color(0xFFE6F1FB),
@@ -82,7 +81,6 @@ class AffiliationSelectorScreen extends StatelessWidget {
 
               SizedBox(height: r.spacing(AppDimens.paddingLG)),
 
-              // ── Helper note ───────────────────────────────────────
               _InfoFooter(r: r),
             ],
           ),

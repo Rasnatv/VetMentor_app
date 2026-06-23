@@ -21,7 +21,6 @@ import '../../courses/view/coursesscreen.dart';
 import '../../courses/controller/courses_controller.dart';
 import 'search_screen.dart';
 
-const Color _kAccentRose = Color(0xFFEF6C57);
 Color _shade(Color base, double lightnessDelta) {
   final hsl = HSLColor.fromColor(base);
   return hsl
@@ -224,9 +223,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  // SEARCH BAR (updated design — custom pill)
-  // ════════════════════════════════════════════════════════
 
   Widget _buildSearchBar(Responsive r) {
     return Padding(
