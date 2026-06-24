@@ -4,6 +4,7 @@
 //
 // import '../../../widgets/bottomnavbar.dart';
 // import '../../careers/careers_Screen.dart';
+// import '../../home/bindings/home_binding.dart';
 // import '../../home/view/homescreen.dart';
 // import '../../Colleges/view/collegescreen.dart';
 // import '../../mentor/views/mentor.dart';
@@ -16,6 +17,9 @@
 //   @override
 //   Widget build(BuildContext context) {
 //     final controller = Get.put(LandingController());
+//
+//     // ✅ Register all controllers before screens build
+//     HomeBinding().dependencies();
 //
 //     WidgetsBinding.instance.addPostFrameCallback((_) {
 //       final arg = Get.arguments;
@@ -41,7 +45,6 @@
 //             ),
 //             body: Stack(
 //               children: [
-//                 // ── These 4 stay alive in IndexedStack ──────
 //                 Offstage(
 //                   offstage: index != 0,
 //                   child: const HomeScreen(),
@@ -58,8 +61,7 @@
 //                   offstage: index != 3,
 //                   child: const MentorScreen(),
 //                 ),
-//                 // ── Profile rebuilds fresh every time ────────
-//                  if (index == 4) const ProfileScreen(),
+//                 if (index == 4) const ProfileScreen(),
 //               ],
 //             ),
 //           );
@@ -87,7 +89,6 @@ class LandingView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(LandingController());
 
-    // ✅ Register all controllers before screens build
     HomeBinding().dependencies();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -130,7 +131,11 @@ class LandingView extends StatelessWidget {
                   offstage: index != 3,
                   child: const MentorScreen(),
                 ),
-                if (index == 4) const ProfileScreen(),
+                // ✅ Changed from if (index == 4) to Offstage
+                Offstage(
+                  offstage: index != 4,
+                  child: const ProfileScreen(),
+                ),
               ],
             ),
           );

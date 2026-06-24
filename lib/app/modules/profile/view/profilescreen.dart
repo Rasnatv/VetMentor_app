@@ -8,6 +8,7 @@ import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
 import '../../Saved/view/SavedScreen.dart';
+import '../../landingview/controller/landingcontroller.dart';
 import '../controller/profilecontroller.dart';
 import '../../../data/models/studentprofilemodel.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
@@ -26,14 +27,18 @@ class _ProfileScreenState extends State<ProfileScreen>
   late final ProfileController ctrl;
 
   @override
-  bool get wantKeepAlive => false;
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
     ctrl = Get.put(ProfileController());
-  }
 
+    // ✅ Re-fetch every time user lands on profile tab
+    ever(Get.find<LandingController>().currentIndex, (index) {
+      if (index == 4) ctrl.fetchProfile();
+    });
+  }
   int get _studentId {
     try {
       final enquiry = Get.find<EnquiryController>();
