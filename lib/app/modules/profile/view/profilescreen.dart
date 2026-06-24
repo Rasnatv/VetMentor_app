@@ -31,7 +31,6 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   void initState() {
     super.initState();
-    Get.delete<ProfileController>(force: true);
     ctrl = Get.put(ProfileController());
   }
 

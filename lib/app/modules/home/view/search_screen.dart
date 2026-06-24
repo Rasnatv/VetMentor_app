@@ -9,6 +9,7 @@ import '../../Colleges/view/collegedtailscreen.dart';
 import '../../Colleges/view/Enquiry_form.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
 import '../../../data/models/collegelistmodel.dart';
+import '../bindings/home_binding.dart';
 import '../controller/searchcontroller.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -81,9 +82,11 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+// ✅ After
   void _pushDetail(String collegeId) {
     Get.to(
           () => CollegeDetailScreen(collegeId: collegeId),
+      binding: CourseDetailBinding(), // ✅ add this
       transition: Transition.rightToLeft,
     );
   }
@@ -174,19 +177,11 @@ class _SearchScreenState extends State<SearchScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.wifi_off_rounded,
+            Icons.search_off_rounded,
             size: r.value(mobile: 48.0, tablet: 56.0),
             color: AppColors.textSecondary,
           ),
           SizedBox(height: r.spacing(AppDimens.paddingMD)),
-          Text(
-            'Something went wrong',
-            style: AppTextStyles.titleSmall.copyWith(
-              fontSize: r.fontSize(14),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: r.spacing(AppDimens.paddingXS)),
           Text(
             _ctrl.errorMsg.value,
             textAlign: TextAlign.center,
@@ -270,7 +265,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             itemCount: _ctrl.results.length,
             separatorBuilder: (_, __) =>
-                SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                SizedBox(height: r.spacing(AppDimens.paddingSM)),
             itemBuilder: (_, i) {
               final college = _ctrl.results[i];
               return CollegeCard(

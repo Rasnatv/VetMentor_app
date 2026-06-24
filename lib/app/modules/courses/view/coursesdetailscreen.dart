@@ -26,7 +26,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _ctrl = Get.put(CourseDetailController());
+    _ctrl = Get.find<CourseDetailController>();
     _ctrl.fetchCourseDetail(widget.courseId);
   }
 

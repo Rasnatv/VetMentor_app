@@ -9,6 +9,7 @@ import '../../../core/utils/responsive utiliteclass.dart';
 import '../../../data/models/collegelistmodel.dart';
 import '../../../widgets/collegecard.dart';
 import '../../../widgets/tempory_permanent.dart';
+import '../../home/bindings/home_binding.dart';
 import '../controller/enquirycontroller.dart';
 import '../controller/filitered_collegescontroller.dart';
 import '../view/Enquiry_form.dart';
@@ -48,14 +49,6 @@ class _PermanentAffiliatedScreenState
 
     if (collegeId.isEmpty) return;
 
-    // ✅ Single source of truth — all platform + registration + type logic
-    // lives inside shouldShowEnquiryForm()
-    //
-    // Android not registered type=0 → show form
-    // Android not registered type=1 → show form
-    // iOS     not registered type=0 → show form
-    // iOS     not registered type=1 → skip form, go directly to detail
-    // Any platform, registered      → skip form, go directly to detail
     if (_enquiryCtrl.shouldShowEnquiryForm(collegeType)) {
       showModalBottomSheet(
         context: context,
@@ -74,6 +67,7 @@ class _PermanentAffiliatedScreenState
   void _pushDetail(String collegeId) {
     Get.to(
           () => CollegeDetailScreen(collegeId: collegeId),
+      binding: CollegeDetailBinding (), // ✅ add this
       transition: Transition.rightToLeft,
     );
   }
@@ -210,7 +204,7 @@ class _PermanentAffiliatedScreenState
                   c.displayedColleges[i] as Map<String, dynamic>;
                   return Padding(
                     padding: EdgeInsets.only(
-                        bottom: r.spacing(AppDimens.paddingMD)),
+                        bottom: r.spacing(AppDimens.paddingXS)),
                     child: CollegeCard(
                       collegeName: college['college_name'] ?? '',
                       location:

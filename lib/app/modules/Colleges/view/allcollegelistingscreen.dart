@@ -13,6 +13,7 @@ import '../../Colleges/controller/college_controller.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
 import '../../Colleges/view/Enquiry_form.dart';
 import '../../Colleges/view/collegedtailscreen.dart';
+import '../../home/bindings/home_binding.dart';
 
 class CollegeListScreen extends StatefulWidget {
   const CollegeListScreen({super.key});
@@ -49,10 +50,10 @@ class _CollegeListScreenState extends State<CollegeListScreen> {
       _pushDetail(college);
     }
   }
-
   void _pushDetail(CollegeModel college) {
     Get.to(
           () => CollegeDetailScreen(collegeId: college.id),
+      binding: CollegeDetailBinding(), // ✅
       transition: Transition.rightToLeft,
     );
   }
@@ -95,7 +96,7 @@ class _CollegeListScreenState extends State<CollegeListScreen> {
                 final college = list[i];
                 return Padding(
                   padding: EdgeInsets.only(
-                      bottom: r.spacing(AppDimens.paddingMD)),
+                      bottom: r.spacing(AppDimens.paddingXS)),
                   child: CollegeCard(
                     collegeName: college.collegeName,
                     location: college.location,

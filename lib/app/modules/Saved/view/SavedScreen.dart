@@ -11,6 +11,7 @@ import '../../../core/utils/responsive utiliteclass.dart';
 import '../../../data/models/whishlistmodel.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
 import '../../Colleges/view/collegedtailscreen.dart';
+import '../../home/bindings/home_binding.dart';
 import '../controller/whishlist_controller.dart';
 
 class WishlistScreen extends StatefulWidget {
@@ -154,6 +155,7 @@ class _SavedCollegeCard extends StatelessWidget {
         collegeId: college.collegeId,
         showBookmark: false,
       ),
+      binding: CollegeDetailBinding(), // ✅ only this line added
       transition: Transition.rightToLeft,
     );
   }

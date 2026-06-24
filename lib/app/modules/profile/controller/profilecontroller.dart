@@ -139,11 +139,6 @@ class ProfileController extends GetxController {
     }
   }
 
-  // ── Update Profile ────────────────────────────────────────
-  // Matches the student-update API exactly:
-  // id, first_name, last_name, gender, email, country_code,
-  // phone_no, state, district, country, address, pincode,
-  // program_id, net_score
   Future<bool> updateProfile({
     required String id,
     required String firstName,

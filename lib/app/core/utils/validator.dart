@@ -221,14 +221,23 @@ class DValidator {
     ]);
   }
 
-  // ── Pincode ───────────────────────────────────────────────
-  /// Required, must have at least [length] digits (default 6 for India).
-  static String? validatePincode(String? value, {int length = 6}) {
-    if (value == null || value.trim().isEmpty) return 'Required';
-    if (value.trim().length < length) return '$length digits needed';
+  static String? validatePincode(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Postal code is required';
+    }
+    final postalCode = value.trim();
+
+    if (postalCode.length < 3) {
+      return 'Min 3 characters';        // ← short & clear
+    }
+    if (postalCode.length > 10) {
+      return 'Max 10 characters';       // ← short & clear
+    }
+    if (!RegExp(r'^[a-zA-Z0-9\s-]+$').hasMatch(postalCode)) {
+      return 'Invalid postal code';     // ← short & clear
+    }
     return null;
   }
-
   // ── NEET Score ────────────────────────────────────────────
   /// Mandatory, numeric only, range 0–720
   static String? validateNeetScore(String? value) {

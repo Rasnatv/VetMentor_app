@@ -19,6 +19,7 @@ import '../../Colleges/view/collegedtailscreen.dart';
 import '../../courses/view/coursesdetailscreen.dart';
 import '../../courses/view/coursesscreen.dart';
 import '../../courses/controller/courses_controller.dart';
+import '../bindings/home_binding.dart';
 import 'search_screen.dart';
 
 Color _shade(Color base, double lightnessDelta) {
@@ -37,9 +38,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final CollegeController _ctrl = Get.put(CollegeController());
-  final EnquiryController _enquiryCtrl = Get.put(EnquiryController());
-  final CourseController _courseCtrl = Get.put(CourseController());
+  final CollegeController _ctrl = Get.find<CollegeController>();
+  final EnquiryController _enquiryCtrl = Get.find<EnquiryController>();
+  final CourseController _courseCtrl = Get.find<CourseController>();
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchCtrl = TextEditingController();
@@ -103,11 +104,15 @@ class _HomeScreenState extends State<HomeScreen>
   void _pushDetail(CollegeModel college) =>
       Get.to(
             () => CollegeDetailScreen(collegeId: college.id),
+        binding:  CollegeDetailBinding(), // ✅ add this
         transition: Transition.rightToLeft,
       );
 
   void _openCourseDetail(CourseModel course) =>
-      Get.to(() => CourseDetailScreen(courseId: course.id));
+      Get.to(
+            () => CourseDetailScreen(courseId: course.id),
+        binding: CourseDetailBinding(), // ✅
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen>
                     SliverToBoxAdapter(child: _buildAppBar(r)),
                     SliverToBoxAdapter(child: _buildSearchBar(r)),
                     SliverToBoxAdapter(child: _buildHeroBanner(r)),
-                    _buildSavedCollegesSliver(r),
                     _buildRecommendedSliver(r),
                     _buildTopCollegesHeader(r),
                     _buildTopCollegesSliver(r),
@@ -185,39 +189,6 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           SizedBox(width: r.spacing(AppDimens.paddingMD)),
-          // Container(
-          //   width: r.spacing(42),
-          //   height: r.spacing(42),
-          //   decoration: const BoxDecoration(
-          //     color: AppColors.primarySurface,
-          //     shape: BoxShape.circle,
-          //   ),
-          //   child: Stack(
-          //     children: [
-          //       Center(
-          //         child: Icon(
-          //           Icons.notifications_none_rounded,
-          //           color: AppColors.primary,
-          //           size: r.fontSize(20),
-          //         ),
-          //       ),
-          //       Positioned(
-          //         top: r.spacing(9),
-          //         right: r.spacing(9),
-          //         child: Container(
-          //           width: r.spacing(7),
-          //           height: r.spacing(7),
-          //           decoration: const BoxDecoration(
-          //             color: _kAccentRose,
-          //             shape: BoxShape.circle,
-          //             border: Border.fromBorderSide(
-          //                 BorderSide(color: Colors.white, width: 1.5)),
-          //           ),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
         ],
       ),
     );
@@ -281,9 +252,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  // HERO BANNER (updated design — gradient banner with CTA)
-  // ════════════════════════════════════════════════════════
+
 
   Widget _buildHeroBanner(Responsive r) {
     return Padding(
@@ -394,7 +363,10 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     SizedBox(height: r.spacing(AppDimens.paddingMD)),
                     GestureDetector(
-                      onTap: () => Get.to(() => CollegeListScreen()),
+                      onTap: () => Get.to(
+                            () => CollegeListScreen(),
+                        binding: CollegesBinding(),
+                      ),
                       child: Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: r.spacing(16),
@@ -429,47 +401,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  // ════════════════════════════════════════════════════════
-  // EVERYTHING BELOW THIS LINE IS UNCHANGED FROM THE ORIGINAL
-  // ════════════════════════════════════════════════════════
-
-  Widget _buildSavedCollegesSliver(Responsive r) {
-    final saved = _ctrl.savedColleges;
-    if (saved.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
-
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          r.spacing(AppDimens.paddingLG),
-          r.spacing(AppDimens.paddingXL),
-          r.spacing(AppDimens.paddingLG),
-          0,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SectionHeader(
-              title: 'Saved Colleges',
-              actionText: 'View All',
-              onAction: () => Get.to(() => CollegeListScreen()),
-            ),
-            SizedBox(height: r.spacing(AppDimens.paddingMD)),
-            SizedBox(
-              height: r.spacing(110),
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: saved.length,
-                separatorBuilder: (_, __) =>
-                    SizedBox(width: r.spacing(AppDimens.paddingMD)),
-                itemBuilder: (_, i) => _buildSavedCollegeChip(saved[i], r),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -533,7 +464,10 @@ class _HomeScreenState extends State<HomeScreen>
         child: SectionHeader(
           title: 'Top Veterinary Colleges',
           actionText: 'View All',
-          onAction: () => Get.to(() => CollegeListScreen()),
+          onAction: () => Get.to(
+                () => CollegeListScreen(),
+            binding: CollegesBinding(),
+          ),
         ),
       ),
     );
@@ -584,7 +518,7 @@ class _HomeScreenState extends State<HomeScreen>
             final college = _ctrl.topColleges[i];
             return Padding(
               padding:
-              EdgeInsets.only(bottom: r.spacing(AppDimens.paddingMD)),
+              EdgeInsets.only(bottom: r.spacing(AppDimens.paddingXS)),
               child: CollegeCard(
                 collegeName: college.collegeName,
                 location: college.location,
@@ -598,66 +532,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildSavedCollegeChip(CollegeModel college, Responsive r) {
-    return GestureDetector(
-      onTap: () => _openCollegeDetail(college),
-      child: Container(
-        width: r.spacing(160),
-        padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-          border: Border.all(color: AppColors.borderLight),
-          boxShadow: [
-            BoxShadow(
-                color: AppColors.shadowLight,
-                blurRadius: 6,
-                offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.bookmark_rounded,
-                    color: AppColors.primary, size: r.fontSize(16)),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => _ctrl.toggleSave(college),
-                  child: Icon(Icons.close_rounded,
-                      color: AppColors.textSecondary, size: r.fontSize(16)),
-                ),
-              ],
-            ),
-            SizedBox(height: r.spacing(AppDimens.paddingSM)),
-            Text(college.collegeName,
-                style: AppTextStyles.titleLarge
-                    .copyWith(fontSize: r.fontSize(12)),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis),
-            SizedBox(height: r.spacing(4)),
-            Row(
-              children: [
-                Icon(Icons.location_on_outlined,
-                    size: r.fontSize(11), color: AppColors.textSecondary),
-                SizedBox(width: r.spacing(2)),
-                Expanded(
-                  child: Text(college.location,
-                      style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: r.fontSize(10),
-                          color: AppColors.textSecondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildCourseCard(CourseModel course, Responsive r) {
     return GestureDetector(

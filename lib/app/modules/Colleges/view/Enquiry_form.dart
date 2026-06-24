@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:phone_form_field/phone_form_field.dart';
 import '../../../core/constants/appcolors.dart';
@@ -519,9 +520,13 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                 child: _label('Pincode *',
                   TextFormField(
                     controller: _pincodeCtrl,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    inputFormatters: DValidator.digitsOnly,
+                    keyboardType: TextInputType.text,
+                    // ← text, not number (allows letters too)
+                    maxLength: 10,                      // ← hard UI cap at 10
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s-]')), // ← replaces digitsOnly
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                     decoration: _dec('678001', r),
                     style: _ts(r),
                     validator: (v) => DValidator.validatePincode(v),
