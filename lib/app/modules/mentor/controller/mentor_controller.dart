@@ -50,8 +50,12 @@ class MentorController extends GetxController {
   static const String _videosApiUrl = '${ApiConstants.baseUrl}/get-videos';
   static const String youtubeChannelUrl =
       'https://youtube.com/@vetadmissionmentor?si=Phnp_C-Z8dr32Gh0';
-  static const String mentorPhone = '+9195447 33000';
-  static const String mentorWhatsApp = '+9195447 33000';
+
+  // ── Mentor contact number 1 ─────────────────────────────────
+  static const String mentorPhone = '+91 9961189939';
+  static const String mentorWhatsApp = '+91 9544733000';
+
+  static const String mentorPhone2 = '+91 9544733000';
 
   @override
   void onInit() {
@@ -129,6 +133,7 @@ class MentorController extends GetxController {
     }
   }
 
+  // ── Number 1 actions ──────────────────────────────────────
   Future<void> callMentor() async {
     final uri = Uri.parse('tel:$mentorPhone');
     if (await canLaunchUrl(uri)) {
@@ -148,4 +153,14 @@ class MentorController extends GetxController {
       AppSnackbar.error('Could not open WhatsApp.');
     }
   }
- }
+
+  Future<void> callMentor2() async {
+    final uri = Uri.parse('tel:$mentorPhone2');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      AppSnackbar.error('Could not make call.');
+    }
+  }
+
+  }

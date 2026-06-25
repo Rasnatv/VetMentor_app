@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart' hide FilterChip;
 import 'package:get/get.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart' hide EmptyState;
@@ -43,42 +42,31 @@ class _PermanentAffiliatedScreenState
   }
 
   // ── Navigation ────────────────────────────────────────────
-  void _openCollegeDetail(Map<String, dynamic> college) {
-    final String collegeId   = college['id']?.toString() ?? '';
-    final String collegeType = college['type']?.toString() ?? '0';
+  void _openCollegeDetail(CollegeModel college) {
+    if (college.id.isEmpty) return;
 
-    if (collegeId.isEmpty) return;
-
-    if (_enquiryCtrl.shouldShowEnquiryForm(collegeType)) {
+    if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (_) => EnquiryBottomSheet(
-          college: _mapToCollegeModel(college),
-          onProceed: () => _pushDetail(collegeId),
+          college: college,
+          onProceed: () => _pushDetail(college.id),
         ),
       );
     } else {
-      _pushDetail(collegeId);
+      _pushDetail(college.id);
     }
   }
 
   void _pushDetail(String collegeId) {
     Get.to(
           () => CollegeDetailScreen(collegeId: collegeId),
-      binding: CollegeDetailBinding (), // ✅ add this
+      binding: CollegeDetailBinding(),
       transition: Transition.rightToLeft,
     );
   }
-
-  CollegeModel _mapToCollegeModel(Map<String, dynamic> m) => CollegeModel(
-    id:          m['id']?.toString() ?? '',
-    type:        m['type']?.toString() ?? '0',
-    collegeName: m['college_name']?.toString() ?? '',
-    district:    m['district']?.toString() ?? '',
-    state:       m['state']?.toString() ?? '',
-  );
 
   void _showStateFilter() {
     showModalBottomSheet(
@@ -118,8 +106,11 @@ class _PermanentAffiliatedScreenState
         return Column(children: [
           // ── Affiliation chip ──────────────────────────────
           Padding(
-            padding: EdgeInsets.fromLTRB(r.spacing(AppDimens.paddingLG),
-                r.spacing(AppDimens.paddingMD), r.spacing(AppDimens.paddingLG), 0),
+            padding: EdgeInsets.fromLTRB(
+                r.spacing(AppDimens.paddingLG),
+                r.spacing(AppDimens.paddingMD),
+                r.spacing(AppDimens.paddingLG),
+                0),
             child: Row(children: [
               AffiliationChip(
                 r: r,
@@ -134,9 +125,11 @@ class _PermanentAffiliatedScreenState
           // ── State filter chip ─────────────────────────────
           Obx(() => c.selectedState.value != 'All States'
               ? Padding(
-            padding: EdgeInsets.fromLTRB(r.spacing(AppDimens.paddingLG),
+            padding: EdgeInsets.fromLTRB(
+                r.spacing(AppDimens.paddingLG),
                 r.spacing(AppDimens.paddingSM + 2),
-                r.spacing(AppDimens.paddingLG), 0),
+                r.spacing(AppDimens.paddingLG),
+                0),
             child: Row(children: [
               FilterChip(
                 r: r,
@@ -151,11 +144,15 @@ class _PermanentAffiliatedScreenState
 
           // ── Count + State Wise ────────────────────────────
           Obx(() => Padding(
-            padding: EdgeInsets.fromLTRB(r.spacing(AppDimens.paddingLG),
-                r.spacing(AppDimens.paddingMD), r.spacing(AppDimens.paddingLG), 0),
+            padding: EdgeInsets.fromLTRB(
+                r.spacing(AppDimens.paddingLG),
+                r.spacing(AppDimens.paddingMD),
+                r.spacing(AppDimens.paddingLG),
+                0),
             child: Row(children: [
               Text(
-                '${c.displayedColleges.length} College${c.displayedColleges.length == 1 ? '' : 's'} Found',
+                '${c.displayedColleges.length} '
+                    'College${c.displayedColleges.length == 1 ? '' : 's'} Found',
                 style: AppTextStyles.bodyMedium
                     .copyWith(fontSize: r.fontSize(13)),
               ),
@@ -179,17 +176,16 @@ class _PermanentAffiliatedScreenState
 
           // ── List ─────────────────────────────────────────
           Obx(() {
-            if (c.isSearching.value) {
-              return const Expanded(
-                  child: Center(child: CircularProgressIndicator()));
-            }
             if (c.displayedColleges.isEmpty) {
-              return const Expanded(
-                  child: EmptyState(
-                    icon: Icons.school_outlined,
-                    title: 'No Colleges Found',
-                    subtitle: 'Try adjusting your search or filter',
-                  ));
+              return Expanded(
+                child: EmptyState(
+                  icon: Icons.school_outlined,
+                  title: 'No Colleges Found',
+                  subtitle: c.emptyMessage.value.isNotEmpty
+                      ? c.emptyMessage.value
+                      : 'Try adjusting your filter',
+                ),
+              );
             }
             return Expanded(
               child: ListView.builder(
@@ -200,15 +196,13 @@ class _PermanentAffiliatedScreenState
                     100),
                 itemCount: c.displayedColleges.length,
                 itemBuilder: (ctx, i) {
-                  final college =
-                  c.displayedColleges[i] as Map<String, dynamic>;
+                  final college = c.displayedColleges[i];
                   return Padding(
                     padding: EdgeInsets.only(
                         bottom: r.spacing(AppDimens.paddingXS)),
                     child: CollegeCard(
-                      collegeName: college['college_name'] ?? '',
-                      location:
-                      '${college['district'] ?? ''}, ${college['state'] ?? ''}',
+                      collegeName: college.collegeName,
+                      location: college.location,
                       onTap: () => _openCollegeDetail(college),
                     ),
                   );

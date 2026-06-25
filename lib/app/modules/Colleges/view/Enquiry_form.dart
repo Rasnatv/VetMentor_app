@@ -41,7 +41,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
   final _emailCtrl    = TextEditingController();
   final _stateCtrl    = TextEditingController();
   final _districtCtrl = TextEditingController();
-  final _countryCtrl  = TextEditingController(text: 'India');
+  final _countryCtrl  = TextEditingController();
   final _addressCtrl  = TextEditingController();
   final _pincodeCtrl  = TextEditingController();
   final _neetCtrl     = TextEditingController();
@@ -349,7 +349,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
                     inputFormatters: DValidator.lettersOnly,
-                    decoration: _dec('Arjun', r),
+                    decoration: _dec('', r),
                     style: _ts(r),
                     validator: (v) => DValidator.validateName('First name', v),
                   ),
@@ -363,7 +363,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
                     inputFormatters: DValidator.lettersOnly,
-                    decoration: _dec('Kumar', r),
+                    decoration: _dec('', r),
                     style: _ts(r),
                   ),
                 ),
@@ -382,7 +382,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                 keyboardType: TextInputType.emailAddress,
                 maxLength: DValidator.maxTextLength,
                 inputFormatters: DValidator.textWithLimit,
-                decoration: _dec('arjun@email.com', r),
+                decoration: _dec('', r),
                 style: _ts(r),
                 validator: (v) => DValidator.validateEmail(v),
               ),
@@ -477,7 +477,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
                     inputFormatters: DValidator.textWithLimit,
-                    decoration: _dec('Kerala', r),
+                    decoration: _dec('', r),
                     style: _ts(r),
                     validator: (v) => DValidator.validateRequired(v),
                   ),
@@ -491,7 +491,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
                     inputFormatters: DValidator.textWithLimit,
-                    decoration: _dec('Palakkad', r),
+                    decoration: _dec('', r),
                     style: _ts(r),
                     validator: (v) => DValidator.validateRequired(v),
                   ),
@@ -509,7 +509,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
                     inputFormatters: DValidator.textWithLimit,
-                    decoration: _dec('India', r),
+                    decoration: _dec('', r),
                     style: _ts(r),
                     validator: (v) => DValidator.validateRequired(v),
                   ),
@@ -527,7 +527,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                       FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s-]')), // ← replaces digitsOnly
                       LengthLimitingTextInputFormatter(10),
                     ],
-                    decoration: _dec('678001', r),
+                    decoration: _dec('', r),
                     style: _ts(r),
                     validator: (v) => DValidator.validatePincode(v),
                   ),
@@ -545,7 +545,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                 maxLines: 2,
                 minLines: 2,
                 inputFormatters: DValidator.textWithLimit,
-                decoration: _dec('Near Bus Stand, Main Road', r)
+                decoration: _dec('', r)
                     .copyWith(alignLabelWithHint: true),
                 style: _ts(r),
                 validator: (v) => DValidator.validateRequired(v),
@@ -603,7 +603,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                 keyboardType: TextInputType.number,
                 maxLength: 3,
                 inputFormatters: DValidator.digitsOnly,
-                decoration: _dec('520', r),
+                decoration: _dec('', r),
                 style: _ts(r),
                 validator: (v) => DValidator.validateNeetScore(v),
               ),
@@ -708,7 +708,6 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   TextStyle _ts(Responsive r) => AppTextStyles.bodySmall
       .copyWith(color: AppColors.textPrimary, fontSize: r.fontSize(13));

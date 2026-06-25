@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
 import '../../../core/constants/appcolors.dart';
@@ -721,24 +722,35 @@ class _ContactCard extends StatelessWidget {
             ),
           ),
           Divider(height: 1, color: AppColors.border),
+
+          // ── Number 1 ─────────────────────────────────────────────
           _ContactRow(
             r: r,
-            icon: Icons.chat_outlined,
+            svgAsset: 'assets/images/whatsapp.svg',
             label: 'WhatsApp',
-            value: '+91 95447 33000',
+            value: MentorController.mentorWhatsApp,
             iconBg: const Color(0xFFE8F5E9),
-            iconColor: const Color(0xFF2E7D32),
+            // ✅ no iconColor → SVG keeps its own native WhatsApp colors
             onTap: controller.openWhatsApp,
           ),
           Divider(height: 1, color: AppColors.border),
           _ContactRow(
             r: r,
-            icon: Icons.phone_outlined,
+            svgAsset: 'assets/images/phone.svg',
             label: 'Call',
-            value: '+91 95447 33000',
+            value: MentorController.mentorPhone,
             iconBg: AppColors.primarySurface,
             iconColor: AppColors.primary,
             onTap: controller.callMentor,
+          ),
+          _ContactRow(
+            r: r,
+            svgAsset: 'assets/images/phone.svg',
+            label: 'Call (Alt)',
+            value: MentorController.mentorPhone2,
+            iconBg: AppColors.primarySurface,
+            iconColor: AppColors.primary,
+            onTap: controller.callMentor2,
           ),
         ],
       ),
@@ -748,63 +760,99 @@ class _ContactCard extends StatelessWidget {
 
 class _ContactRow extends StatelessWidget {
   final Responsive r;
-  final IconData icon;
+  final IconData? icon;        // used when no SVG is supplied
+  final String? svgAsset;      // ✅ used when an SVG icon is supplied
   final String label;
   final String value;
   final Color iconBg;
-  final Color iconColor;
+  final Color? iconColor;      // ✅ optional — if null, SVG keeps its own native color
   final VoidCallback onTap;
 
   const _ContactRow({
     required this.r,
-    required this.icon,
+    this.icon,
+    this.svgAsset,
     required this.label,
     required this.value,
     required this.iconBg,
-    required this.iconColor,
+    this.iconColor,
     required this.onTap,
-  });
+  }) : assert(icon != null || svgAsset != null,
+  'Provide either icon or svgAsset');
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: r.spacing(AppDimens.paddingMD),
-          vertical: r.spacing(AppDimens.paddingMD - 2),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: r.spacing(36),
-              height: r.spacing(36),
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        // ✅ Ensures the ENTIRE row area is tappable — including the
+        // arrow icon, the gaps between widgets, and the empty space —
+        // not just where a child widget happens to paint pixels.
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: r.spacing(AppDimens.paddingMD),
+            vertical: r.spacing(AppDimens.paddingMD - 2),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: r.spacing(36),
+                height: r.spacing(36),
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                ),
+                child: Center(
+                  child: svgAsset != null
+                      ? (iconColor != null
+                      ? ColorFiltered(
+                    // ✅ Only force a tint when iconColor is
+                    // explicitly provided — this is what fixes
+                    // icons staying the wrong/baked-in color
+                    // when a tint IS wanted.
+                    colorFilter:
+                    ColorFilter.mode(iconColor!, BlendMode.srcIn),
+                    child: SvgPicture.asset(
+                      svgAsset!,
+                      width: r.fontSize(AppDimens.iconXS + 2),
+                      height: r.fontSize(AppDimens.iconXS + 2),
+                    ),
+                  )
+                  // ✅ No iconColor given → render the SVG exactly
+                  // as authored, using its own embedded colors.
+                      : SvgPicture.asset(
+                    svgAsset!,
+                    width: r.fontSize(AppDimens.iconXS + 2),
+                    height: r.fontSize(AppDimens.iconXS + 2),
+                  ))
+                      : Icon(icon,
+                      size: r.fontSize(AppDimens.iconXS + 2),
+                      color: iconColor),
+                ),
               ),
-              child: Icon(icon,
-                  size: r.fontSize(AppDimens.iconXS + 2), color: iconColor),
-            ),
-            SizedBox(width: r.spacing(AppDimens.paddingMD)),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label,
-                      style: AppTextStyles.bodySmall
-                          .copyWith(fontSize: r.fontSize(11))),
-                  SizedBox(height: r.spacing(1)),
-                  Text(value,
-                      style: AppTextStyles.titleMedium
-                          .copyWith(fontSize: r.fontSize(13))),
-                ],
+              SizedBox(width: r.spacing(AppDimens.paddingMD)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(fontSize: r.fontSize(11))),
+                    SizedBox(height: r.spacing(1)),
+                    Text(value,
+                        style: AppTextStyles.titleMedium
+                            .copyWith(fontSize: r.fontSize(13))),
+                  ],
+                ),
               ),
-            ),
-            Icon(Icons.arrow_forward_ios_rounded,
-                size: r.fontSize(AppDimens.iconXS),
-                color: AppColors.textSecondary),
-          ],
+              // ── Arrow icon: same onTap fires here too — it's part
+              // of the same InkWell-covered row, no separate handler.
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: r.fontSize(AppDimens.iconXS),
+                  color: AppColors.textSecondary),
+            ],
+          ),
         ),
       ),
     );
