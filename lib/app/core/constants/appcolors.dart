@@ -69,6 +69,8 @@ class AppColors {
   // Chip colors
   static const Color chipGreen = Color(0xFFE8F5E9);
   static const Color chipGreenText = Color(0xFF1B5E20);
+  static Color kAccent = Color(0xFF1D9E75);
+  static Color kAccentDark = Color(0xFF0F6E56);
 
   // Gradient
   static const List<Color> heroGradient = [

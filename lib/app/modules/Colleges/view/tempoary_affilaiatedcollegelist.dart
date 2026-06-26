@@ -6,6 +6,7 @@ import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
 import '../../../data/models/collegelistmodel.dart';
+import '../../../no internetconnection/no_connection.dart';
 import '../../../widgets/collegecard.dart';
 import '../../../widgets/tempory_permanent.dart';
 import '../../home/bindings/home_binding.dart';
@@ -90,7 +91,7 @@ class _TemporaryAffiliatedScreenState
     const badgeColor = Color(0xFF0F6E56);
     const badgeBg    = Color(0xFFE1F5EE);
 
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: VetAppBar(title: 'Temporary Affiliated Colleges'),
       body: Obx(() {
@@ -212,6 +213,6 @@ class _TemporaryAffiliatedScreenState
           }),
         ]);
       }),
-    );
+    ));
   }
 }

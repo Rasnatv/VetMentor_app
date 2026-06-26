@@ -33,49 +33,178 @@ class CourseListingScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: VetAppBar(title: 'All Courses'),
       body: Obx(() {
-        // ── Loading ──────────────────────────────────────
+        // ── Decide what goes below the banner ───────────────
+        Widget content;
         if (_ctrl.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        // ── Error ────────────────────────────────────────
-        if (_ctrl.hasError.value) {
-          return _ErrorState(r: r, onRetry: _ctrl.fetchCourses);
-        }
-
-        // ── Empty ────────────────────────────────────────
-        if (_ctrl.courses.isEmpty) {
-          return _EmptyState(r: r);
-        }
-
-        // ── List ─────────────────────────────────────────
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.separated(
-                padding: EdgeInsets.fromLTRB(
-                  r.spacing(AppDimens.paddingLG),
-                  r.spacing(AppDimens.paddingMD),
-                  r.spacing(AppDimens.paddingLG),
-                  100,
-                ),
-                itemCount: _ctrl.courses.length,
-                separatorBuilder: (_, __) =>
-                    SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                itemBuilder: (_, i) => _CourseListTile(
-                  course: _ctrl.courses[i],
-                  r: r,
-                  index: i,
-                  onTap: () => Get.to(
-                        () => CourseDetailScreen(courseId: _ctrl.courses[i].id),
-                    binding: CourseDetailBinding(), // ✅
-                  ),
-                ),
+          content = const Center(child: CircularProgressIndicator());
+        } else if (_ctrl.hasError.value) {
+          content = _ErrorState(r: r, onRetry: _ctrl.fetchCourses);
+        } else if (_ctrl.courses.isEmpty) {
+          content = _EmptyState(r: r);
+        } else {
+          content = ListView.separated(
+            padding: EdgeInsets.fromLTRB(
+              r.spacing(AppDimens.paddingLG),
+              0,
+              r.spacing(AppDimens.paddingLG),
+              100,
+            ),
+            itemCount: _ctrl.courses.length,
+            separatorBuilder: (_, __) =>
+                SizedBox(height: r.spacing(AppDimens.paddingMD)),
+            itemBuilder: (_, i) => _CourseListTile(
+              course: _ctrl.courses[i],
+              r: r,
+              index: i,
+              onTap: () => Get.to(
+                    () => CourseDetailScreen(courseId: _ctrl.courses[i].id),
+                binding: CourseDetailBinding(), // ✅
               ),
             ),
+          );
+        }
+
+        // ── Banner stays put; only the content below it swaps ─
+        return Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                r.spacing(AppDimens.paddingLG),
+                r.spacing(AppDimens.paddingMD),
+                r.spacing(AppDimens.paddingLG),
+                0,
+              ),
+              child: _CourseHeroBanner(
+                r: r,
+                courseCount: _ctrl.courses.length,
+              ),
+            ),
+            SizedBox(height: r.spacing(AppDimens.paddingMD)),
+            Expanded(child: content),
           ],
         );
       }),
+    );
+  }
+}
+
+class _CourseHeroBanner extends StatelessWidget {
+  final Responsive r;
+  final int courseCount;
+
+  const _CourseHeroBanner({required this.r, required this.courseCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppColors.cardGradient,
+          ),
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              right: -r.spacing(20),
+              top: -r.spacing(30),
+              child: Container(
+                width: r.spacing(110),
+                height: r.spacing(110),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.08),
+                ),
+              ),
+            ),
+            Positioned(
+              right: r.spacing(40),
+              bottom: -r.spacing(45),
+              child: Container(
+                width: r.spacing(70),
+                height: r.spacing(70),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.06),
+                ),
+              ),
+            ),
+
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(r.spacing(AppDimens.paddingSM + 2)),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.16),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                  ),
+                  child: Icon(
+                    Icons.menu_book_rounded,
+                    size: r.fontSize(AppDimens.iconMD),
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                Text(
+                  'Veterinary Courses',
+                  style: AppTextStyles.titleLarge.copyWith(
+                    color: Colors.white,
+                    fontSize: r.fontSize(19),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: r.spacing(AppDimens.paddingXS)),
+                Text(
+                  'Explore programs designed to grow your veterinary career',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white.withOpacity(0.88),
+                    fontSize: r.fontSize(12),
+                  ),
+                ),
+                SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: r.spacing(AppDimens.paddingSM + 2),
+                    vertical: r.spacing(AppDimens.paddingXS),
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.16),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: r.fontSize(12),
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: r.spacing(6)),
+                      Text(
+                        courseCount > 0
+                            ? '$courseCount courses available'
+                            : 'Browse all courses',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          fontSize: r.fontSize(11),
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

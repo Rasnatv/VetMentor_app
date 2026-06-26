@@ -28,14 +28,7 @@ class _CollegeListScreenState extends State<CollegeListScreen> {
 
   // ── Navigation ────────────────────────────────────────────
   void _openCollegeDetail(CollegeModel college) {
-    // ✅ Single source of truth — all platform + registration + type logic
-    // lives inside shouldShowEnquiryForm()
-    //
-    // Android not registered type=0 → show form
-    // Android not registered type=1 → show form
-    // iOS     not registered type=0 → show form
-    // iOS     not registered type=1 → skip form, go directly to detail
-    // Any platform, registered      → skip form, go directly to detail
+
     if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
       showModalBottomSheet(
         context: context,

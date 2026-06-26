@@ -1,5 +1,7 @@
 //
 // import 'package:flutter/services.dart';
+// import 'package:flutter/widgets.dart';
+// import 'package:phone_form_field/phone_form_field.dart';
 //
 // class DValidator {
 //   /// Max character limit for all text fields
@@ -14,6 +16,14 @@
 //     if (value == null || value.isEmpty) {
 //       return '$fieldName is required';
 //     }
+//     return null;
+//   }
+//
+//   // ── Generic required field ─────────────────────────────────
+//   /// Use for plain "Required" fields (state, district, country, address)
+//   /// where you don't need a custom field name in the message.
+//   static String? validateRequired(String? value, {String message = 'Required'}) {
+//     if (value == null || value.trim().isEmpty) return message;
 //     return null;
 //   }
 //
@@ -68,19 +78,37 @@
 //     return null;
 //   }
 //
-//   // ── Phone number ──────────────────────────────────────────
-//   /// Exactly 10 digits, no letters or symbols
-//   static String? validatePhoneNumber(String? value) {
-//     if (value == null || value.trim().isEmpty) {
-//       return 'Phone number is required';
-//     }
-//     final phoneRegExp = RegExp(r'^\d{10}$');
-//     // if (!phoneRegExp.hasMatch(value.trim())) {
-//     //   return 'Enter a valid 10-digit phone number';
-//     // }
-//     return null;
+//   static String? Function(PhoneNumber?) validatePhoneNumber(
+//       BuildContext context) {
+//     return PhoneValidator.compose([
+//       PhoneValidator.required(
+//         context,
+//         errorText: 'Phone number is required',
+//       ),
+//       PhoneValidator.validMobile(
+//         context,
+//         errorText: 'Enter a valid mobile number for this country',
+//       ),
+//     ]);
 //   }
 //
+//   static String? validatePincode(String? value) {
+//     if (value == null || value.trim().isEmpty) {
+//       return 'Postal code is required';
+//     }
+//     final postalCode = value.trim();
+//
+//     if (postalCode.length < 3) {
+//       return 'Min 3 characters';        // ← short & clear
+//     }
+//     if (postalCode.length > 10) {
+//       return 'Max 10 characters';       // ← short & clear
+//     }
+//     if (!RegExp(r'^[a-zA-Z0-9\s-]+$').hasMatch(postalCode)) {
+//       return 'Invalid postal code';     // ← short & clear
+//     }
+//     return null;
+//   }
 //   // ── NEET Score ────────────────────────────────────────────
 //   /// Mandatory, numeric only, range 0–720
 //   static String? validateNeetScore(String? value) {
@@ -105,8 +133,6 @@
 //     return null;
 //   }
 //
-//   // ── Input formatters (reusable) ───────────────────────────
-//   /// Digits only — use on phone & NEET fields
 //   static List<TextInputFormatter> get digitsOnly => [
 //     FilteringTextInputFormatter.digitsOnly,
 //   ];
@@ -201,12 +227,6 @@ class DValidator {
     return null;
   }
 
-  // ── Phone number (country-code aware) ──────────────────────
-  /// Validates a [PhoneNumber] (from phone_form_field) against the
-  /// libphonenumber rules for whichever country is currently selected
-  /// in the PhoneController. Required + must be a valid mobile number
-  /// for that country — no fixed digit-length assumption, since the
-  /// correct length varies by country code (India = 10, others differ).
   static String? Function(PhoneNumber?) validatePhoneNumber(
       BuildContext context) {
     return PhoneValidator.compose([
@@ -221,6 +241,8 @@ class DValidator {
     ]);
   }
 
+  // ── Pincode / Postal Code ─────────────────────────────────
+  /// Required, alphanumeric, 3–10 chars (supports international postal codes)
   static String? validatePincode(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Postal code is required';
@@ -238,6 +260,7 @@ class DValidator {
     }
     return null;
   }
+
   // ── NEET Score ────────────────────────────────────────────
   /// Mandatory, numeric only, range 0–720
   static String? validateNeetScore(String? value) {
@@ -262,12 +285,6 @@ class DValidator {
     return null;
   }
 
-  // ── Input formatters (reusable) ───────────────────────────
-  /// Digits only — use on NEET & pincode fields.
-  /// NOTE: phone number is NOT formatted here — PhoneFormField
-  /// (from phone_form_field) handles its own digit limiting per
-  /// country via shouldLimitLengthByCountry, since allowed length
-  /// varies by country code.
   static List<TextInputFormatter> get digitsOnly => [
     FilteringTextInputFormatter.digitsOnly,
   ];
@@ -281,5 +298,12 @@ class DValidator {
   /// General text with max 100 char limiter
   static List<TextInputFormatter> get textWithLimit => [
     LengthLimitingTextInputFormatter(maxTextLength),
+  ];
+
+  /// Letters, digits, spaces, and hyphens, max 10 chars — use on
+  /// pincode / postal code fields so it matches [validatePincode].
+  static List<TextInputFormatter> get postalCode => [
+    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s-]')),
+    LengthLimitingTextInputFormatter(10),
   ];
 }

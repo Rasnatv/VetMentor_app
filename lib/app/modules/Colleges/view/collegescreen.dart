@@ -33,7 +33,7 @@ class AffiliationSelectorScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Hero banner ───────────────────────────────────────
+              // ── Hero banner (image) ─────────────────────────────
               _HeroBanner(r: r),
 
               SizedBox(height: r.spacing(AppDimens.paddingLG)),
@@ -48,7 +48,6 @@ class AffiliationSelectorScreen extends StatelessWidget {
               ),
               SizedBox(height: r.spacing(AppDimens.paddingMD)),
 
-              // ── Temporary Affiliated Card ────────────────────────
               _AffiliationCard(
                 r: r,
                 icon: Icons.access_time_rounded,
@@ -56,7 +55,6 @@ class AffiliationSelectorScreen extends StatelessWidget {
                 subtitle: 'Colleges with provisional recognition',
                 badgeLabel: 'Temporary',
                 gradientColors: AppColors.smallGradient,
-                //gradientColors: const [Color(0xFFFFA726), AppColors.badgeStateText],
                 iconColor: AppColors.iconPrimary,
                 badgeBgColor: const Color(0xFFE1F5EE),
                 badgeTextColor: const Color(0xFF0F6E56),
@@ -71,11 +69,10 @@ class AffiliationSelectorScreen extends StatelessWidget {
                 title: 'Permanent affiliated',
                 subtitle: 'Colleges with full & permanent recognition',
                 badgeLabel: 'Permanent',
-                 gradientColors: AppColors.smallGradient,
-                //gradientColors: const [Color(0xFF4DA3E0), Color(0xFF185FA5)],
+                gradientColors: AppColors.smallGradient,
                 iconColor: AppColors.iconPrimary,
                 badgeBgColor: const Color(0xFFE6F1FB),
-               badgeTextColor: const Color(0xFF185FA5),
+                badgeTextColor: const Color(0xFF185FA5),
                 onTap: () => Get.to(() => const PermanentAffiliatedScreen()),
               ),
 
@@ -90,8 +87,9 @@ class AffiliationSelectorScreen extends StatelessWidget {
   }
 }
 
-// ─── Hero Banner ────────────────────────────────────────────────────────────
-
+/// Top hero banner — now renders the "Vet Mentor" artwork instead of the
+/// gradient card. Drop the image at assets/images/vet_mentor_banner.png
+/// and register it in pubspec.yaml (see note below the widget).
 class _HeroBanner extends StatelessWidget {
   final Responsive r;
   const _HeroBanner({required this.r});
@@ -101,86 +99,49 @@ class _HeroBanner extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppDimens.radiusLG),
       child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppColors.cardGradient,
-          ),
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Decorative circles for depth
-            Positioned(
-              right: -r.spacing(20),
-              top: -r.spacing(30),
-              child: Container(
-                width: r.spacing(110),
-                height: r.spacing(110),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.08),
-                ),
-              ),
-            ),
-            Positioned(
-              right: r.spacing(40),
-              bottom: -r.spacing(45),
-              child: Container(
-                width: r.spacing(70),
-                height: r.spacing(70),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
-                ),
-              ),
-            ),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(r.spacing(AppDimens.paddingSM + 2)),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.16),
-                    borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-                  ),
-                  child: Icon(
-                    Icons.school_rounded,
-                    size: r.fontSize(AppDimens.iconMD),
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                Text(
-                  'Veterinary Colleges',
-                  style: AppTextStyles.titleLarge.copyWith(
-                    color: Colors.white,
-                    fontSize: r.fontSize(19),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: r.spacing(AppDimens.paddingXS)),
-                Text(
-                  'Browse affiliated colleges by recognition status',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white.withOpacity(0.88),
-                    fontSize: r.fontSize(12),
-                  ),
-                ),
-              ],
+          borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowMedium,
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
           ],
+        ),
+        // The source artwork is 1774x887 (~2:1). Locking the aspect ratio
+        // keeps it crisp at any screen width instead of stretching/cropping.
+        child: AspectRatio(
+          aspectRatio: 1774 / 887,
+          child: Image.asset(
+            'assets/images/newbaner.png',
+            fit: BoxFit.cover,
+            // Fallback so the screen doesn't crash if the asset hasn't
+            // been wired up in pubspec.yaml yet.
+            errorBuilder: (context, error, stackTrace) => Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: AppColors.cardGradient,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Padding(
+                padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
+                child: Text(
+                  'Add assets/images/vet_mentor_banner.png\nand register it in pubspec.yaml',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
-
-// ─── Affiliation Card ───────────────────────────────────────────────────────
 
 class _AffiliationCard extends StatelessWidget {
   final Responsive r;
@@ -332,8 +293,6 @@ class _AffiliationCard extends StatelessWidget {
     );
   }
 }
-
-// ─── Info Footer ────────────────────────────────────────────────────────────
 
 class _InfoFooter extends StatelessWidget {
   final Responsive r;

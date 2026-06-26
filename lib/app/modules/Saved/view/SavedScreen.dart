@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
 import 'package:veterinaryapp/app/widgets/appsnackbar.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart';
 import '../../../core/constants/appcolors.dart';
@@ -44,7 +45,7 @@ class _WishlistScreenState extends State<WishlistScreen>
     super.build(context);
     final Responsive r = Responsive.of(context);
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: AppColors.backgroundGrey,
       appBar: VetAppBar(title: 'Saved Colleges', showBack: true),
       body: Obx(() {
@@ -55,7 +56,7 @@ class _WishlistScreenState extends State<WishlistScreen>
           child: ctrl.wishlist.isEmpty ? _buildEmpty(r) : _buildContent(r),
         );
       }),
-    );
+    ));
   }
 
   Widget _buildLoading() => const Center(
@@ -141,21 +142,12 @@ class _SavedCollegeCard extends StatelessWidget {
   });
 
   void _onCardTap() {
-    final isRegistered = Get.isRegistered<EnquiryController>()
-        ? Get.find<EnquiryController>().isAlreadyRegistered
-        : false;
-
-    if (!isRegistered) {
-      AppSnackbar.warning('Please complete the enquiry form to view college details.');
-      return;
-    }
-
     Get.to(
           () => CollegeDetailScreen(
         collegeId: college.collegeId,
         showBookmark: false,
       ),
-      binding: CollegeDetailBinding(), // ✅ only this line added
+      binding: CollegeDetailBinding(),
       transition: Transition.rightToLeft,
     );
   }

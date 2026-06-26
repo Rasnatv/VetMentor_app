@@ -139,7 +139,6 @@ class WishlistController extends GetxController {
     }
   }
 
-  // ── Toggle ────────────────────────────────────────────────
   Future<void> toggleWishlist(int studentId, String collegeId) async {
     if (isWishlisted(collegeId)) {
       await removeFromWishlist(studentId, collegeId);

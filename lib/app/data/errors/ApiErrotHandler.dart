@@ -277,6 +277,5 @@ class ApiErrorHandler {
       return 'No internet connection.';
     }
     return '';
-    // return 'Unexpected error occurred.';
   }
 }

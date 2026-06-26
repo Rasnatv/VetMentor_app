@@ -44,7 +44,6 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  // ── Convert SearchCollegeModel → CollegeModel ─────────────
   CollegeModel _toCollegeModel(SearchCollegeModel s) {
     return CollegeModel(
       id:          s.id.toString(),
@@ -58,15 +57,6 @@ class _SearchScreenState extends State<SearchScreen> {
   // ── Navigation: tap college card ──────────────────────────
   void _openCollegeDetail(SearchCollegeModel searchCollege) {
     final college = _toCollegeModel(searchCollege);
-
-    // ✅ Single source of truth — all platform + registration + type logic
-    // lives inside shouldShowEnquiryForm()
-    //
-    // Android not registered type=0 → show form
-    // Android not registered type=1 → show form
-    // iOS     not registered type=0 → show form
-    // iOS     not registered type=1 → skip form, go directly to detail
-    // Any platform, registered      → skip form, go directly to detail
     if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
       showModalBottomSheet(
         context: context,

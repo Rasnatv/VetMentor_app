@@ -95,7 +95,6 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // ── Error ────────────────────────────────────────
           if (_ctrl.detailError.value.isNotEmpty) {
             return Center(
               child: Padding(

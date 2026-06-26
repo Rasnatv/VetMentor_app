@@ -45,7 +45,6 @@ class _HomeScreenState extends State<HomeScreen>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchCtrl = TextEditingController();
 
-  // Fade-in controller for the real content
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
   bool _contentVisible = false;
@@ -323,7 +322,6 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              // Text content + CTA
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   r.spacing(AppDimens.paddingXL),
@@ -593,7 +591,6 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
-
   Future<void> _onRefresh() async {
     await Future.wait([
       _ctrl.fetchTopCollegesFromApi(),

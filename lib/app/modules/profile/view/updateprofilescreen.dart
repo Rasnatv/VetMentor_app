@@ -199,9 +199,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  // ══════════════════════════════════════════
-                  // SECTION: Personal Information
-                  // ══════════════════════════════════════════
                   _SectionLabel(
                     r: r,
                     title: 'Personal Information',
@@ -218,7 +215,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           controller: _firstCtrl,
                           textCapitalization: TextCapitalization.words,
                           inputFormatters: DValidator.lettersOnly,
-                          decoration: _dec('Arjun', r),
+                          decoration: _dec('', r),
                           style: _ts(r),
                           validator: (v) =>
                               DValidator.validateName('First Name', v),
@@ -233,7 +230,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           controller: _lastCtrl,
                           textCapitalization: TextCapitalization.words,
                           inputFormatters: DValidator.lettersOnly,
-                          decoration: _dec('Kumar', r),
+                          decoration: _dec('', r),
                           style: _ts(r),
                         ),
                       ),
@@ -259,7 +256,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
                       inputFormatters: DValidator.textWithLimit,
-                      decoration: _dec('arjun@email.com', r),
+                      decoration: _dec('', r),
                       style: _ts(r),
                       validator: (v) => DValidator.validateEmail(v),
                     ),
@@ -305,12 +302,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   Row(children: [
                     Expanded(
                       child: FieldWrapper(
-                        label: 'State *',
+                        label: 'Country *',
                         child: TextFormField(
-                          controller: _stateCtrl,
+                          controller:_countryCtrl,
                           textCapitalization: TextCapitalization.words,
                           inputFormatters: DValidator.textWithLimit,
-                          decoration: _dec('Kerala', r),
+                          decoration: _dec('', r),
                           style: _ts(r),
                           validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -320,12 +317,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     SizedBox(width: r.spacing(AppDimens.paddingMD)),
                     Expanded(
                       child: FieldWrapper(
-                        label: 'District *',
+                        label: 'State *',
                         child: TextFormField(
-                          controller: _districtCtrl,
+                          controller:_stateCtrl,
                           textCapitalization: TextCapitalization.words,
                           inputFormatters: DValidator.textWithLimit,
-                          decoration: _dec('Palakkad', r),
+                          decoration: _dec('', r),
                           style: _ts(r),
                           validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -339,12 +336,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   Row(children: [
                     Expanded(
                       child: FieldWrapper(
-                        label: 'Country *',
+                        label: 'District *',
                         child: TextFormField(
-                          controller: _countryCtrl,
+                          controller: _districtCtrl,
                           textCapitalization: TextCapitalization.words,
                           inputFormatters: DValidator.textWithLimit,
-                          decoration: _dec('India', r),
+                          decoration: _dec('', r),
                           style: _ts(r),
                           validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -355,18 +352,15 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     Expanded(
                       child: FieldWrapper(
                         label: 'Pincode *',
-                        child: TextFormField(
+                        child:
+                        TextFormField(
                           controller: _pincodeCtrl,
-                          keyboardType: TextInputType.number,
-                          maxLength: 6,
-                          inputFormatters: DValidator.digitsOnly,
-                          decoration: _dec('678001', r),
+                          keyboardType: TextInputType.text,
+                          maxLength: 10,
+                          inputFormatters: DValidator.postalCode,
+                          decoration: _dec('', r),
                           style: _ts(r),
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Required';
-                            if (v.trim().length < 6) return '6 digits needed';
-                            return null;
-                          },
+                          validator: (v) => DValidator.validatePincode(v),
                         ),
                       ),
                     ),

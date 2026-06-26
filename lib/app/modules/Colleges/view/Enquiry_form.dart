@@ -159,9 +159,6 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  //  BUILD
-  // ═══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final r      = Responsive.of(context);
@@ -200,7 +197,6 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
     );
   }
 
-  // ── Handle ────────────────────────────────────────────────────────────────
   Widget _buildHandle() => Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
     child: Container(
@@ -212,7 +208,6 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
     ),
   );
 
-  // ── Header ────────────────────────────────────────────────────────────────
   Widget _buildHeader(Responsive r) => Padding(
     padding: EdgeInsets.fromLTRB(
         r.spacing(16), 0, r.spacing(16), r.spacing(10)),
@@ -471,9 +466,9 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
             // State & District
             Row(children: [
               Expanded(
-                child: _label('State *',
+                child: _label('Country *',
                   TextFormField(
-                    controller: _stateCtrl,
+                    controller: _countryCtrl,
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
                     inputFormatters: DValidator.textWithLimit,
@@ -485,9 +480,9 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
               ),
               SizedBox(width: r.spacing(10)),
               Expanded(
-                child: _label('District *',
+                child: _label('State *',
                   TextFormField(
-                    controller: _districtCtrl,
+                    controller: _stateCtrl,
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
                     inputFormatters: DValidator.textWithLimit,
@@ -503,9 +498,9 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
             // Country & Pincode
             Row(children: [
               Expanded(
-                child: _label('Country *',
+                child: _label('District *',
                   TextFormField(
-                    controller: _countryCtrl,
+                    controller: _districtCtrl,
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
                     inputFormatters: DValidator.textWithLimit,

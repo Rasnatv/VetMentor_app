@@ -21,7 +21,6 @@ class FiliteredCollegescontroller extends GetxController {
 
   String _currentType = '';
 
-  // ── Init ──────────────────────────────────────────────────
   Future<void> init(String type) async {
     _currentType = type;
     await Future.wait([
@@ -45,7 +44,6 @@ class FiliteredCollegescontroller extends GetxController {
     ]);
   }
 
-  // ── Fetch all colleges ────────────────────────────────────
   Future<void> fetchColleges(String type) async {
     isLoading.value    = true;
     error.value        = '';
@@ -87,12 +85,14 @@ class FiliteredCollegescontroller extends GetxController {
     }
   }
 
-  // ── Fetch states ──────────────────────────────────────────
+// ── Fetch states ──────────────────────────────────────────
   Future<void> fetchStates() async {
     try {
-      final response = await _dio.get(
-        '${ApiConstants.baseUrl}/get-college-states',
-      );
+      final endpoint = _currentType == 'temporary'
+          ? '${ApiConstants.baseUrl}/college-states/temporary'
+          : '${ApiConstants.baseUrl}/get-college-states';
+
+      final response = await _dio.get(endpoint);
       if (response.statusCode == 200) {
         final json = response.data as Map<String, dynamic>;
         final list = List<String>.from(json['data'] ?? []);
@@ -149,8 +149,6 @@ class FiliteredCollegescontroller extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // ── Clear filter ──────────────────────────────────────────
   void clearStateFilter(String type) {
     selectedState.value     = 'All States';
     displayedColleges.value = List.from(colleges);
