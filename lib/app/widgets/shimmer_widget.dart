@@ -100,11 +100,6 @@ class ShimmerAppBar extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// 2. SEARCH BAR SHIMMER
-// Full-width pill — matches real search bar height & radius
-// ══════════════════════════════════════════════════════════
-
 class ShimmerSearchBar extends StatelessWidget {
   const ShimmerSearchBar({super.key});
 

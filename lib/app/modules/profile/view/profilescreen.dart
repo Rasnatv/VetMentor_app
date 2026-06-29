@@ -675,9 +675,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Info Card (generic rows)
-// ─────────────────────────────────────────────────────────────
 class _InfoRowData {
   final IconData icon;
   final Color iconColor, iconBg;

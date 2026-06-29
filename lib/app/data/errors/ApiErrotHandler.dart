@@ -265,13 +265,11 @@ class ApiErrorHandler {
           }
         }
       }
-
       return null;
     } catch (_) {
       return null;
     }
   }
-
   static String _handleException(Object error) {
     if (error is SocketException) {
       return 'No internet connection.';
