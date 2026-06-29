@@ -7,8 +7,6 @@ import '../../core/style/textstyle.dart';
 import '../../core/utils/responsive utiliteclass.dart';
 import '../../widgets/commonwidget.dart';
 
-// ── Category colors — light tint background + a single mid-tone
-// accent for the icon/text. No solid/dark fills anywhere.
 const _blue = Color(0xFF185FA5);
 const _blueBg = Color(0xFFE6F1FB);
 const _teal = Color(0xFF0F6E56);
@@ -150,7 +148,6 @@ class CareersScreen extends StatelessWidget {
             ),
             SizedBox(height: r.spacing(AppDimens.paddingMD)),
 
-            // ── Starting point ─────────────────────────────────────────
             _RootNode(r: r),
             Padding(
               padding: EdgeInsets.only(left: r.spacing(_kNodeColumnWidth / 2 - 1)),
@@ -161,7 +158,6 @@ class CareersScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Career timeline ─────────────────────────────────────────
             ...List.generate(paths.length, (index) {
               return _TimelineCareerCard(
                 r: r,
