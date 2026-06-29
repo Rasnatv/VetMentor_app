@@ -81,12 +81,6 @@ class _SBox extends StatelessWidget {
   );
 }
 
-// ══════════════════════════════════════════════════════════
-// 1. APP BAR SHIMMER
-// Matches: bold "Hello, Vet Aspirant! 👋" + subtitle
-// NO circle avatar — real UI has no avatar
-// ══════════════════════════════════════════════════════════
-
 class ShimmerAppBar extends StatelessWidget {
   const ShimmerAppBar({super.key});
 
@@ -129,10 +123,6 @@ class ShimmerSearchBar extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// 3. HERO BANNER SHIMMER
-// Solid rounded rectangle — same height as green banner
-// ══════════════════════════════════════════════════════════
 
 class ShimmerHeroBanner extends StatelessWidget {
   const ShimmerHeroBanner({super.key});
@@ -152,10 +142,6 @@ class ShimmerHeroBanner extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// 4. SECTION HEADER SHIMMER
-// Bold title left + "View All" right
-// ══════════════════════════════════════════════════════════
 
 class ShimmerSectionHeader extends StatelessWidget {
   const ShimmerSectionHeader({super.key});
@@ -172,11 +158,7 @@ class ShimmerSectionHeader extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// 5. COURSE CARD SHIMMER
-// Matches exactly: green-tinted left square + two text lines + chevron
-// Used in "Recommended For You" — vertical list, ONE card per row
-// ══════════════════════════════════════════════════════════
+
 
 class ShimmerCourseCard extends StatelessWidget {
   const ShimmerCourseCard({super.key});
@@ -236,10 +218,6 @@ class ShimmerCourseCard extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// 6. COLLEGE CARD SHIMMER
-// Matches: rounded-square letter avatar + 2-line name + pin + city
-// ══════════════════════════════════════════════════════════
 
 class ShimmerCollegeCard extends StatelessWidget {
   const ShimmerCollegeCard({super.key});
@@ -299,12 +277,6 @@ class ShimmerCollegeCard extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// 7. FULL HOME SCREEN SHIMMER
-// Section order matches screenshot exactly.
-// All wrapped in ONE ShimmerWrapper so every block
-// animates in perfect sync with no circular indicators.
-// ══════════════════════════════════════════════════════════
 
 class HomeScreenShimmer extends StatelessWidget {
   const HomeScreenShimmer({super.key});

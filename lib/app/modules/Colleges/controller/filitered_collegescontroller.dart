@@ -10,7 +10,6 @@ import '../../../no internetconnection/network_service.dart';
 class FiliteredCollegescontroller extends GetxController {
   final Dio _dio = Dio();
 
-  // ── State ─────────────────────────────────────────────────
   final RxList<CollegeModel> colleges          = <CollegeModel>[].obs;
   final RxList<CollegeModel> displayedColleges = <CollegeModel>[].obs;
   final RxList<String>       states            = <String>[].obs;
