@@ -270,8 +270,8 @@ class CareerData {
       subtitle: 'NGOs · Conservation organisations',
       icon: Icons.park_outlined,
       category: 'Animal care',
-      accent: _teal,
-      accentBg: _tealBg,
+      accent: _coral,
+      accentBg: _coralBg,
     ),
     CareerPath(
       id: '5',
@@ -279,8 +279,8 @@ class CareerData {
       subtitle: 'ICAR, Universities · Stipend + growth',
       icon: Icons.science_outlined,
       category: 'Industry & research',
-      accent: _purple,
-      accentBg: _purpleBg,
+        accent: _blue,
+        accentBg: _blueBg
     ),
     CareerPath(
       id: '6',
@@ -288,8 +288,8 @@ class CareerData {
       subtitle: 'Civil services · Govt research roles',
       icon: Icons.workspace_premium_outlined,
       category: 'Public service',
-      accent: _blue,
-      accentBg: _blueBg,
+      accent: _teal,
+      accentBg: _tealBg,
     ),
     CareerPath(
       id: '7',
@@ -297,8 +297,8 @@ class CareerData {
       subtitle: 'Nutrition, health tech · Equity growth',
       icon: Icons.rocket_launch_outlined,
       category: 'Global & growth',
-      accent: _coral,
-      accentBg: _coralBg,
+      accent: _purple,
+      accentBg: _purpleBg,
     ),
     CareerPath(
       id: '8',
