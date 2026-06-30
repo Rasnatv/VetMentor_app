@@ -281,8 +281,6 @@ class _SplashScreenState extends State<SplashScreen>
                 ],
               ),
             ),
-
-            // Bottom loading indicator
             Positioned(
               bottom: 60,
               left: 0,

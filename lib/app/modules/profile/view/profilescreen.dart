@@ -233,7 +233,6 @@ class _ProfileScreenState extends State<ProfileScreen>
               ]),
             ),
 
-            // NEET Score
             const _SectionHeader(title: 'NEET Score'),
             Padding(
               padding: EdgeInsets.symmetric(

@@ -217,7 +217,6 @@ class _SavedCollegeCard extends StatelessWidget {
               Obx(() {
                 final busy = ctrl.isLoading(college.collegeId);
                 return GestureDetector(
-                  // Absorb tap so it doesn't bubble up to card's onTap
                   onTap: busy
                       ? null
                       : () async {
