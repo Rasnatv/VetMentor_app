@@ -101,7 +101,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // ── Error ──────────────────────────────────────────────────
   Widget _buildError(Responsive r, ProfileController ctrl) => Center(
     child: Padding(
       padding: EdgeInsets.all(r.spacing(AppDimens.paddingXL)),
@@ -138,7 +137,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     ),
   );
 
-  // ── Loaded profile ─────────────────────────────────────────
   Widget _buildProfile(
       BuildContext context,
       Responsive r,
@@ -1074,7 +1072,6 @@ class _NeetCard extends StatelessWidget {
                     ],
                   ),
                   const Spacer(),
-
       ]))],
         ),
       ),

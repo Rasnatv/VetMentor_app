@@ -25,7 +25,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
 
   final _formKey = GlobalKey<FormState>();
 
-  // ── Text controllers ──────────────────────────────────────
   late final TextEditingController _firstCtrl;
   late final TextEditingController _lastCtrl;
   late final TextEditingController _emailCtrl;
@@ -36,7 +35,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   late final TextEditingController _pincodeCtrl;
   late final TextEditingController _neetCtrl;
 
-  // ── Phone ─────────────────────────────────────────────────
   late final PhoneController _phoneCtrl;
 
   String _gender = 'Male';
@@ -377,7 +375,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       maxLines: 2,
                       minLines: 2,
                       inputFormatters: DValidator.textWithLimit,
-                      decoration: _dec('Near Bus Stand, Main Road', r)
+                      decoration: _dec('', r)
                           .copyWith(alignLabelWithHint: true),
                       style: _ts(r),
                       validator: (v) =>
@@ -385,10 +383,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     ),
                   ),
                   SizedBox(height: r.spacing(AppDimens.paddingXL)),
-
-                  // ══════════════════════════════════════════
-                  // SECTION: Academic Information
-                  // ══════════════════════════════════════════
                   _SectionLabel(
                     r: r,
                     title: 'Academic Information',
@@ -617,9 +611,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Gender Row
-// ─────────────────────────────────────────────────────────────
 class _GenderRow extends StatelessWidget {
   final Responsive r;
   final String selected;
@@ -689,9 +680,6 @@ class _GenderRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Section Label
-// ─────────────────────────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   final Responsive r;
   final String title;

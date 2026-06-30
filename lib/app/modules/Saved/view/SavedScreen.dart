@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
-import 'package:veterinaryapp/app/widgets/appsnackbar.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
 import '../../../data/models/whishlistmodel.dart';
-import '../../Colleges/controller/enquirycontroller.dart';
 import '../../Colleges/view/collegedtailscreen.dart';
 import '../../home/bindings/home_binding.dart';
 import '../controller/whishlist_controller.dart';
@@ -267,7 +265,6 @@ class _SavedCollegeCard extends StatelessWidget {
   }
 }
 
-// ── Remove Confirmation Bottom Sheet ──────────────────────────
 class _RemoveConfirmSheet extends StatelessWidget {
   final String collegeName;
   const _RemoveConfirmSheet({required this.collegeName});

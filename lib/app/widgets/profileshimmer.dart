@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
-
 import '../core/constants/appcolors.dart';
 import '../core/style/dimens.dart';
 
-
-/// Full-page shimmer skeleton that mirrors the exact layout of ProfileScreen.
-///
-/// Usage:
-///   if (ctrl.isLoading) return const ProfileShimmer();
 class ProfileShimmer extends StatefulWidget {
   const ProfileShimmer({super.key});
 
@@ -331,7 +325,6 @@ class _ProfileShimmerState extends State<ProfileShimmer>
           _sectionLabel(),
           _neetCard(),
 
-          // Privacy note
           _privacyNote(),
         ],
       ),

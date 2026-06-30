@@ -451,7 +451,6 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
     );
   }
 
-  // ── STEP 2: Location + Program + NEET ────────────────────────────────────
   Widget _buildStep2(Responsive r) {
     final gap = r.spacing(12);
     return SingleChildScrollView(
@@ -591,7 +590,6 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
             })),
             SizedBox(height: gap),
 
-            // NEET
             _label('NEET Score *',
               TextFormField(
                 controller: _neetCtrl,

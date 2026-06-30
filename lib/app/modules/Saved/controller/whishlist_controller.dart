@@ -71,7 +71,6 @@ class WishlistController extends GetxController {
       }
     } on DioException catch (e) {
       if (!silent && !ApiErrorHandler.isNetworkError(e)) {
-        // ✅ Only show snackbar for non-network errors
         AppSnackbar.error(ApiErrorHandler.handleDioError(e));
       }
     } finally {

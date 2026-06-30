@@ -42,7 +42,6 @@ class _TemporaryAffiliatedScreenState
     super.dispose();
   }
 
-  // ── Navigation ────────────────────────────────────────────
   void _openCollegeDetail(CollegeModel college) {
     if (college.id.isEmpty) return;
 
@@ -123,7 +122,6 @@ class _TemporaryAffiliatedScreenState
             ]),
           ),
 
-          // ── State filter chip ─────────────────────────────
           Obx(() => c.selectedState.value != 'All States'
               ? Padding(
             padding: EdgeInsets.fromLTRB(
@@ -175,7 +173,6 @@ class _TemporaryAffiliatedScreenState
             ]),
           )),
 
-          // ── List ─────────────────────────────────────────
           Obx(() {
             if (c.displayedColleges.isEmpty) {
               return Expanded(

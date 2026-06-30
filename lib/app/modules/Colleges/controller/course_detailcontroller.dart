@@ -2,7 +2,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-
 import '../../../core/network/api_constants.dart';
 import '../../../data/errors/ApiErrotHandler.dart';
 import '../../../data/models/coursedetailmodel.dart';

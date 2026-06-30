@@ -87,9 +87,6 @@ class AffiliationSelectorScreen extends StatelessWidget {
   }
 }
 
-/// Top hero banner — now renders the "Vet Mentor" artwork instead of the
-/// gradient card. Drop the image at assets/images/vet_mentor_banner.png
-/// and register it in pubspec.yaml (see note below the widget).
 class _HeroBanner extends StatelessWidget {
   final Responsive r;
   const _HeroBanner({required this.r});
@@ -109,15 +106,11 @@ class _HeroBanner extends StatelessWidget {
             ),
           ],
         ),
-        // The source artwork is 1774x887 (~2:1). Locking the aspect ratio
-        // keeps it crisp at any screen width instead of stretching/cropping.
         child: AspectRatio(
           aspectRatio: 1774 / 887,
           child: Image.asset(
             'assets/images/newbaner.png',
             fit: BoxFit.cover,
-            // Fallback so the screen doesn't crash if the asset hasn't
-            // been wired up in pubspec.yaml yet.
             errorBuilder: (context, error, stackTrace) => Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

@@ -146,7 +146,6 @@ class CollegeController extends GetxController {
           c.state.toLowerCase().contains(q)),
     );
   }
-
   void _handleError(String msg) {
     errorMessage.value = msg;
     loadState.value = CollegeLoadState.error;
@@ -161,7 +160,6 @@ class CollegeController extends GetxController {
       } catch (_) {}
     }
   }
-
   void _persistSavedIds() => Storage.saveValueForce(
       _kSavedCollegeIds, jsonEncode(savedIds.toList()));
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-
 import '../../../core/network/api_constants.dart';
 import '../../../data/errors/ApiErrotHandler.dart';
 import '../../../data/models/collegelistmodel.dart';
@@ -104,7 +103,6 @@ class FiliteredCollegescontroller extends GetxController {
     } catch (_) {}
   }
 
-  // ── Filter by state ───────────────────────────────────────
   Future<void> fetchByState(String state) async {
     if (state == 'All States') {
       selectedState.value     = 'All States';

@@ -71,7 +71,6 @@ class MentorController extends GetxController {
     super.onClose();
   }
 
-  // ── reconnect callback ────────────────────────────────────
   Future<void> _onReconnect() => fetchVideos();
 
   Future<void> fetchVideos() async {
@@ -146,7 +145,7 @@ class MentorController extends GetxController {
   Future<void> openWhatsApp() async {
     final number = mentorWhatsApp.replaceAll('+', '').replaceAll(' ', '');
     final uri = Uri.parse(
-        'https://wa.me/$number?text=Hi, I found your contact on VetColleges app. I need guidance for BVSc admission.');
+        'https://wa.me/$number?text=Hi, I found your contact on Vet Mentor app. I need guidance for BVSc admission.');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
