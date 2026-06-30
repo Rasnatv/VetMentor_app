@@ -285,10 +285,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                     ),
                   ),
                   SizedBox(height: r.spacing(AppDimens.paddingXL)),
-
-                  // ══════════════════════════════════════════
-                  // SECTION: Location Information
-                  // ══════════════════════════════════════════
                   _SectionLabel(
                     r: r,
                     title: 'Location Information',
@@ -535,8 +531,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
               ),
             ),
           ),
-
-          // Full-screen loading overlay
           Obx(() {
             if (!_ctrl.getIsUpdating) return const SizedBox.shrink();
             return Container(

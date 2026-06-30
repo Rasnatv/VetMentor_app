@@ -29,6 +29,11 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
   late final EnquiryController _ctrl;
   late final WishlistController _wishlistCtrl;
 
+  // Local flag that drives the small refresh indicator in the AppBar.
+  // Kept separate from _ctrl.detailLoading so a pull-to-refresh doesn't
+  // blank out the whole page while new data (e.g. admin panel edits) loads.
+  bool _isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +52,19 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
       if (studentId > 0) {
         _wishlistCtrl.fetchWishlist(studentId, silent: true);
       }
+    }
+  }
+
+  // ── Pull-to-refresh handler ───────────────────────────────
+  // Re-fetches the college detail so any changes made from the
+  // admin panel are reflected here. Shows the built-in
+  // RefreshIndicator circular spinner while it runs.
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    try {
+      await _ctrl.fetchCollegeDetail(widget.collegeId);
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
     }
   }
 
@@ -90,12 +108,15 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: Obx(() {
-          // ── Loading ──────────────────────────────────────
-          if (_ctrl.detailLoading.value) {
+          final detail = _ctrl.collegeDetail.value;
+
+          // ── Loading (only on the very first load, before we have
+          //    any data yet) ──────────────────────────────────────
+          if (_ctrl.detailLoading.value && detail == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (_ctrl.detailError.value.isNotEmpty) {
+          if (_ctrl.detailError.value.isNotEmpty && detail == null) {
             return Center(
               child: Padding(
                 padding: EdgeInsets.all(r.spacing(AppDimens.paddingXL)),
@@ -123,279 +144,297 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
             );
           }
 
-          final detail = _ctrl.collegeDetail.value;
           if (detail == null) return const SizedBox.shrink();
 
           // ── Content ──────────────────────────────────────
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: r.value(mobile: 220.0, tablet: 280.0),
-                pinned: true,
-                backgroundColor: AppColors.backgroundWhite,
-                leading: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    margin: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: _onRefresh,
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: r.value(mobile: 220.0, tablet: 280.0),
+                  pinned: true,
+                  backgroundColor: AppColors.backgroundWhite,
+                  leading: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      margin: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                      ),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: r.fontSize(AppDimens.iconSM),
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      size: r.fontSize(AppDimens.iconSM),
-                      color: AppColors.textPrimary,
+                  ),
+
+                  // ── Actions: refresh spinner + bookmark button ──
+                  actions: [
+                    // Small circular indicator that shows while a
+                    // manual refresh (pull-to-refresh) is in flight.
+                    if (_isRefreshing)
+                      Padding(
+                        padding: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
+                        child: SizedBox(
+                          width: r.fontSize(AppDimens.iconSM),
+                          height: r.fontSize(AppDimens.iconSM),
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+
+                    if (widget.showBookmark)
+                      Obx(() {
+                        final isLoading    = _wishlistCtrl.isLoading(widget.collegeId);
+                        final isWishlisted = _wishlistCtrl.isWishlisted(widget.collegeId);
+
+                        return Padding(
+                          padding: EdgeInsets.only(
+                              right: r.spacing(AppDimens.paddingSM)),
+                          child: GestureDetector(
+                            onTap: isLoading ? null : _onBookmarkTap,
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              margin: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius:
+                                BorderRadius.circular(AppDimens.radiusMD),
+                              ),
+                              child: isLoading
+                                  ? const Padding(
+                                padding: EdgeInsets.all(8),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primary,
+                                ),
+                              )
+                                  : Icon(
+                                isWishlisted
+                                    ? Icons.bookmark_rounded
+                                    : Icons.bookmark_border_rounded,
+                                size: r.fontSize(AppDimens.iconSM),
+                                color: isWishlisted
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                  ],
+
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        (detail.imageUrl != null && detail.imageUrl!.isNotEmpty)
+                            ? Image.network(
+                          detail.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _imageFallback(),
+                        )
+                            : _imageFallback(),
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Color(0x80000000),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (detail.affiliationType.isNotEmpty)
+                          Positioned(
+                            bottom: r.spacing(AppDimens.paddingMD),
+                            right: r.spacing(AppDimens.paddingMD),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: r.spacing(AppDimens.paddingSM + 2),
+                                vertical: r.spacing(AppDimens.paddingXS + 1),
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius:
+                                BorderRadius.circular(AppDimens.radiusSM),
+                              ),
+                              child: Text(
+                                detail.affiliationType,
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: Colors.white,
+                                  fontSize: r.fontSize(11),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
 
-                // ── Bookmark button ───────────────────────
-                actions: [
-                  if (widget.showBookmark)
-                    Obx(() {
-                      final isLoading    = _wishlistCtrl.isLoading(widget.collegeId);
-                      final isWishlisted = _wishlistCtrl.isWishlisted(widget.collegeId);
-
-                      return Padding(
-                        padding: EdgeInsets.only(
-                            right: r.spacing(AppDimens.paddingSM)),
-                        child: GestureDetector(
-                          onTap: isLoading ? null : _onBookmarkTap,
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            margin: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                              BorderRadius.circular(AppDimens.radiusMD),
-                            ),
-                            child: isLoading
-                                ? const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.primary,
-                              ),
-                            )
-                                : Icon(
-                              isWishlisted
-                                  ? Icons.bookmark_rounded
-                                  : Icons.bookmark_border_rounded,
-                              size: r.fontSize(AppDimens.iconSM),
-                              color: isWishlisted
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                ],
-
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    fit: StackFit.expand,
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      (detail.imageUrl != null && detail.imageUrl!.isNotEmpty)
-                          ? Image.network(
-                        detail.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _imageFallback(),
-                      )
-                          : _imageFallback(),
-                      Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Color(0x80000000),
-                            ],
-                          ),
+                      // ── College Header ────────────────────────
+                      Padding(
+                        padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              detail.collegeName,
+                              style: AppTextStyles.headlineLarge.copyWith(
+                                fontSize: r.fontSize(16),
+                              ),
+                            ),
+                            SizedBox(height: r.spacing(AppDimens.paddingXS)),
+                            Row(
+                              children: [
+                                Icon(Icons.location_on_outlined,
+                                    size: r.fontSize(AppDimens.iconXS),
+                                    color: AppColors.textSecondary),
+                                SizedBox(width: r.spacing(AppDimens.paddingXS)),
+                                Expanded(
+                                  child: Text(
+                                    detail.fullAddress,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                        fontSize: r.fontSize(12)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                            Row(
+                              children: [
+                                Icon(Icons.star_rounded,
+                                    size: r.fontSize(14), color: Colors.amber),
+                                SizedBox(width: r.spacing(AppDimens.paddingXS)),
+                                Text(
+                                  detail.rating.toStringAsFixed(1),
+                                  style: AppTextStyles.titleSmall.copyWith(
+                                    fontSize: r.fontSize(13),
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      if (detail.affiliationType.isNotEmpty)
-                        Positioned(
-                          bottom: r.spacing(AppDimens.paddingMD),
-                          right: r.spacing(AppDimens.paddingMD),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: r.spacing(AppDimens.paddingSM + 2),
-                              vertical: r.spacing(AppDimens.paddingXS + 1),
+
+                      // ── Stats Row ─────────────────────────────
+                      Container(
+                        margin: EdgeInsets.symmetric(
+                            horizontal: r.spacing(AppDimens.paddingLG)),
+                        padding: EdgeInsets.symmetric(
+                            vertical: r.spacing(AppDimens.paddingLG)),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundWhite,
+                          borderRadius:
+                          BorderRadius.circular(AppDimens.radiusLG),
+                          border: Border.all(color: AppColors.borderLight),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            StatItem(
+                              value: '${detail.years}+',
+                              label: 'Years',
+                              icon: Icons.calendar_today_rounded,
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius:
-                              BorderRadius.circular(AppDimens.radiusSM),
+                            _buildDivider(r),
+                            StatItem(
+                              value: detail.faculty,
+                              label: 'Faculty',
+                              icon: Icons.person_rounded,
                             ),
-                            child: Text(
-                              detail.affiliationType,
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: Colors.white,
-                                fontSize: r.fontSize(11),
-                              ),
+                            _buildDivider(r),
+                            StatItem(
+                              value: detail.students,
+                              label: 'Students',
+                              icon: Icons.groups_rounded,
                             ),
+                            _buildDivider(r),
+                            StatItem(
+                              value: '${detail.courses.length}',
+                              label: 'Courses',
+                              icon: Icons.menu_book_rounded,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // ── Contact Info ──────────────────────────
+                      _buildSection(
+                        r,
+                        title: 'Contact Information',
+                        child: Column(
+                          children: [
+                            _buildContactRow(r,
+                                icon: Icons.phone_outlined, label: detail.phone),
+                            SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                            _buildContactRow(r,
+                                icon: Icons.email_outlined, label: detail.email),
+                            SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                            _buildContactRow(r,
+                                icon: Icons.language_outlined,
+                                label: detail.website,
+                                isLink: true),
+                          ],
+                        ),
+                      ),
+
+                      // ── About ─────────────────────────────────
+                      if (detail.about.isNotEmpty)
+                        _buildSection(
+                          r,
+                          title: 'About College',
+                          child: _ExpandableText(text: detail.about, r: r),
+                        ),
+
+                      // ── Courses ───────────────────────────────
+                      if (detail.courses.isNotEmpty)
+                        _buildSection(
+                          r,
+                          title: 'Courses Offered',
+                          child: Column(
+                            children: detail.courses
+                                .map((c) => _buildCourseChip(c, r))
+                                .toList(),
                           ),
                         ),
+
+                      // ── Facilities ────────────────────────────
+                      if (detail.facilities.isNotEmpty)
+                        _buildSection(
+                          r,
+                          title: 'Facilities',
+                          child: Wrap(
+                            spacing: r.spacing(AppDimens.paddingSM),
+                            runSpacing: r.spacing(AppDimens.paddingSM),
+                            children: detail.facilities
+                                .map((f) => _buildFacilityChip(f, r))
+                                .toList(),
+                          ),
+                        ),
+
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
-              ),
-
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── College Header ────────────────────────
-                    Padding(
-                      padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            detail.collegeName,
-                            style: AppTextStyles.headlineLarge.copyWith(
-                              fontSize: r.fontSize(16),
-                            ),
-                          ),
-                          SizedBox(height: r.spacing(AppDimens.paddingXS)),
-                          Row(
-                            children: [
-                              Icon(Icons.location_on_outlined,
-                                  size: r.fontSize(AppDimens.iconXS),
-                                  color: AppColors.textSecondary),
-                              SizedBox(width: r.spacing(AppDimens.paddingXS)),
-                              Expanded(
-                                child: Text(
-                                  detail.fullAddress,
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                      fontSize: r.fontSize(12)),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: r.spacing(AppDimens.paddingSM)),
-                          Row(
-                            children: [
-                              Icon(Icons.star_rounded,
-                                  size: r.fontSize(14), color: Colors.amber),
-                              SizedBox(width: r.spacing(AppDimens.paddingXS)),
-                              Text(
-                                detail.rating.toStringAsFixed(1),
-                                style: AppTextStyles.titleSmall.copyWith(
-                                  fontSize: r.fontSize(13),
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // ── Stats Row ─────────────────────────────
-                    Container(
-                      margin: EdgeInsets.symmetric(
-                          horizontal: r.spacing(AppDimens.paddingLG)),
-                      padding: EdgeInsets.symmetric(
-                          vertical: r.spacing(AppDimens.paddingLG)),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundWhite,
-                        borderRadius:
-                        BorderRadius.circular(AppDimens.radiusLG),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          StatItem(
-                            value: '${detail.years}+',
-                            label: 'Years',
-                            icon: Icons.calendar_today_rounded,
-                          ),
-                          _buildDivider(r),
-                          StatItem(
-                            value: detail.faculty,
-                            label: 'Faculty',
-                            icon: Icons.person_rounded,
-                          ),
-                          _buildDivider(r),
-                          StatItem(
-                            value: detail.students,
-                            label: 'Students',
-                            icon: Icons.groups_rounded,
-                          ),
-                          _buildDivider(r),
-                          StatItem(
-                            value: '${detail.courses.length}',
-                            label: 'Courses',
-                            icon: Icons.menu_book_rounded,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // ── Contact Info ──────────────────────────
-                    _buildSection(
-                      r,
-                      title: 'Contact Information',
-                      child: Column(
-                        children: [
-                          _buildContactRow(r,
-                              icon: Icons.phone_outlined, label: detail.phone),
-                          SizedBox(height: r.spacing(AppDimens.paddingSM)),
-                          _buildContactRow(r,
-                              icon: Icons.email_outlined, label: detail.email),
-                          SizedBox(height: r.spacing(AppDimens.paddingSM)),
-                          _buildContactRow(r,
-                              icon: Icons.language_outlined,
-                              label: detail.website,
-                              isLink: true),
-                        ],
-                      ),
-                    ),
-
-                    // ── About ─────────────────────────────────
-                    if (detail.about.isNotEmpty)
-                      _buildSection(
-                        r,
-                        title: 'About College',
-                        child: _ExpandableText(text: detail.about, r: r),
-                      ),
-
-                    // ── Courses ───────────────────────────────
-                    if (detail.courses.isNotEmpty)
-                      _buildSection(
-                        r,
-                        title: 'Courses Offered',
-                        child: Column(
-                          children: detail.courses
-                              .map((c) => _buildCourseChip(c, r))
-                              .toList(),
-                        ),
-                      ),
-
-                    // ── Facilities ────────────────────────────
-                    if (detail.facilities.isNotEmpty)
-                      _buildSection(
-                        r,
-                        title: 'Facilities',
-                        child: Wrap(
-                          spacing: r.spacing(AppDimens.paddingSM),
-                          runSpacing: r.spacing(AppDimens.paddingSM),
-                          children: detail.facilities
-                              .map((f) => _buildFacilityChip(f, r))
-                              .toList(),
-                        ),
-                      ),
-
-                    const SizedBox(height: 100),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           );
         }),
       ),

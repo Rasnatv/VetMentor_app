@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
@@ -19,18 +20,33 @@ class FiliteredCollegescontroller extends GetxController {
 
   String _currentType = '';
 
+  // Guards against registering the same reconnect callback multiple
+  // times when init() is called repeatedly (e.g. on every pull-to-refresh).
+  bool _reconnectRegistered = false;
+
   Future<void> init(String type) async {
     _currentType = type;
     await Future.wait([
       fetchColleges(type),
       fetchStates(),
     ]);
-    Get.find<NetworkService>().register(_onReconnect);
+
+    // If a state filter was active before this refresh, re-apply it
+    // instead of silently falling back to the unfiltered list.
+    await _reapplyStateFilter();
+
+    if (!_reconnectRegistered) {
+      Get.find<NetworkService>().register(_onReconnect);
+      _reconnectRegistered = true;
+    }
   }
 
   @override
   void onClose() {
-    Get.find<NetworkService>().unregister(_onReconnect);
+    if (_reconnectRegistered) {
+      Get.find<NetworkService>().unregister(_onReconnect);
+      _reconnectRegistered = false;
+    }
     super.onClose();
   }
 
@@ -40,6 +56,16 @@ class FiliteredCollegescontroller extends GetxController {
       fetchColleges(_currentType),
       fetchStates(),
     ]);
+    await _reapplyStateFilter();
+  }
+
+  // Re-runs the state-filtered fetch if a filter other than
+  // 'All States' is currently selected. Called after any full
+  // refresh (init / reconnect) so the active filter isn't lost.
+  Future<void> _reapplyStateFilter() async {
+    if (selectedState.value != 'All States') {
+      await fetchByState(selectedState.value);
+    }
   }
 
   Future<void> fetchColleges(String type) async {
@@ -146,6 +172,7 @@ class FiliteredCollegescontroller extends GetxController {
       isLoading.value = false;
     }
   }
+
   void clearStateFilter(String type) {
     selectedState.value     = 'All States';
     displayedColleges.value = List.from(colleges);

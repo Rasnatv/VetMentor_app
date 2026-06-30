@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart' hide FilterChip;
 import 'package:get/get.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart' hide EmptyState;
@@ -40,6 +41,13 @@ class _PermanentAffiliatedScreenState
   void dispose() {
     Get.delete<FiliteredCollegescontroller>(tag: 'permanent');
     super.dispose();
+  }
+
+  // ── Pull-to-refresh handler ───────────────────────────────
+  // Re-runs the list fetch so any colleges added/edited/removed
+  // from the admin panel are reflected here.
+  Future<void> _onRefresh() async {
+    await c.init('permanent');
   }
 
   // ── Navigation ────────────────────────────────────────────
@@ -95,10 +103,12 @@ class _PermanentAffiliatedScreenState
       backgroundColor: AppColors.background,
       appBar: VetAppBar(title: 'Permanent Affiliated Colleges'),
       body: Obx(() {
-        if (c.isLoading.value) {
+        // ── Loading (only on the very first load, before we
+        //    have any data to show yet) ───────────────────────
+        if (c.isLoading.value && c.displayedColleges.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (c.error.value.isNotEmpty) {
+        if (c.error.value.isNotEmpty && c.displayedColleges.isEmpty) {
           return ErrorView(
             message: c.error.value,
             onRetry: () => c.init('permanent'),
@@ -175,39 +185,56 @@ class _PermanentAffiliatedScreenState
             ]),
           )),
 
-          // ── List ─────────────────────────────────────────
+          // ── List (pull-to-refresh enabled) ────────────────
           Obx(() {
             if (c.displayedColleges.isEmpty) {
               return Expanded(
-                child: EmptyState(
-                  icon: Icons.school_outlined,
-                  title: 'No Colleges Found',
-                  subtitle: c.emptyMessage.value.isNotEmpty
-                      ? c.emptyMessage.value
-                      : 'Try adjusting your filter',
+                child: RefreshIndicator(
+                  color: badgeColor,
+                  onRefresh: _onRefresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        child: EmptyState(
+                          icon: Icons.school_outlined,
+                          title: 'No Colleges Found',
+                          subtitle: c.emptyMessage.value.isNotEmpty
+                              ? c.emptyMessage.value
+                              : 'Try adjusting your filter',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
             return Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.fromLTRB(
-                    r.spacing(AppDimens.paddingLG),
-                    r.spacing(AppDimens.paddingMD),
-                    r.spacing(AppDimens.paddingLG),
-                    100),
-                itemCount: c.displayedColleges.length,
-                itemBuilder: (ctx, i) {
-                  final college = c.displayedColleges[i];
-                  return Padding(
-                    padding: EdgeInsets.only(
-                        bottom: r.spacing(AppDimens.paddingXS)),
-                    child: CollegeCard(
-                      collegeName: college.collegeName,
-                      location: college.location,
-                      onTap: () => _openCollegeDetail(college),
-                    ),
-                  );
-                },
+              child: RefreshIndicator(
+                color: badgeColor,
+                onRefresh: _onRefresh,
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                      r.spacing(AppDimens.paddingLG),
+                      r.spacing(AppDimens.paddingMD),
+                      r.spacing(AppDimens.paddingLG),
+                      100),
+                  itemCount: c.displayedColleges.length,
+                  itemBuilder: (ctx, i) {
+                    final college = c.displayedColleges[i];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                          bottom: r.spacing(AppDimens.paddingXS)),
+                      child: CollegeCard(
+                        collegeName: college.collegeName,
+                        location: college.location,
+                        onTap: () => _openCollegeDetail(college),
+                      ),
+                    );
+                  },
+                ),
               ),
             );
           }),
