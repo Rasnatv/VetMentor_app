@@ -9,10 +9,10 @@ import '../../../data/errors/ApiErrotHandler.dart';
 import '../../../data/models/college_detailmodel.dart';
 import '../../../data/models/studentregistermodel.dart';
 import '../../../no internetconnection/network_service.dart';
-// ✅ Add this import
 import '../../profile/controller/profilecontroller.dart';
 
 const _kRegisteredStudentId = 'registered_student_id';
+const _kRegisteredCollegeType = 'registered_college_type';
 
 enum EnquiryFormState { idle, loading, success, error }
 
@@ -37,14 +37,22 @@ class EnquiryController extends GetxController {
   final RxString formError = ''.obs;
 
   final RxBool _registered = false.obs;
+  final RxString _collegeType = ''.obs; // ✅ reactive mirror of stored type
 
   bool get isAlreadyRegistered => _registered.value;
   bool get isFormLoading => formState.value == EnquiryFormState.loading;
   bool get isFormSuccess => formState.value == EnquiryFormState.success;
+
   String get _storedStudentId =>
       Storage.getValue<String>(_kRegisteredStudentId) ?? '';
 
   int get studentId => int.tryParse(_storedStudentId) ?? 0;
+
+  /// ✅ Registered college's type — readable from anywhere via
+  /// Get.find<EnquiryController>().registeredCollegeType
+  String get registeredCollegeType => _collegeType.value;
+
+  bool get isRegisteredCollegeTypeOne => registeredCollegeType == '1';
 
   @override
   void onInit() {
@@ -65,6 +73,9 @@ class EnquiryController extends GetxController {
 
   Future<void> _syncRegistrationState() async {
     final storedId = _storedStudentId;
+    _collegeType.value =
+        Storage.getValue<String>(_kRegisteredCollegeType) ?? ''; // ✅ hydrate on start
+
     if (storedId.isEmpty) {
       _registered.value = false;
       _fetchPrograms();
@@ -85,10 +96,7 @@ class EnquiryController extends GetxController {
     collegeDetail.value = null;
 
     try {
-      final res = await _dio.post(
-        '/college-details',
-        data: {'id': collegeId},
-      );
+      final res = await _dio.post('/college-details', data: {'id': collegeId});
       final response =
       CollegeDetailResponse.fromJson(res.data as Map<String, dynamic>);
 
@@ -110,29 +118,37 @@ class EnquiryController extends GetxController {
     }
   }
 
-  Future<void> submitEnquiry(StudentRegisterRequest request) async {
+  /// ✅ collegeType is persisted the same way studentId is.
+  Future<void> submitEnquiry(
+      StudentRegisterRequest request, {
+        String? collegeType,
+      }) async {
     formState.value = EnquiryFormState.loading;
     formError.value = '';
 
     try {
-      final res = await _dio.post(
-        '/student-register',
-        data: request.toJson(),
-      );
+      final res = await _dio.post('/student-register', data: request.toJson());
       final response =
       StudentRegisterResponse.fromJson(res.data as Map<String, dynamic>);
 
       if (response.isSuccess) {
+        // ✅ always store as String — avoids read<String>() cast mismatch
         await Storage.saveValueForce(
-            _kRegisteredStudentId, response.studentId);
+          _kRegisteredStudentId,
+          response.studentId.toString(),
+        );
+
+        if (collegeType != null && collegeType.isNotEmpty) {
+          await Storage.saveValueForce(_kRegisteredCollegeType, collegeType);
+          _collegeType.value = collegeType; // ✅ update reactive value immediately
+        }
+
         _registered.value = true;
         formState.value = EnquiryFormState.success;
 
-        // ✅ Notify ProfileController to refresh with the new student ID
         if (Get.isRegistered<ProfileController>()) {
           Get.find<ProfileController>().fetchProfile();
         }
-
       } else {
         formError.value = response.message;
         formState.value = EnquiryFormState.error;
@@ -158,7 +174,9 @@ class EnquiryController extends GetxController {
 
   Future<void> resetRegistration() async {
     await Storage.removeValue(_kRegisteredStudentId);
+    await Storage.removeValue(_kRegisteredCollegeType); // ✅
     _registered.value = false;
+    _collegeType.value = ''; // ✅
     _fetchPrograms();
   }
 
@@ -171,8 +189,7 @@ class EnquiryController extends GetxController {
       if (programsRes.isSuccess) programs.assignAll(programsRes.data);
     } on DioException catch (e) {
       if (!ApiErrorHandler.isNetworkError(e)) {
-        debugPrint(
-            'Programs fetch failed: ${ApiErrorHandler.handleDioError(e)}');
+        debugPrint('Programs fetch failed: ${ApiErrorHandler.handleDioError(e)}');
       }
     } catch (e) {
       debugPrint('Programs fetch failed: $e');

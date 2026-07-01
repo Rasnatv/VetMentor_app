@@ -4,11 +4,11 @@ import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
+import '../../../data/models/collegelistmodel.dart';
 import '../../../widgets/collegecard.dart';
 import '../../Colleges/view/collegedtailscreen.dart';
 import '../../Colleges/view/Enquiry_form.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
-import '../../../data/models/collegelistmodel.dart';
 import '../bindings/home_binding.dart';
 import '../controller/searchcontroller.dart';
 
@@ -44,19 +44,21 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  CollegeModel _toCollegeModel(SearchCollegeModel s) {
+  CollegeModel _toCollegeModel(SearchCollegeModel s, String effectiveType) { // ✅ takes effectiveType now
     return CollegeModel(
       id:          s.id.toString(),
-      type:        s.type, // ✅ FIXED: use actual type from API, not hardcoded '0'
+      type:        effectiveType, // ✅ stored registeredCollegeType, not from API
       collegeName: s.collegeName,
       district:    s.district,
       state:       s.state,
     );
   }
 
-  // ── Navigation: tap college card ──────────────────────────
+// ── Navigation: tap college card ──────────────────────────
   void _openCollegeDetail(SearchCollegeModel searchCollege) {
-    final college = _toCollegeModel(searchCollege);
+    final effectiveType = _enquiryCtrl.registeredCollegeType; // ✅ stored type
+    final college = _toCollegeModel(searchCollege, effectiveType);
+
     if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
       showModalBottomSheet(
         context: context,

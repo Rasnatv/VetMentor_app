@@ -6,7 +6,8 @@ import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
-import '../../../data/models/collegelistmodel.dart';
+import '../../../data/models/affiliated_collegemodel.dart';
+import '../../../data/models/collegelistmodel.dart';           // ✅ still needed — for CollegeModel wrapper
 import '../../../no internetconnection/no_connection.dart';
 import '../../../widgets/collegecard.dart';
 import '../../../widgets/tempory_permanent.dart';
@@ -43,24 +44,30 @@ class _PermanentAffiliatedScreenState
     super.dispose();
   }
 
-  // ── Pull-to-refresh handler ───────────────────────────────
-  // Re-runs the list fetch so any colleges added/edited/removed
-  // from the admin panel are reflected here.
   Future<void> _onRefresh() async {
     await c.init('permanent');
   }
 
-  // ── Navigation ────────────────────────────────────────────
-  void _openCollegeDetail(CollegeModel college) {
+  // ✅ takes AffiliatedCollegeModel now (matches controller's list type)
+  void _openCollegeDetail(AffiliatedCollegeModel college) {
     if (college.id.isEmpty) return;
 
-    if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
+    // ✅ this endpoint has no `type` — use the type saved during registration
+    final effectiveType = _enquiryCtrl.registeredCollegeType;
+
+    if (_enquiryCtrl.shouldShowEnquiryForm(effectiveType)) {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (_) => EnquiryBottomSheet(
-          college: college,
+          college: CollegeModel(                       // ✅ build a CollegeModel on the spot
+            id: college.id,
+            type: effectiveType,
+            collegeName: college.collegeName,
+            district: college.district,
+            state: college.state,
+          ),
           onProceed: () => _pushDetail(college.id),
         ),
       );
@@ -103,8 +110,6 @@ class _PermanentAffiliatedScreenState
       backgroundColor: AppColors.background,
       appBar: VetAppBar(title: 'Permanent Affiliated Colleges'),
       body: Obx(() {
-        // ── Loading (only on the very first load, before we
-        //    have any data to show yet) ───────────────────────
         if (c.isLoading.value && c.displayedColleges.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -115,7 +120,6 @@ class _PermanentAffiliatedScreenState
           );
         }
         return Column(children: [
-          // ── Affiliation chip ──────────────────────────────
           Padding(
             padding: EdgeInsets.fromLTRB(
                 r.spacing(AppDimens.paddingLG),
@@ -133,7 +137,6 @@ class _PermanentAffiliatedScreenState
             ]),
           ),
 
-          // ── State filter chip ─────────────────────────────
           Obx(() => c.selectedState.value != 'All States'
               ? Padding(
             padding: EdgeInsets.fromLTRB(
@@ -152,8 +155,6 @@ class _PermanentAffiliatedScreenState
             ]),
           )
               : const SizedBox.shrink()),
-
-          // ── Count + State Wise ────────────────────────────
           Obx(() => Padding(
             padding: EdgeInsets.fromLTRB(
                 r.spacing(AppDimens.paddingLG),
@@ -185,7 +186,6 @@ class _PermanentAffiliatedScreenState
             ]),
           )),
 
-          // ── List (pull-to-refresh enabled) ────────────────
           Obx(() {
             if (c.displayedColleges.isEmpty) {
               return Expanded(

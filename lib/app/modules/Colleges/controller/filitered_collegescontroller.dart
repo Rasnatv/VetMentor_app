@@ -1,17 +1,18 @@
-
 import 'dart:async';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../data/errors/ApiErrotHandler.dart';
-import '../../../data/models/collegelistmodel.dart';
+import '../../../data/models/affiliated_collegemodel.dart';
 import '../../../no internetconnection/network_service.dart';
+import 'enquirycontroller.dart'; // ✅ new — to read registeredCollegeType
 
 class FiliteredCollegescontroller extends GetxController {
   final Dio _dio = Dio();
 
-  final RxList<CollegeModel> colleges          = <CollegeModel>[].obs;
-  final RxList<CollegeModel> displayedColleges = <CollegeModel>[].obs;
+  final RxList<AffiliatedCollegeModel> colleges          = <AffiliatedCollegeModel>[].obs;
+  final RxList<AffiliatedCollegeModel> displayedColleges = <AffiliatedCollegeModel>[].obs;
   final RxList<String>       states            = <String>[].obs;
   final RxString             selectedState     = 'All States'.obs;
   final RxBool               isLoading         = false.obs;
@@ -20,9 +21,15 @@ class FiliteredCollegescontroller extends GetxController {
 
   String _currentType = '';
 
-  // Guards against registering the same reconnect callback multiple
-  // times when init() is called repeatedly (e.g. on every pull-to-refresh).
   bool _reconnectRegistered = false;
+
+  List<AffiliatedCollegeModel> _platformVisible(List<AffiliatedCollegeModel> list) {
+    if (Platform.isIOS) {
+      final registeredType = Get.find<EnquiryController>().registeredCollegeType;
+      if (registeredType == '1') return [];
+    }
+    return list;
+  }
 
   Future<void> init(String type) async {
     _currentType = type;
@@ -31,8 +38,6 @@ class FiliteredCollegescontroller extends GetxController {
       fetchStates(),
     ]);
 
-    // If a state filter was active before this refresh, re-apply it
-    // instead of silently falling back to the unfiltered list.
     await _reapplyStateFilter();
 
     if (!_reconnectRegistered) {
@@ -59,9 +64,6 @@ class FiliteredCollegescontroller extends GetxController {
     await _reapplyStateFilter();
   }
 
-  // Re-runs the state-filtered fetch if a filter other than
-  // 'All States' is currently selected. Called after any full
-  // refresh (init / reconnect) so the active filter isn't lost.
   Future<void> _reapplyStateFilter() async {
     if (selectedState.value != 'All States') {
       await fetchByState(selectedState.value);
@@ -81,11 +83,11 @@ class FiliteredCollegescontroller extends GetxController {
       final response = await _dio.get(endpoint);
 
       if (response.statusCode == 200) {
-        final apiResponse = CollegeListResponse.fromJson(
+        final apiResponse = AffiliatedCollegeListResponse.fromJson(
           response.data as Map<String, dynamic>,
         );
-        colleges.value          = apiResponse.data;
-        displayedColleges.value = List.from(apiResponse.data);
+        colleges.value          = _platformVisible(apiResponse.data); // ✅
+        displayedColleges.value = List.from(colleges);                // ✅ derive from filtered colleges
       } else {
         error.value = 'Server error: ${response.statusCode}';
       }
@@ -109,7 +111,6 @@ class FiliteredCollegescontroller extends GetxController {
     }
   }
 
-// ── Fetch states ──────────────────────────────────────────
   Future<void> fetchStates() async {
     try {
       final endpoint = _currentType == 'temporary'
@@ -132,7 +133,7 @@ class FiliteredCollegescontroller extends GetxController {
   Future<void> fetchByState(String state) async {
     if (state == 'All States') {
       selectedState.value     = 'All States';
-      displayedColleges.value = List.from(colleges);
+      displayedColleges.value = List.from(colleges); // already platform-filtered
       emptyMessage.value      = '';
       return;
     }
@@ -152,10 +153,10 @@ class FiliteredCollegescontroller extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        final apiResponse = CollegeListResponse.fromJson(
+        final apiResponse = AffiliatedCollegeListResponse.fromJson(
           response.data as Map<String, dynamic>,
         );
-        displayedColleges.value = apiResponse.data;
+        displayedColleges.value = _platformVisible(apiResponse.data); // ✅
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {

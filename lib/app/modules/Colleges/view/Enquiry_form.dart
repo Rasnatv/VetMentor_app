@@ -150,7 +150,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
       neetScore:   _neetCtrl.text.trim(),
     );
 
-    await _ctrl.submitEnquiry(request);
+    await _ctrl.submitEnquiry(request, collegeType: widget.college?.type);
 
     if (_ctrl.isFormSuccess && mounted) {
       await Future.delayed(const Duration(milliseconds: 100));

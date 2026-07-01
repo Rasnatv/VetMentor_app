@@ -1,5 +1,6 @@
 
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
@@ -43,8 +44,7 @@ class CollegeController extends GetxController {
     fetchColleges();
     fetchTopCollegesFromApi();
     Get.find<NetworkService>().register(_onReconnect);
-    debounce(searchQuery, (_) => _applyFilter(),
-        time: const Duration(milliseconds: 300));
+    debounce(searchQuery, (_) => _applyFilter(), time: const Duration(milliseconds: 300));
   }
 
   @override
@@ -58,19 +58,23 @@ class CollegeController extends GetxController {
     await fetchTopCollegesFromApi();
   }
 
+  List<CollegeModel> _platformVisible(List<CollegeModel> list) {
+    if (Platform.isIOS) {
+      return list.where((c) => c.type != '1').toList();
+    }
+    return list;
+  }
+
   Future<void> fetchColleges({bool forceRefresh = false}) async {
     loadState.value = CollegeLoadState.loading;
     errorMessage.value = '';
 
     try {
       final response = await _dio.get('/college-list');
-
-      final result = CollegeListResponse.fromJson(
-        response.data as Map<String, dynamic>,
-      );
+      final result = CollegeListResponse.fromJson(response.data as Map<String, dynamic>);
 
       if (result.isSuccess) {
-        colleges.assignAll(result.data);
+        colleges.assignAll(_platformVisible(result.data));
         _applyFilter();
         loadState.value = CollegeLoadState.success;
       } else {
@@ -80,7 +84,7 @@ class CollegeController extends GetxController {
       if (ApiErrorHandler.isNetworkError(e)) {
         loadState.value = CollegeLoadState.initial;
       } else {
-        ApiErrorHandler.showError(e); // ✅ handles 508 + others
+        ApiErrorHandler.showError(e);
         _handleError(ApiErrorHandler.handleDioError(e));
       }
     } catch (e) {
@@ -94,13 +98,10 @@ class CollegeController extends GetxController {
 
     try {
       final response = await _dio.get('/college-list');
-
-      final result = CollegeListResponse.fromJson(
-        response.data as Map<String, dynamic>,
-      );
+      final result = CollegeListResponse.fromJson(response.data as Map<String, dynamic>);
 
       if (result.isSuccess) {
-        topColleges.assignAll(result.data.take(5).toList());
+        topColleges.assignAll(_platformVisible(result.data).take(5).toList());
         topCollegesError.value = false;
       } else {
         topCollegesError.value = true;
@@ -111,7 +112,7 @@ class CollegeController extends GetxController {
         topCollegesError.value = false;
       } else {
         topCollegesError.value = true;
-        ApiErrorHandler.showError(e); // ✅ handles 508 + others
+        ApiErrorHandler.showError(e);
       }
     } catch (e) {
       topCollegesError.value = true;
@@ -124,9 +125,7 @@ class CollegeController extends GetxController {
   void onSearchChanged(String query) => searchQuery.value = query;
 
   void toggleSave(CollegeModel college) {
-    savedIds.contains(college.id)
-        ? savedIds.remove(college.id)
-        : savedIds.add(college.id);
+    savedIds.contains(college.id) ? savedIds.remove(college.id) : savedIds.add(college.id);
     _persistSavedIds();
   }
 
@@ -146,6 +145,7 @@ class CollegeController extends GetxController {
           c.state.toLowerCase().contains(q)),
     );
   }
+
   void _handleError(String msg) {
     errorMessage.value = msg;
     loadState.value = CollegeLoadState.error;
@@ -155,11 +155,11 @@ class CollegeController extends GetxController {
     final raw = Storage.getValue<String>(_kSavedCollegeIds);
     if (raw != null && raw.isNotEmpty) {
       try {
-        savedIds.addAll(
-            (jsonDecode(raw) as List<dynamic>).map((e) => e.toString()));
+        savedIds.addAll((jsonDecode(raw) as List<dynamic>).map((e) => e.toString()));
       } catch (_) {}
     }
   }
-  void _persistSavedIds() => Storage.saveValueForce(
-      _kSavedCollegeIds, jsonEncode(savedIds.toList()));
+
+  void _persistSavedIds() =>
+      Storage.saveValueForce(_kSavedCollegeIds, jsonEncode(savedIds.toList()));
 }
