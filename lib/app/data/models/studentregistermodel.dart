@@ -118,9 +118,6 @@ class StudentRegisterResponse {
   });
 
   factory StudentRegisterResponse.fromJson(Map<String, dynamic> json) {
-    // API response shape:
-    // { "status":"1", "status_code":"200", "message":"...",
-    //   "data": { "id":"52", "first_name":... } }
     final data = json['data'];
     final id = (data is Map ? data['id']?.toString() : null) ?? '';
 

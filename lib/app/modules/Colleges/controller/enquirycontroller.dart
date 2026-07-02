@@ -13,7 +13,6 @@ import '../../profile/controller/profilecontroller.dart';
 
 const _kRegisteredStudentId = 'registered_student_id';
 const _kRegisteredCollegeType = 'registered_college_type';
-
 enum EnquiryFormState { idle, loading, success, error }
 
 class EnquiryController extends GetxController {
@@ -48,8 +47,6 @@ class EnquiryController extends GetxController {
 
   int get studentId => int.tryParse(_storedStudentId) ?? 0;
 
-  /// ✅ Registered college's type — readable from anywhere via
-  /// Get.find<EnquiryController>().registeredCollegeType
   String get registeredCollegeType => _collegeType.value;
 
   bool get isRegisteredCollegeTypeOne => registeredCollegeType == '1';
@@ -74,7 +71,7 @@ class EnquiryController extends GetxController {
   Future<void> _syncRegistrationState() async {
     final storedId = _storedStudentId;
     _collegeType.value =
-        Storage.getValue<String>(_kRegisteredCollegeType) ?? ''; // ✅ hydrate on start
+        Storage.getValue<String>(_kRegisteredCollegeType) ?? '';
 
     if (storedId.isEmpty) {
       _registered.value = false;
@@ -124,7 +121,6 @@ class EnquiryController extends GetxController {
     }
   }
 
-  /// ✅ collegeType is persisted the same way studentId is.
   Future<void> submitEnquiry(
       StudentRegisterRequest request, {
         String? collegeType,
@@ -138,7 +134,6 @@ class EnquiryController extends GetxController {
       StudentRegisterResponse.fromJson(res.data as Map<String, dynamic>);
 
       if (response.isSuccess) {
-        // ✅ always store as String — avoids read<String>() cast mismatch
         await Storage.saveValueForce(
           _kRegisteredStudentId,
           response.studentId.toString(),

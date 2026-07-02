@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../data/errors/ApiErrotHandler.dart';
 import '../../../no internetconnection/network_service.dart';
-import '../../Colleges/controller/enquirycontroller.dart'; // ✅ new
+import '../../Colleges/controller/enquirycontroller.dart';
 
 class SearchCollegeModel {
   final int id;

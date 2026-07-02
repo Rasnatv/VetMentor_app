@@ -294,15 +294,12 @@ class _ProfileShimmerState extends State<ProfileShimmer>
           // My Collections
           _sectionLabel(),
           _savedCollegesBtn(),
-
-          // Contact Details
           _sectionLabel(),
           _card(children: [
             _infoRow(),
             _infoRow(divider: false),
           ]),
 
-          // Location Details — has breadcrumb + 5 rows (Country→State→District→Address→Pincode)
           _sectionLabel(),
           _card(
             hasBreadcrumb: true,
@@ -314,14 +311,10 @@ class _ProfileShimmerState extends State<ProfileShimmer>
               _infoRow(divider: false), // Pincode
             ],
           ),
-
-          // Academic Details
           _sectionLabel(),
           _card(children: [
             _infoRow(divider: false),
           ]),
-
-          // NEET Score
           _sectionLabel(),
           _neetCard(),
 

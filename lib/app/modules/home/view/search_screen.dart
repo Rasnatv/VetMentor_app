@@ -45,11 +45,6 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  // ✅ /search-colleges has no `type` field at all — CollegeModel and
-  // SearchCollegeModel are two separate models from two separate APIs and
-  // should NOT be mixed by faking a `type`. CollegeModel no longer carries
-  // a `type` field at all; Enquiry_form.dart reads the effective type
-  // directly from CollegeController.collegeType.value when submitting.
   CollegeModel _toCollegeModel(SearchCollegeModel s) {
     return CollegeModel(
       id:          s.id.toString(),

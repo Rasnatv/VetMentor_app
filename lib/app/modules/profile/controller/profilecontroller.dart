@@ -23,13 +23,12 @@ class ProfileController extends GetxController {
     ),
   );
 
-  // ── Profile State ─────────────────────────────────────────
+
   final Rx<StudentProfileModel?> profile = Rx(null);
   final Rx<ProfileState> profileState    = ProfileState.idle.obs;
   final RxString profileError            = ''.obs;
   final RxBool isUpdating                = false.obs;
 
-  // ── Dropdowns ─────────────────────────────────────────────
   final RxList<ProgramModel> programs = <ProgramModel>[].obs;
   final RxBool dropdownsLoading = false.obs;
 

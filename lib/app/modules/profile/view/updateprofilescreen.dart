@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phone_form_field/phone_form_field.dart';
@@ -56,7 +57,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _neetCtrl     = TextEditingController(text: p.netScore);
     _gender       = p.gender.isNotEmpty ? p.gender : 'Male';
 
-    // Pre-fill phone with existing country code + number
     final dialCode = p.countryCode.isNotEmpty ? p.countryCode : '+91';
     _phoneCtrl = PhoneController(
       initialValue: PhoneNumber.parse('$dialCode${p.phoneNo}'),
@@ -262,10 +262,15 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
 
                   // Phone
+                  // autovalidateMode disabled so "Enter a valid mobile
+                  // number" doesn't fire after typing just 1 digit —
+                  // it only shows once _formKey.currentState!.validate()
+                  // runs on Save.
                   FieldWrapper(
                     label: 'Phone Number *',
                     child: PhoneFormField(
                       controller: _phoneCtrl,
+                      autovalidateMode: AutovalidateMode.disabled,
                       countryButtonStyle: CountryButtonStyle(
                         showDialCode: true,
                         showFlag: true,
@@ -292,7 +297,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   ),
                   SizedBox(height: r.spacing(AppDimens.paddingMD)),
 
-                  // State & District
+                  // Country & State — numbers blocked at formatter + validator level
                   Row(children: [
                     Expanded(
                       child: FieldWrapper(
@@ -300,11 +305,11 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                         child: TextFormField(
                           controller:_countryCtrl,
                           textCapitalization: TextCapitalization.words,
-                          inputFormatters: DValidator.textWithLimit,
+                          inputFormatters: DValidator.alphaOnly,
                           decoration: _dec('', r),
                           style: _ts(r),
                           validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
+                              DValidator.validateAlphaOnly('Country', v),
                         ),
                       ),
                     ),
@@ -315,18 +320,18 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                         child: TextFormField(
                           controller:_stateCtrl,
                           textCapitalization: TextCapitalization.words,
-                          inputFormatters: DValidator.textWithLimit,
+                          inputFormatters: DValidator.alphaOnly,
                           decoration: _dec('', r),
                           style: _ts(r),
                           validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
+                              DValidator.validateAlphaOnly('State', v),
                         ),
                       ),
                     ),
                   ]),
                   SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
 
-                  // Country & Pincode
+                  // District & Pincode
                   Row(children: [
                     Expanded(
                       child: FieldWrapper(
@@ -334,11 +339,11 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                         child: TextFormField(
                           controller: _districtCtrl,
                           textCapitalization: TextCapitalization.words,
-                          inputFormatters: DValidator.textWithLimit,
+                          inputFormatters: DValidator.alphaOnly,
                           decoration: _dec('', r),
                           style: _ts(r),
                           validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
+                              DValidator.validateAlphaOnly('District', v),
                         ),
                       ),
                     ),
@@ -361,7 +366,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   ]),
                   SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
 
-                  // Address
+                  // Address — numbers allowed (house/flat no., etc.)
                   FieldWrapper(
                     label: 'Address *',
                     child: TextFormField(
@@ -374,8 +379,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       decoration: _dec('', r)
                           .copyWith(alignLabelWithHint: true),
                       style: _ts(r),
-                      validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      validator: (v) => DValidator.validateRequired(v),
                     ),
                   ),
                   SizedBox(height: r.spacing(AppDimens.paddingXL)),
@@ -525,7 +529,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       ),
                     );
                   }),
-                   SizedBox(height: r.spacing(AppDimens.paddingXXXL)),
+                  SizedBox(height: r.spacing(AppDimens.paddingXXXL)),
 
                 ],
               ),

@@ -36,7 +36,7 @@ class CollegeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadInitialData(); // ✅ sequential — no more race on collegeType
+    _loadInitialData();
     Get.find<NetworkService>().register(_onReconnect);
     debounce(searchQuery, (_) => _applyFilter(), time: const Duration(milliseconds: 300));
   }
@@ -129,7 +129,6 @@ class CollegeController extends GetxController {
           c.state.toLowerCase().contains(q)),
     );
   }
-
   void _handleError(String msg) {
     errorMessage.value = msg;
     loadState.value = CollegeLoadState.error;

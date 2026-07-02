@@ -13,8 +13,6 @@ class CourseDetailController extends GetxController {
   final isLoading                          = false.obs;
   final hasError                           = false.obs;
   final Rx<CourseDetailModel?> courseDetail = Rx<CourseDetailModel?>(null);
-
-  // Keep last courseId for reconnect re-fetch
   String _lastCourseId = '';
 
   @override
@@ -23,7 +21,6 @@ class CourseDetailController extends GetxController {
     super.onClose();
   }
 
-  // ── reconnect callback ────────────────────────────────────
   Future<void> _onReconnect() async {
     if (_lastCourseId.isNotEmpty) await fetchCourseDetail(_lastCourseId);
   }
@@ -31,7 +28,6 @@ class CourseDetailController extends GetxController {
   Future<void> fetchCourseDetail(String courseId) async {
     _lastCourseId = courseId;
 
-    // ✅ Register on first fetch so we have courseId available
     Get.find<NetworkService>().register(_onReconnect);
 
     isLoading.value = true;
@@ -59,7 +55,6 @@ class CourseDetailController extends GetxController {
       }
     } on DioException catch (e) {
       if (ApiErrorHandler.isNetworkError(e)) {
-        // ✅ Network error — don't show error widget, NetworkAwareWrapper handles it
         hasError.value = false;
       } else {
         hasError.value = true;

@@ -125,7 +125,6 @@ class FiliteredCollegescontroller extends GetxController {
       }
     } on DioException catch (e) {
       if (!ApiErrorHandler.isNetworkError(e)) {
-        // Non-network error — silently fail
       }
     } catch (_) {}
   }
@@ -166,14 +165,12 @@ class FiliteredCollegescontroller extends GetxController {
             ? body['message'].toString()
             : 'No colleges found for this state';
       } else if (!ApiErrorHandler.isNetworkError(e)) {
-        // Non-network errors — silently fail
       }
     } catch (_) {}
     finally {
       isLoading.value = false;
     }
   }
-
   void clearStateFilter(String type) {
     selectedState.value     = 'All States';
     displayedColleges.value = List.from(colleges);

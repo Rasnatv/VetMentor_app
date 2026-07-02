@@ -151,9 +151,6 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
       collegeId:   widget.college?.id,
       neetScore:   _neetCtrl.text.trim(),
     );
-
-    // ✅ was: collegeType: widget.college?.type — CollegeModel no longer
-    // carries "type"; it's a single response-level flag from CollegeController.
     await _ctrl.submitEnquiry(request, collegeType: _collegeCtrl.collegeType.value);
 
     if (_ctrl.isFormSuccess && mounted) {
@@ -389,9 +386,14 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
             SizedBox(height: gap),
 
             // Phone
+            // NOTE: autovalidateMode is set to disabled so the
+            // "Enter a valid mobile number" error does NOT appear after
+            // typing just 1 digit. It only shows once the user taps
+            // "Next" and _step1Key.currentState!.validate() runs.
             _label('Phone *',
               PhoneFormField(
                 controller: _phoneCtrl,
+                autovalidateMode: AutovalidateMode.disabled,
                 countryButtonStyle: CountryButtonStyle(
                   showDialCode: true,
                   showFlag: true,
@@ -466,7 +468,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // State & District
+            // Country & State — digits blocked at formatter + validator level
             Row(children: [
               Expanded(
                 child: _label('Country *',
@@ -474,10 +476,11 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     controller: _countryCtrl,
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
-                    inputFormatters: DValidator.textWithLimit,
+                    inputFormatters: DValidator.alphaOnly,
                     decoration: _dec('', r),
                     style: _ts(r),
-                    validator: (v) => DValidator.validateRequired(v),
+                    validator: (v) =>
+                        DValidator.validateAlphaOnly('Country', v),
                   ),
                 ),
               ),
@@ -488,17 +491,18 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     controller: _stateCtrl,
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
-                    inputFormatters: DValidator.textWithLimit,
+                    inputFormatters: DValidator.alphaOnly,
                     decoration: _dec('', r),
                     style: _ts(r),
-                    validator: (v) => DValidator.validateRequired(v),
+                    validator: (v) =>
+                        DValidator.validateAlphaOnly('State', v),
                   ),
                 ),
               ),
             ]),
             SizedBox(height: gap),
 
-            // Country & Pincode
+            // District & Pincode
             Row(children: [
               Expanded(
                 child: _label('District *',
@@ -506,10 +510,11 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     controller: _districtCtrl,
                     textCapitalization: TextCapitalization.words,
                     maxLength: DValidator.maxTextLength,
-                    inputFormatters: DValidator.textWithLimit,
+                    inputFormatters: DValidator.alphaOnly,
                     decoration: _dec('', r),
                     style: _ts(r),
-                    validator: (v) => DValidator.validateRequired(v),
+                    validator: (v) =>
+                        DValidator.validateAlphaOnly('District', v),
                   ),
                 ),
               ),
@@ -521,10 +526,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
                     keyboardType: TextInputType.text,
                     // ← text, not number (allows letters too)
                     maxLength: 10,                      // ← hard UI cap at 10
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s-]')), // ← replaces digitsOnly
-                      LengthLimitingTextInputFormatter(10),
-                    ],
+                    inputFormatters: DValidator.postalCode, // letters+digits+space+hyphen, max 10
                     decoration: _dec('', r),
                     style: _ts(r),
                     validator: (v) => DValidator.validatePincode(v),
@@ -534,7 +536,7 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
             ]),
             SizedBox(height: gap),
 
-            // Address
+            // Address — numbers allowed (house/flat no., etc.)
             _label('Address *',
               TextFormField(
                 controller: _addressCtrl,

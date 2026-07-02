@@ -262,8 +262,6 @@ class _AffiliationCard extends StatelessWidget {
                 ),
 
                 SizedBox(width: r.spacing(AppDimens.paddingXS)),
-
-                // Arrow in a soft circular backdrop
                 Container(
                   width: r.spacing(32),
                   height: r.spacing(32),

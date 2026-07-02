@@ -27,7 +27,7 @@ class _MentorScreenState extends State<MentorScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(MentorController()); // ✅ moved from build
+    controller = Get.put(MentorController());
     enquiryCtrl = Get.find<EnquiryController>();
   }
 
@@ -128,9 +128,6 @@ class _MentorScreenState extends State<MentorScreen> {
 
   void _showEnquirySheet(
       BuildContext context, Responsive r, EnquiryController enquiryCtrl) {
-    // ❌ no "type:" here anymore — CollegeModel doesn't carry it.
-    // Enquiry_form.dart reads the effective type directly from
-    // CollegeController.collegeType.value when submitting.
     final mentorCollege = CollegeModel(
       id: '',
       collegeName: 'VET Admission Mentor',
@@ -306,7 +303,6 @@ class _YouTubeChannelCard extends StatelessWidget {
                         ),
                       ),
 
-                    // Centre play button
                     if (!isLoading)
                       Positioned.fill(
                         child: Center(
@@ -500,9 +496,6 @@ class _YouTubeChannelCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Thumbnail helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _ThumbnailFallback extends StatelessWidget {
   final Responsive r;
@@ -570,10 +563,6 @@ class _ThumbnailSkeletonState extends State<_ThumbnailSkeleton>
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Video list tile
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _VideoListTile extends StatelessWidget {
   final Responsive r;
@@ -659,10 +648,6 @@ class _MiniThumbFallback extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Contact Card
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _ContactCard extends StatelessWidget {
   final Responsive r;
@@ -762,12 +747,12 @@ class _ContactCard extends StatelessWidget {
 
 class _ContactRow extends StatelessWidget {
   final Responsive r;
-  final IconData? icon;        // used when no SVG is supplied
-  final String? svgAsset;      // ✅ used when an SVG icon is supplied
+  final IconData? icon;
+  final String? svgAsset;
   final String label;
   final String value;
   final Color iconBg;
-  final Color? iconColor;      // ✅ optional — if null, SVG keeps its own native color
+  final Color? iconColor;
   final VoidCallback onTap;
 
   const _ContactRow({
@@ -788,9 +773,6 @@ class _ContactRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        // ✅ Ensures the ENTIRE row area is tappable — including the
-        // arrow icon, the gaps between widgets, and the empty space —
-        // not just where a child widget happens to paint pixels.
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: r.spacing(AppDimens.paddingMD),
@@ -809,10 +791,6 @@ class _ContactRow extends StatelessWidget {
                   child: svgAsset != null
                       ? (iconColor != null
                       ? ColorFiltered(
-                    // ✅ Only force a tint when iconColor is
-                    // explicitly provided — this is what fixes
-                    // icons staying the wrong/baked-in color
-                    // when a tint IS wanted.
                     colorFilter:
                     ColorFilter.mode(iconColor!, BlendMode.srcIn),
                     child: SvgPicture.asset(
@@ -821,8 +799,6 @@ class _ContactRow extends StatelessWidget {
                       height: r.fontSize(AppDimens.iconXS + 2),
                     ),
                   )
-                  // ✅ No iconColor given → render the SVG exactly
-                  // as authored, using its own embedded colors.
                       : SvgPicture.asset(
                     svgAsset!,
                     width: r.fontSize(AppDimens.iconXS + 2),

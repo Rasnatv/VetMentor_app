@@ -85,11 +85,9 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Navigation helpers ────────────────────────────────────
 
   void _openCollegeDetail(CollegeModel college) {
-    // ✅ "type" is a single flag per API call (from CollegeController),
-    // NOT a per-college field anymore — CollegeModel no longer has .type.
     final type = _ctrl.collegeType.value;
 
-    _enquiryCtrl.markCollegeType(type); // ✅ store backend type before form submit
+    _enquiryCtrl.markCollegeType(type);
 
     if (_enquiryCtrl.shouldShowEnquiryForm(type)) {
       showModalBottomSheet(
@@ -131,12 +129,9 @@ class _HomeScreenState extends State<HomeScreen>
           final isLoading = _ctrl.topCollegesLoading.value ||
               _courseCtrl.isLoading.value;
 
-          // ── Shimmer phase ─────────────────────────────────
           if (isLoading) {
             return const HomeScreenShimmer();
           }
-
-          // ── Real content (fades in) ───────────────────────
           return FadeTransition(
             opacity: _fadeAnim,
             child: SafeArea(
@@ -256,9 +251,6 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
-
-
-
   Widget _buildHeroBanner(Responsive r) {
     return Padding(
       padding: EdgeInsets.fromLTRB(

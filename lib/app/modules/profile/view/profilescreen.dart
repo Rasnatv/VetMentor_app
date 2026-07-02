@@ -157,8 +157,6 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               child: _ProfileHeroBanner(profile: p),
             ),
-
-            // My Collections
             const _SectionHeader(title: 'My Collections'),
             Padding(
               padding: EdgeInsets.symmetric(

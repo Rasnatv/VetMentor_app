@@ -29,9 +29,6 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
   late final EnquiryController _ctrl;
   late final WishlistController _wishlistCtrl;
 
-  // Local flag that drives the small refresh indicator in the AppBar.
-  // Kept separate from _ctrl.detailLoading so a pull-to-refresh doesn't
-  // blank out the whole page while new data (e.g. admin panel edits) loads.
   bool _isRefreshing = false;
 
   @override
@@ -55,10 +52,6 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
     }
   }
 
-  // ── Pull-to-refresh handler ───────────────────────────────
-  // Re-fetches the college detail so any changes made from the
-  // admin panel are reflected here. Shows the built-in
-  // RefreshIndicator circular spinner while it runs.
   Future<void> _onRefresh() async {
     setState(() => _isRefreshing = true);
     try {
@@ -171,11 +164,8 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                       ),
                     ),
                   ),
-
-                  // ── Actions: refresh spinner + bookmark button ──
                   actions: [
-                    // Small circular indicator that shows while a
-                    // manual refresh (pull-to-refresh) is in flight.
+
                     if (_isRefreshing)
                       Padding(
                         padding: EdgeInsets.all(r.spacing(AppDimens.paddingSM)),

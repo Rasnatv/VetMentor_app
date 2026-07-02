@@ -28,11 +28,12 @@ class LandingView extends StatelessWidget {
       }
     });
 
-    return WillPopScope(
-      onWillPop: () async {
-        controller.onBackPressed();
-        return false;
-      },
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          controller.onBackPressed();
+        },
       child: Obx(
             () {
           final index = controller.currentIndex.value;

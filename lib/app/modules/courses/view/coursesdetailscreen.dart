@@ -63,7 +63,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Hero Banner ──────────────────────────────
             _buildHeroBanner(r, course),
 
             Padding(

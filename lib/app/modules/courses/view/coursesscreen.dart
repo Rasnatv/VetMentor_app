@@ -244,7 +244,7 @@ class _CourseListTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon badge
+
             Container(
               width: r.spacing(48),
               height: r.spacing(48),

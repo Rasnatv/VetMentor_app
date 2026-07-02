@@ -48,11 +48,8 @@ class _TemporaryAffiliatedScreenState
     await c.init('temporary');
   }
 
-  // ✅ takes AffiliatedCollegeModel now (matches controller's list type)
   void _openCollegeDetail(AffiliatedCollegeModel college) {
     if (college.id.isEmpty) return;
-
-    // ✅ this endpoint has no `type` — use the type saved during registration
     final effectiveType = _enquiryCtrl.registeredCollegeType;
 
     if (_enquiryCtrl.shouldShowEnquiryForm(effectiveType)) {
@@ -61,11 +58,8 @@ class _TemporaryAffiliatedScreenState
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (_) => EnquiryBottomSheet(
-          college: CollegeModel(                       // ✅ build a CollegeModel on the spot
+          college: CollegeModel(
             id: college.id,
-            // ❌ no "type:" here anymore — CollegeModel doesn't carry it.
-            // Enquiry_form.dart now reads the effective type directly from
-            // CollegeController.collegeType.value when submitting.
             collegeName: college.collegeName,
             district: college.district,
             state: college.state,

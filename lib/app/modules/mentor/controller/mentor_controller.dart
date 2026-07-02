@@ -94,21 +94,17 @@ class MentorController extends GetxController {
             .toList();
         videos.assignAll(list);
       } else {
-        // API returned failure — show snackbar
         AppSnackbar.error(
           body['message']?.toString() ?? 'Failed to load videos.',
         );
       }
     } on DioException catch (e) {
       if (ApiErrorHandler.isNetworkError(e)) {
-        // ✅ Network error — stay silent, NetworkAwareWrapper handles it
         videosError.value = false;
       } else {
-        // ✅ Real API error — show snackbar
         AppSnackbar.error(ApiErrorHandler.handleDioError(e));
       }
     } catch (_) {
-      // Silently fail — UI falls back to the static channel card
     } finally {
       isVideosLoading.value = false;
     }
@@ -132,7 +128,6 @@ class MentorController extends GetxController {
     }
   }
 
-  // ── Number 1 actions ──────────────────────────────────────
   Future<void> callMentor() async {
     final uri = Uri.parse('tel:$mentorPhone');
     if (await canLaunchUrl(uri)) {

@@ -1,4 +1,5 @@
 
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../mentor/controller/mentor_controller.dart';
@@ -39,10 +40,12 @@ class LandingController extends GetxController {
   }
 
   void onBackPressed() {
+    print("BACK PRESSED - index is ${currentIndex.value}");
     if (currentIndex.value != 0) {
       currentIndex.value = 0;
     } else {
-      Get.back();
+      print("TRYING TO EXIT APP");
+      SystemNavigator.pop();
     }
   }
-}
+  }
