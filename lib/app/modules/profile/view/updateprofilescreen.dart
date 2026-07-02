@@ -182,12 +182,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           ),
         ),
       ),
-      // NOTE: previously this body used a Stack with a second full-screen
-      // loading overlay on top of the form. That produced two spinners
-      // (the overlay + the one inside the Save button) at the same time.
-      // The overlay has been removed — the Save button's own Obx spinner
-      // (below) is now the single source of loading feedback, and it also
-      // disables the button while saving.
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           r.spacing(AppDimens.paddingXL),
