@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../core/constants/appcolors.dart';
 import '../core/style/textstyle.dart';
 
@@ -75,7 +74,6 @@ class VetBottomNav extends StatelessWidget {
     );
   }
 }
-
 class _NavItem {
   final IconData icon;
   final IconData activeIcon;
