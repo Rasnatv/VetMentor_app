@@ -236,7 +236,6 @@ class ShimmerCollegeCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Letter-avatar square (S / R / M)
           Container(
             width: 52,
             height: 52,

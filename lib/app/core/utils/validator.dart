@@ -7,7 +7,6 @@ class DValidator {
   /// Max character limit for all text fields
   static const int maxTextLength = 100;
 
-  /// NEET score range
   static const int minNeet = 0;
   static const int maxNeet = 720;
 
@@ -19,16 +18,11 @@ class DValidator {
     return null;
   }
 
-  // ── Generic required field ─────────────────────────────────
-  /// Use for plain "Required" fields (address, etc.) where digits are
-  /// allowed and you don't need a custom field name in the message.
   static String? validateRequired(String? value, {String message = 'Required'}) {
     if (value == null || value.trim().isEmpty) return message;
     return null;
   }
 
-  // ── Alpha-only (Country / State / District) ─────────────────
-  /// Required, letters/spaces/apostrophe/hyphen only — blocks numbers.
   static String? validateAlphaOnly(String fieldName, String? value) {
     final v = value?.trim() ?? '';
     if (v.isEmpty) {
@@ -46,16 +40,13 @@ class DValidator {
     return null;
   }
 
-  /// Blocks digits at the keyboard level so numbers can't even be typed.
-  /// Use on Country / State / District fields.
   static List<TextInputFormatter> get alphaOnly => [
     FilteringTextInputFormatter.deny(RegExp(r'[0-9]')),
     FilteringTextInputFormatter.allow(RegExp(r"[a-zA-Z\s'-]")),
     LengthLimitingTextInputFormatter(maxTextLength),
   ];
 
-  // ── Name (first / last) ───────────────────────────────────
-  /// Max 100 chars, letters and spaces only
+
   static String? validateName(String? fieldName, String? value) {
     if (value == null || value.trim().isEmpty) {
       return '$fieldName is required';
@@ -69,8 +60,6 @@ class DValidator {
     return null;
   }
 
-  // ── Email ─────────────────────────────────────────────────
-  /// Required, valid format, max 100 chars
   static String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Email is required';
@@ -182,8 +171,6 @@ class DValidator {
     LengthLimitingTextInputFormatter(maxTextLength),
   ];
 
-  /// Letters, digits, spaces, and hyphens, max 10 chars — use on
-  /// pincode / postal code fields so it matches [validatePincode].
   static List<TextInputFormatter> get postalCode => [
     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s-]')),
     LengthLimitingTextInputFormatter(10),
