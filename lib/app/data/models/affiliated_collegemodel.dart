@@ -27,8 +27,6 @@ class AffiliatedCollegeListResponse {
   bool get isSuccess => status == '1' && statusCode == '200';
 }
 
-/// Used for /temporary-colleges and /permanent-colleges — these endpoints
-/// don't return a `type` field, unlike /college-list (CollegeModel).
 class AffiliatedCollegeModel {
   final String id;
   final String collegeName;

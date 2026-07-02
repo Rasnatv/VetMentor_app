@@ -10,6 +10,7 @@ import '../../../core/utils/responsive utiliteclass.dart';
 import '../../../core/utils/validator.dart';
 import '../../../data/models/collegelistmodel.dart';
 import '../../../data/models/studentregistermodel.dart';
+import '../controller/college_controller.dart';
 import '../controller/enquirycontroller.dart';
 
 class EnquiryBottomSheet extends StatefulWidget {
@@ -29,6 +30,7 @@ class EnquiryBottomSheet extends StatefulWidget {
 class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
     with SingleTickerProviderStateMixin {
   final EnquiryController _ctrl = Get.find<EnquiryController>();
+  final CollegeController _collegeCtrl = Get.find<CollegeController>(); // ✅ source of the single response-level type
 
   // ── Steps ─────────────────────────────────────────────────────────────────
   final _step1Key = GlobalKey<FormState>();
@@ -150,7 +152,9 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet>
       neetScore:   _neetCtrl.text.trim(),
     );
 
-    await _ctrl.submitEnquiry(request, collegeType: widget.college?.type);
+    // ✅ was: collegeType: widget.college?.type — CollegeModel no longer
+    // carries "type"; it's a single response-level flag from CollegeController.
+    await _ctrl.submitEnquiry(request, collegeType: _collegeCtrl.collegeType.value);
 
     if (_ctrl.isFormSuccess && mounted) {
       await Future.delayed(const Duration(milliseconds: 100));

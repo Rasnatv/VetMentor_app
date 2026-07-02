@@ -128,9 +128,11 @@ class _MentorScreenState extends State<MentorScreen> {
 
   void _showEnquirySheet(
       BuildContext context, Responsive r, EnquiryController enquiryCtrl) {
+    // ❌ no "type:" here anymore — CollegeModel doesn't carry it.
+    // Enquiry_form.dart reads the effective type directly from
+    // CollegeController.collegeType.value when submitting.
     final mentorCollege = CollegeModel(
       id: '',
-      type: '0',
       collegeName: 'VET Admission Mentor',
       district: '',
       state: '',
@@ -846,8 +848,6 @@ class _ContactRow extends StatelessWidget {
                   ],
                 ),
               ),
-              // ── Arrow icon: same onTap fires here too — it's part
-              // of the same InkWell-covered row, no separate handler.
               Icon(Icons.arrow_forward_ios_rounded,
                   size: r.fontSize(AppDimens.iconXS),
                   color: AppColors.textSecondary),

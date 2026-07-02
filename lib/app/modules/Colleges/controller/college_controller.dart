@@ -1,18 +1,12 @@
-
 import 'dart:convert';
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-
 import '../../../core/network/api_constants.dart';
-import '../../../core/storage/storage.dart';
 import '../../../data/errors/ApiErrotHandler.dart';
 import '../../../data/models/collegelistmodel.dart';
 import '../../../no internetconnection/network_service.dart';
 
 enum CollegeLoadState { initial, loading, success, error }
-
-const _kSavedCollegeIds = 'saved_college_ids';
 
 class CollegeController extends GetxController {
   final Dio _dio = Dio(
@@ -34,15 +28,15 @@ class CollegeController extends GetxController {
   final RxString searchQuery = ''.obs;
   final RxSet<String> savedIds = <String>{}.obs;
 
+  final RxString collegeType = '0'.obs;
+
   bool get isLoading => loadState.value == CollegeLoadState.loading;
   bool get hasError => loadState.value == CollegeLoadState.error;
 
   @override
   void onInit() {
     super.onInit();
-    _loadSavedIds();
-    fetchColleges();
-    fetchTopCollegesFromApi();
+    _loadInitialData(); // ✅ sequential — no more race on collegeType
     Get.find<NetworkService>().register(_onReconnect);
     debounce(searchQuery, (_) => _applyFilter(), time: const Duration(milliseconds: 300));
   }
@@ -53,16 +47,14 @@ class CollegeController extends GetxController {
     super.onClose();
   }
 
-  Future<void> _onReconnect() async {
-    await fetchColleges(forceRefresh: true);
+  Future<void> _loadInitialData() async {
+    await fetchColleges();
     await fetchTopCollegesFromApi();
   }
 
-  List<CollegeModel> _platformVisible(List<CollegeModel> list) {
-    if (Platform.isIOS) {
-      return list.where((c) => c.type != '1').toList();
-    }
-    return list;
+  Future<void> _onReconnect() async {
+    await fetchColleges(forceRefresh: true);
+    await fetchTopCollegesFromApi();
   }
 
   Future<void> fetchColleges({bool forceRefresh = false}) async {
@@ -74,7 +66,8 @@ class CollegeController extends GetxController {
       final result = CollegeListResponse.fromJson(response.data as Map<String, dynamic>);
 
       if (result.isSuccess) {
-        colleges.assignAll(_platformVisible(result.data));
+        colleges.assignAll(result.data);
+        collegeType.value = result.type;
         _applyFilter();
         loadState.value = CollegeLoadState.success;
       } else {
@@ -101,7 +94,8 @@ class CollegeController extends GetxController {
       final result = CollegeListResponse.fromJson(response.data as Map<String, dynamic>);
 
       if (result.isSuccess) {
-        topColleges.assignAll(_platformVisible(result.data).take(5).toList());
+        topColleges.assignAll(result.data.take(5).toList());
+        collegeType.value = result.type;
         topCollegesError.value = false;
       } else {
         topCollegesError.value = true;
@@ -124,16 +118,6 @@ class CollegeController extends GetxController {
 
   void onSearchChanged(String query) => searchQuery.value = query;
 
-  void toggleSave(CollegeModel college) {
-    savedIds.contains(college.id) ? savedIds.remove(college.id) : savedIds.add(college.id);
-    _persistSavedIds();
-  }
-
-  bool isSaved(CollegeModel college) => savedIds.contains(college.id);
-
-  List<CollegeModel> get savedColleges =>
-      colleges.where((c) => savedIds.contains(c.id)).toList();
-
   void _applyFilter() {
     final q = searchQuery.value.trim().toLowerCase();
     filteredColleges.assignAll(
@@ -150,16 +134,4 @@ class CollegeController extends GetxController {
     errorMessage.value = msg;
     loadState.value = CollegeLoadState.error;
   }
-
-  void _loadSavedIds() {
-    final raw = Storage.getValue<String>(_kSavedCollegeIds);
-    if (raw != null && raw.isNotEmpty) {
-      try {
-        savedIds.addAll((jsonDecode(raw) as List<dynamic>).map((e) => e.toString()));
-      } catch (_) {}
-    }
-  }
-
-  void _persistSavedIds() =>
-      Storage.saveValueForce(_kSavedCollegeIds, jsonEncode(savedIds.toList()));
 }

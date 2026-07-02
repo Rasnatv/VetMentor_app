@@ -28,8 +28,13 @@ class _CollegeListScreenState extends State<CollegeListScreen> {
 
   // ── Navigation ────────────────────────────────────────────
   void _openCollegeDetail(CollegeModel college) {
+    // ✅ "type" is a single flag per API call (from CollegeController),
+    // NOT a per-college field anymore — CollegeModel no longer has .type.
+    final type = _ctrl.collegeType.value;
 
-    if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
+    _enquiryCtrl.markCollegeType(type); // ✅ store backend type before form submit
+
+    if (_enquiryCtrl.shouldShowEnquiryForm(type)) {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,

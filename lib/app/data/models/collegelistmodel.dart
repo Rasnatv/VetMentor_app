@@ -3,12 +3,14 @@ class CollegeListResponse {
   final String status;
   final String statusCode;
   final String message;
+  final String type; // ✅ ONE flag per API call — not per college
   final List<CollegeModel> data;
 
   const CollegeListResponse({
     required this.status,
     required this.statusCode,
     required this.message,
+    required this.type,
     required this.data,
   });
 
@@ -17,6 +19,7 @@ class CollegeListResponse {
       status: json['status']?.toString() ?? '',
       statusCode: json['status_code']?.toString() ?? '',
       message: json['message']?.toString() ?? '',
+      type: json['type']?.toString() ?? '0', // ✅ read once, top-level only
       data: (json['data'] as List<dynamic>?)
           ?.map((e) => CollegeModel.fromJson(e as Map<String, dynamic>))
           .toList() ??
@@ -29,14 +32,14 @@ class CollegeListResponse {
 
 class CollegeModel {
   final String id;
-  final String type;
   final String collegeName;
   final String district;
   final String state;
+  // ❌ no "type" field here — the API never sends it per-item, and it
+  // never differs between colleges within the same response.
 
   const CollegeModel({
     required this.id,
-    required this.type,
     required this.collegeName,
     required this.district,
     required this.state,
@@ -44,44 +47,34 @@ class CollegeModel {
 
   factory CollegeModel.fromJson(Map<String, dynamic> json) {
     return CollegeModel(
-      id:          json['id']?.toString() ?? '',
-      type:        json['type']?.toString() ?? '0',
+      id: json['id']?.toString() ?? '',
       collegeName: json['college_name']?.toString() ?? '',
-      district:    json['district']?.toString() ?? '',
-      state:       json['state']?.toString() ?? '',
+      district: json['district']?.toString() ?? '',
+      state: json['state']?.toString() ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id':           id,
-    'type':         type,
+    'id': id,
     'college_name': collegeName,
-    'district':     district,
-    'state':        state,
+    'district': district,
+    'state': state,
   };
 
   /// Full location string e.g. "Jhajjar, Haryana"
   String get location => '$district, $state';
 
-  /// type '1' = government, type '0' = private
-  bool get isGovernment => type == '1';
-
-  /// type '0' = enquiry form required, type '1' = skip enquiry form (iOS only)
-  bool get isEnquiryRequired => type == '0';
-
   CollegeModel copyWith({
     String? id,
-    String? type,
     String? collegeName,
     String? district,
     String? state,
   }) {
     return CollegeModel(
-      id:          id ?? this.id,
-      type:        type ?? this.type,
+      id: id ?? this.id,
       collegeName: collegeName ?? this.collegeName,
-      district:    district ?? this.district,
-      state:       state ?? this.state,
+      district: district ?? this.district,
+      state: state ?? this.state,
     );
   }
 

@@ -85,7 +85,13 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Navigation helpers ────────────────────────────────────
 
   void _openCollegeDetail(CollegeModel college) {
-    if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
+    // ✅ "type" is a single flag per API call (from CollegeController),
+    // NOT a per-college field anymore — CollegeModel no longer has .type.
+    final type = _ctrl.collegeType.value;
+
+    _enquiryCtrl.markCollegeType(type); // ✅ store backend type before form submit
+
+    if (_enquiryCtrl.shouldShowEnquiryForm(type)) {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,

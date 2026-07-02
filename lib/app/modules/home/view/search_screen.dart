@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart' hide SearchController;
 import 'package:get/get.dart';
 import '../../../core/constants/appcolors.dart';
@@ -44,22 +45,26 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  CollegeModel _toCollegeModel(SearchCollegeModel s, String effectiveType) { // ✅ takes effectiveType now
+  // ✅ /search-colleges has no `type` field at all — CollegeModel and
+  // SearchCollegeModel are two separate models from two separate APIs and
+  // should NOT be mixed by faking a `type`. CollegeModel no longer carries
+  // a `type` field at all; Enquiry_form.dart reads the effective type
+  // directly from CollegeController.collegeType.value when submitting.
+  CollegeModel _toCollegeModel(SearchCollegeModel s) {
     return CollegeModel(
       id:          s.id.toString(),
-      type:        effectiveType, // ✅ stored registeredCollegeType, not from API
       collegeName: s.collegeName,
       district:    s.district,
       state:       s.state,
     );
   }
 
-// ── Navigation: tap college card ──────────────────────────
+  // ── Navigation: tap college card ──────────────────────────
   void _openCollegeDetail(SearchCollegeModel searchCollege) {
-    final effectiveType = _enquiryCtrl.registeredCollegeType; // ✅ stored type
-    final college = _toCollegeModel(searchCollege, effectiveType);
+    final storedType = _enquiryCtrl.registeredCollegeType; // ✅ already stored value
 
-    if (_enquiryCtrl.shouldShowEnquiryForm(college.type)) {
+    if (_enquiryCtrl.shouldShowEnquiryForm(storedType)) {
+      final college = _toCollegeModel(searchCollege);
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -74,11 +79,10 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-// ✅ After
   void _pushDetail(String collegeId) {
     Get.to(
           () => CollegeDetailScreen(collegeId: collegeId),
-      binding: CourseDetailBinding(), // ✅ add this
+      binding: CollegeDetailBinding(), // ✅ fixed — was CourseDetailBinding()
       transition: Transition.rightToLeft,
     );
   }
@@ -272,6 +276,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 }
+
 class _SearchField extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;

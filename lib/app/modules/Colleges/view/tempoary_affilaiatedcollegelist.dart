@@ -63,7 +63,9 @@ class _TemporaryAffiliatedScreenState
         builder: (_) => EnquiryBottomSheet(
           college: CollegeModel(                       // ✅ build a CollegeModel on the spot
             id: college.id,
-            type: effectiveType,
+            // ❌ no "type:" here anymore — CollegeModel doesn't carry it.
+            // Enquiry_form.dart now reads the effective type directly from
+            // CollegeController.collegeType.value when submitting.
             collegeName: college.collegeName,
             district: college.district,
             state: college.state,

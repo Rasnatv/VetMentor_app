@@ -90,6 +90,12 @@ class EnquiryController extends GetxController {
     return collegeType == '0';
   }
 
+  Future<void> markCollegeType(String? collegeType) async {
+    if (collegeType == null || collegeType.isEmpty) return;
+    await Storage.saveValueForce(_kRegisteredCollegeType, collegeType);
+    _collegeType.value = collegeType;
+  }
+
   Future<void> fetchCollegeDetail(String collegeId) async {
     detailLoading.value = true;
     detailError.value = '';
