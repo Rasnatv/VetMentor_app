@@ -236,15 +236,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
               ),
-              Container(
-                padding: EdgeInsets.all(r.spacing(7)),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySurface,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-                ),
-                child: Icon(Icons.tune_rounded,
-                    color: AppColors.primary, size: r.fontSize(16)),
-              ),
+
             ],
           ),
         ),

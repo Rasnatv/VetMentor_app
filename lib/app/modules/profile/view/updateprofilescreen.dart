@@ -182,399 +182,364 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              r.spacing(AppDimens.paddingXL),
-              r.spacing(AppDimens.paddingLG),
-              r.spacing(AppDimens.paddingXL),
-              bottom + r.spacing(AppDimens.paddingXL),
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      // NOTE: previously this body used a Stack with a second full-screen
+      // loading overlay on top of the form. That produced two spinners
+      // (the overlay + the one inside the Save button) at the same time.
+      // The overlay has been removed — the Save button's own Obx spinner
+      // (below) is now the single source of loading feedback, and it also
+      // disables the button while saving.
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          r.spacing(AppDimens.paddingXL),
+          r.spacing(AppDimens.paddingLG),
+          r.spacing(AppDimens.paddingXL),
+          bottom + r.spacing(AppDimens.paddingXL),
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
 
-                  _SectionLabel(
-                    r: r,
-                    title: 'Personal Information',
-                    icon: Icons.person_outline_rounded,
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingMD)),
+              _SectionLabel(
+                r: r,
+                title: 'Personal Information',
+                icon: Icons.person_outline_rounded,
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingMD)),
 
-                  // Name row
-                  Row(children: [
-                    Expanded(
-                      child: FieldWrapper(
-                        label: 'First Name *',
-                        child: TextFormField(
-                          controller: _firstCtrl,
-                          textCapitalization: TextCapitalization.words,
-                          inputFormatters: DValidator.lettersOnly,
-                          decoration: _dec('', r),
-                          style: _ts(r),
-                          validator: (v) =>
-                              DValidator.validateName('First Name', v),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: r.spacing(AppDimens.paddingMD)),
-                    Expanded(
-                      child: FieldWrapper(
-                        label: 'Last Name',
-                        child: TextFormField(
-                          controller: _lastCtrl,
-                          textCapitalization: TextCapitalization.words,
-                          inputFormatters: DValidator.lettersOnly,
-                          decoration: _dec('', r),
-                          style: _ts(r),
-                        ),
-                      ),
-                    ),
-                  ]),
-                  SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
-
-                  // Gender
-                  FieldWrapper(
-                    label: 'Gender *',
-                    child: _GenderRow(
-                      r: r,
-                      selected: _gender,
-                      onChanged: (g) => setState(() => _gender = g),
-                    ),
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
-
-                  // Email
-                  FieldWrapper(
-                    label: 'Email Address *',
+              // Name row
+              Row(children: [
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'First Name *',
                     child: TextFormField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      inputFormatters: DValidator.textWithLimit,
+                      controller: _firstCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: DValidator.lettersOnly,
                       decoration: _dec('', r),
                       style: _ts(r),
-                      validator: (v) => DValidator.validateEmail(v),
+                      validator: (v) =>
+                          DValidator.validateName('First Name', v),
                     ),
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
-
-                  // Phone
-                  // autovalidateMode disabled so "Enter a valid mobile
-                  // number" doesn't fire after typing just 1 digit —
-                  // it only shows once _formKey.currentState!.validate()
-                  // runs on Save.
-                  FieldWrapper(
-                    label: 'Phone Number *',
-                    child: PhoneFormField(
-                      controller: _phoneCtrl,
-                      autovalidateMode: AutovalidateMode.disabled,
-                      countryButtonStyle: CountryButtonStyle(
-                        showDialCode: true,
-                        showFlag: true,
-                        flagSize: 20,
-                        textStyle: _ts(r).copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      shouldLimitLengthByCountry: true,
-                      keyboardType: TextInputType.phone,
-                      style: _ts(r),
-                      decoration: _dec('Phone number', r),
-                      validator: PhoneValidator.compose([
-                        PhoneValidator.required(context,
-                            errorText: 'Phone number is required'),
-                        PhoneValidator.validMobile(context,
-                            errorText: 'Enter a valid mobile number'),
-                      ]),
-                    ),
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingXL)),
-                  _SectionLabel(
-                    r: r,
-                    title: 'Location Information',
-                    icon: Icons.location_on_outlined,
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingMD)),
-
-                  // Country & State — numbers blocked at formatter + validator level
-                  Row(children: [
-                    Expanded(
-                      child: FieldWrapper(
-                        label: 'Country *',
-                        child: TextFormField(
-                          controller:_countryCtrl,
-                          textCapitalization: TextCapitalization.words,
-                          inputFormatters: DValidator.alphaOnly,
-                          decoration: _dec('', r),
-                          style: _ts(r),
-                          validator: (v) =>
-                              DValidator.validateAlphaOnly('Country', v),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: r.spacing(AppDimens.paddingMD)),
-                    Expanded(
-                      child: FieldWrapper(
-                        label: 'State *',
-                        child: TextFormField(
-                          controller:_stateCtrl,
-                          textCapitalization: TextCapitalization.words,
-                          inputFormatters: DValidator.alphaOnly,
-                          decoration: _dec('', r),
-                          style: _ts(r),
-                          validator: (v) =>
-                              DValidator.validateAlphaOnly('State', v),
-                        ),
-                      ),
-                    ),
-                  ]),
-                  SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
-
-                  // District & Pincode
-                  Row(children: [
-                    Expanded(
-                      child: FieldWrapper(
-                        label: 'District *',
-                        child: TextFormField(
-                          controller: _districtCtrl,
-                          textCapitalization: TextCapitalization.words,
-                          inputFormatters: DValidator.alphaOnly,
-                          decoration: _dec('', r),
-                          style: _ts(r),
-                          validator: (v) =>
-                              DValidator.validateAlphaOnly('District', v),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: r.spacing(AppDimens.paddingMD)),
-                    Expanded(
-                      child: FieldWrapper(
-                        label: 'Pincode *',
-                        child:
-                        TextFormField(
-                          controller: _pincodeCtrl,
-                          keyboardType: TextInputType.text,
-                          maxLength: 10,
-                          inputFormatters: DValidator.postalCode,
-                          decoration: _dec('', r),
-                          style: _ts(r),
-                          validator: (v) => DValidator.validatePincode(v),
-                        ),
-                      ),
-                    ),
-                  ]),
-                  SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
-
-                  // Address — numbers allowed (house/flat no., etc.)
-                  FieldWrapper(
-                    label: 'Address *',
-                    child: TextFormField(
-                      controller: _addressCtrl,
-                      textCapitalization: TextCapitalization.sentences,
-                      maxLength: 200,
-                      maxLines: 2,
-                      minLines: 2,
-                      inputFormatters: DValidator.textWithLimit,
-                      decoration: _dec('', r)
-                          .copyWith(alignLabelWithHint: true),
-                      style: _ts(r),
-                      validator: (v) => DValidator.validateRequired(v),
-                    ),
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingXL)),
-                  _SectionLabel(
-                    r: r,
-                    title: 'Academic Information',
-                    icon: Icons.school_outlined,
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingMD)),
-
-                  // Program dropdown
-                  FieldWrapper(
-                    label: 'Program *',
-                    child: Obx(() {
-                      if (_ctrl.dropdownsLoading.value) {
-                        return _loadingField();
-                      }
-                      if (_ctrl.programs.length == 1) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (_selectedProgram != _ctrl.programs.first) {
-                            setState(() => _selectedProgram = _ctrl.programs.first);
-                          }
-                        });
-                        return _staticBox(_ctrl.programs.first.programName, r);
-                      }
-                      return DropdownButtonFormField<ProgramModel>(
-                        value: _selectedProgram,
-                        hint: Text(
-                          'Select program',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: r.fontSize(12),
-                          ),
-                        ),
-                        decoration: _dec('', r),
-                        style: _ts(r),
-                        isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                            size: 20, color: AppColors.textSecondary),
-                        validator: (v) =>
-                        v == null ? 'Select a program' : null,
-                        items: _ctrl.programs
-                            .map((p) => DropdownMenuItem(
-                          value: p,
-                          child: Text(p.programName,
-                              style: TextStyle(
-                                  fontSize: r.fontSize(13))),
-                        ))
-                            .toList(),
-                        onChanged: (v) => setState(() => _selectedProgram = v),
-                      );
-                    }),
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
-
-                  // NEET Score
-                  FieldWrapper(
-                    label: 'NEET Score (optional)',
-                    child: TextFormField(
-                      controller: _neetCtrl,
-                      keyboardType: TextInputType.number,
-                      maxLength: 3,
-                      inputFormatters: DValidator.digitsOnly,
-                      decoration: _dec('e.g. 520', r),
-                      style: _ts(r),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return null;
-                        return DValidator.validateNeetScore(v);
-                      },
-                    ),
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingSM + 2)),
-
-                  // Privacy note
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.lock_outline_rounded,
-                        size: r.value(
-                            mobile: AppDimens.iconXS - 2,
-                            tablet: AppDimens.iconXS),
-                        color: AppColors.textSecondary,
-                      ),
-                      SizedBox(width: r.spacing(AppDimens.paddingXS + 1)),
-                      Expanded(
-                        child: Text(
-                          'Your information is safe and never shared with third parties.',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            fontSize: r.fontSize(10),
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: r.spacing(AppDimens.paddingLG)),
-
-                  // Submit button
-                  Obx(() {
-                    final loading = _ctrl.getIsUpdating;
-                    return SizedBox(
-                      width: double.infinity,
-                      height: r.value(
-                        mobile: AppDimens.buttonHeight,
-                        tablet: AppDimens.buttonHeight + 4,
-                      ),
-                      child: ElevatedButton(
-                        onPressed: loading ? null : _handleSubmit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                          AppColors.primary.withOpacity(0.6),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius.circular(AppDimens.buttonRadius),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: loading
-                            ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
-                            : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.check_circle_outline_rounded,
-                              size: r.value(
-                                  mobile: AppDimens.iconXS + 4,
-                                  tablet: AppDimens.iconSM),
-                            ),
-                            SizedBox(
-                                width: r.spacing(AppDimens.paddingSM)),
-                            Text(
-                              'Save Changes',
-                              style: AppTextStyles.titleSmall.copyWith(
-                                color: Colors.white,
-                                fontSize: r.fontSize(14),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                  SizedBox(height: r.spacing(AppDimens.paddingXXXL)),
-
-                ],
-              ),
-            ),
-          ),
-          Obx(() {
-            if (!_ctrl.getIsUpdating) return const SizedBox.shrink();
-            return Container(
-              color: Colors.black.withOpacity(0.35),
-              child: Center(
-                child: Container(
-                  padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                    BorderRadius.circular(AppDimens.radiusMD),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
-                        blurRadius: 16,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(
-                        color: AppColors.primary,
-                        strokeWidth: 3,
-                      ),
-                      SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                      Text(
-                        'Saving changes…',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textPrimary,
-                          fontSize: r.fontSize(13),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
+                SizedBox(width: r.spacing(AppDimens.paddingMD)),
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'Last Name',
+                    child: TextFormField(
+                      controller: _lastCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: DValidator.lettersOnly,
+                      decoration: _dec('', r),
+                      style: _ts(r),
+                    ),
+                  ),
+                ),
+              ]),
+              SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
+
+              // Gender
+              FieldWrapper(
+                label: 'Gender *',
+                child: _GenderRow(
+                  r: r,
+                  selected: _gender,
+                  onChanged: (g) => setState(() => _gender = g),
+                ),
               ),
-            );
-          }),
-        ],
+              SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
+
+              // Email
+              FieldWrapper(
+                label: 'Email Address *',
+                child: TextFormField(
+                  controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  inputFormatters: DValidator.textWithLimit,
+                  decoration: _dec('', r),
+                  style: _ts(r),
+                  validator: (v) => DValidator.validateEmail(v),
+                ),
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
+
+              // Phone
+              // autovalidateMode disabled so "Enter a valid mobile
+              // number" doesn't fire after typing just 1 digit —
+              // it only shows once _formKey.currentState!.validate()
+              // runs on Save.
+              FieldWrapper(
+                label: 'Phone Number *',
+                child: PhoneFormField(
+                  controller: _phoneCtrl,
+                  autovalidateMode: AutovalidateMode.disabled,
+                  countryButtonStyle: CountryButtonStyle(
+                    showDialCode: true,
+                    showFlag: true,
+                    flagSize: 20,
+                    textStyle: _ts(r).copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  shouldLimitLengthByCountry: true,
+                  keyboardType: TextInputType.phone,
+                  style: _ts(r),
+                  decoration: _dec('Phone number', r),
+                  validator: PhoneValidator.compose([
+                    PhoneValidator.required(context,
+                        errorText: 'Phone number is required'),
+                    PhoneValidator.validMobile(context,
+                        errorText: 'Enter a valid mobile number'),
+                  ]),
+                ),
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingXL)),
+              _SectionLabel(
+                r: r,
+                title: 'Location Information',
+                icon: Icons.location_on_outlined,
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingMD)),
+
+              // Country & State — numbers blocked at formatter + validator level
+              Row(children: [
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'Country *',
+                    child: TextFormField(
+                      controller:_countryCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: DValidator.alphaOnly,
+                      decoration: _dec('', r),
+                      style: _ts(r),
+                      validator: (v) =>
+                          DValidator.validateAlphaOnly('Country', v),
+                    ),
+                  ),
+                ),
+                SizedBox(width: r.spacing(AppDimens.paddingMD)),
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'State *',
+                    child: TextFormField(
+                      controller:_stateCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: DValidator.alphaOnly,
+                      decoration: _dec('', r),
+                      style: _ts(r),
+                      validator: (v) =>
+                          DValidator.validateAlphaOnly('State', v),
+                    ),
+                  ),
+                ),
+              ]),
+              SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
+
+              // District & Pincode
+              Row(children: [
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'District *',
+                    child: TextFormField(
+                      controller: _districtCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: DValidator.alphaOnly,
+                      decoration: _dec('', r),
+                      style: _ts(r),
+                      validator: (v) =>
+                          DValidator.validateAlphaOnly('District', v),
+                    ),
+                  ),
+                ),
+                SizedBox(width: r.spacing(AppDimens.paddingMD)),
+                Expanded(
+                  child: FieldWrapper(
+                    label: 'Pincode *',
+                    child:
+                    TextFormField(
+                      controller: _pincodeCtrl,
+                      keyboardType: TextInputType.text,
+                      maxLength: 10,
+                      inputFormatters: DValidator.postalCode,
+                      decoration: _dec('', r),
+                      style: _ts(r),
+                      validator: (v) => DValidator.validatePincode(v),
+                    ),
+                  ),
+                ),
+              ]),
+              SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
+
+              // Address — numbers allowed (house/flat no., etc.)
+              FieldWrapper(
+                label: 'Address *',
+                child: TextFormField(
+                  controller: _addressCtrl,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLength: 200,
+                  maxLines: 2,
+                  minLines: 2,
+                  inputFormatters: DValidator.textWithLimit,
+                  decoration: _dec('', r)
+                      .copyWith(alignLabelWithHint: true),
+                  style: _ts(r),
+                  validator: (v) => DValidator.validateRequired(v),
+                ),
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingXL)),
+              _SectionLabel(
+                r: r,
+                title: 'Academic Information',
+                icon: Icons.school_outlined,
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingMD)),
+
+              // Program dropdown
+              FieldWrapper(
+                label: 'Program *',
+                child: Obx(() {
+                  if (_ctrl.dropdownsLoading.value) {
+                    return _loadingField();
+                  }
+                  if (_ctrl.programs.length == 1) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (_selectedProgram != _ctrl.programs.first) {
+                        setState(() => _selectedProgram = _ctrl.programs.first);
+                      }
+                    });
+                    return _staticBox(_ctrl.programs.first.programName, r);
+                  }
+                  return DropdownButtonFormField<ProgramModel>(
+                    value: _selectedProgram,
+                    hint: Text(
+                      'Select program',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                        fontSize: r.fontSize(12),
+                      ),
+                    ),
+                    decoration: _dec('', r),
+                    style: _ts(r),
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 20, color: AppColors.textSecondary),
+                    validator: (v) =>
+                    v == null ? 'Select a program' : null,
+                    items: _ctrl.programs
+                        .map((p) => DropdownMenuItem(
+                      value: p,
+                      child: Text(p.programName,
+                          style: TextStyle(
+                              fontSize: r.fontSize(13))),
+                    ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedProgram = v),
+                  );
+                }),
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingLG - 2)),
+
+              // NEET Score
+              FieldWrapper(
+                label: 'NEET Score (optional)',
+                child: TextFormField(
+                  controller: _neetCtrl,
+                  keyboardType: TextInputType.number,
+                  maxLength: 3,
+                  inputFormatters: DValidator.digitsOnly,
+                  decoration: _dec('e.g. 520', r),
+                  style: _ts(r),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    return DValidator.validateNeetScore(v);
+                  },
+                ),
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingSM + 2)),
+
+              // Privacy note
+              Row(
+                children: [
+                  Icon(
+                    Icons.lock_outline_rounded,
+                    size: r.value(
+                        mobile: AppDimens.iconXS - 2,
+                        tablet: AppDimens.iconXS),
+                    color: AppColors.textSecondary,
+                  ),
+                  SizedBox(width: r.spacing(AppDimens.paddingXS + 1)),
+                  Expanded(
+                    child: Text(
+                      'Your information is safe and never shared with third parties.',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: r.fontSize(10),
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingLG)),
+
+              // Submit button — single source of loading feedback.
+              // Spinner replaces the label/icon and the button is
+              // disabled while _ctrl.getIsUpdating is true.
+              Obx(() {
+                final loading = _ctrl.getIsUpdating;
+                return SizedBox(
+                  width: double.infinity,
+                  height: r.value(
+                    mobile: AppDimens.buttonHeight,
+                    tablet: AppDimens.buttonHeight + 4,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: loading ? null : _handleSubmit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor:
+                      AppColors.primary.withOpacity(0.6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius.circular(AppDimens.buttonRadius),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: loading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                        : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: r.value(
+                              mobile: AppDimens.iconXS + 4,
+                              tablet: AppDimens.iconSM),
+                        ),
+                        SizedBox(
+                            width: r.spacing(AppDimens.paddingSM)),
+                        Text(
+                          'Save Changes',
+                          style: AppTextStyles.titleSmall.copyWith(
+                            color: Colors.white,
+                            fontSize: r.fontSize(14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              SizedBox(height: r.spacing(AppDimens.paddingXXXL)),
+
+            ],
+          ),
+        ),
       ),
     );
   }
