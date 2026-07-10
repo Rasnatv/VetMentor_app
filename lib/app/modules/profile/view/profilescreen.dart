@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -51,6 +52,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     return 0;
   }
 
+  bool get _hasRegistration => _studentId != 0;
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -59,88 +62,191 @@ class _ProfileScreenState extends State<ProfileScreen>
     return NetworkAwareWrapper(
       child: Scaffold(
         backgroundColor: AppColors.backgroundGrey,
-        appBar: VetAppBar(
+        appBar: const VetAppBar(
           title: 'My Profile',
           showBack: false,
-          actions: [
-            Obx(() {
-              if (!ctrl.isSuccess) return const SizedBox.shrink();
-              return Padding(
-                padding: EdgeInsets.only(right: r.spacing(AppDimens.paddingMD)),
-                child: _EditProfilePill(
-                  onTap: () {
-                    if (ctrl.profile.value != null) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => UpdateProfileScreen(
-                            profile: ctrl.profile.value!,
-                          ),
-                        ),
-                      ).then((_) => ctrl.fetchProfile());
-                    }
-                  },
-                ),
-              );
-            }),
-          ],
         ),
         body: Obx(() {
           if (ctrl.isLoading) return const ProfileShimmer();
-          if (ctrl.hasError) return _buildError(r, ctrl);
+
           if (ctrl.isSuccess && ctrl.profile.value != null) {
             return RefreshIndicator(
               color: _kAccent,
               onRefresh: () async => ctrl.fetchProfile(),
-              child: _buildProfile(context, r, ctrl.profile.value!),
+              child: _buildProfile(context, r, ctrl.profile.value!, ctrl),
             );
           }
-          return const SizedBox.shrink();
+
+          // No registration yet, or a real fetch error — either way we
+          // still show "My Collections" so the user can see what's
+          // available; tapping without data just shows a friendly
+          // Lottie "no data" sheet instead of a dead-end screen.
+          return RefreshIndicator(
+            color: _kAccent,
+            onRefresh: () async => ctrl.fetchProfile(),
+            child: _buildGuestCollections(context, r, ctrl),
+          );
         }),
       ),
     );
   }
 
-  Widget _buildError(Responsive r, ProfileController ctrl) => Center(
-    child: Padding(
-      padding: EdgeInsets.all(r.spacing(AppDimens.paddingXL)),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Lottie.asset(
-            'assets/lottie/not-found.json',
-            width: r.value(mobile: 180.0, tablet: 220.0),
-            height: r.value(mobile: 180.0, tablet: 220.0),
-            fit: BoxFit.contain,
-            repeat: true,
-          ),
-          SizedBox(height: r.spacing(AppDimens.paddingMD)),
-          Text(
-            'Could not load profile',
-            style: AppTextStyles.titleSmall.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: r.fontSize(15),
+  /// Shown when there's no profile to display yet — either the user
+  /// hasn't registered/submitted an enquiry, or the profile fetch failed.
+  Widget _buildGuestCollections(
+      BuildContext context,
+      Responsive r,
+      ProfileController ctrl,
+      ) =>
+      SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                r.spacing(AppDimens.paddingLG),
+                r.spacing(AppDimens.paddingLG),
+                r.spacing(AppDimens.paddingLG),
+                0,
+              ),
+              child: _GuestBanner(
+                message: _hasRegistration
+                    ? (ctrl.profileError.value.isNotEmpty
+                    ? ctrl.profileError.value
+                    : 'We could not load your profile right now.')
+                    : 'Submit an enquiry to unlock your profile and saved colleges.',
+              ),
             ),
-          ),
-          SizedBox(height: r.spacing(AppDimens.paddingXS)),
-          Text(
-            ctrl.profileError.value,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: r.fontSize(13),
-            ),
-          ),
-          SizedBox(height: r.spacing(AppDimens.paddingLG)),
-        ],
-      ),
-    ),
-  );
 
+            const _SectionHeader(title: 'My Collections'),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: r.spacing(AppDimens.paddingLG)),
+              child: Column(
+                children: [
+                  _ActionCard(
+                    icon: Icons.person_outline_rounded,
+                    iconColor: _kAccent,
+                    iconBg: const Color(0xFFE8F5E9),
+                    title: 'View Profile',
+                    subtitle: 'See and edit your full profile details',
+                    onTap: () => _showNoDataSheet(context),
+                  ),
+                  SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                  _ActionCard(
+                    icon: Icons.bookmark_rounded,
+                    iconColor: _kAccent,
+                    iconBg: const Color(0xFFE8F5E9),
+                    title: 'Saved Colleges',
+                    subtitle: 'View your bookmarked colleges',
+                    onTap: () => _showNoDataSheet(context),
+                  ),
+                ],
+              ),
+            ),
+
+            // Privacy note
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                r.spacing(AppDimens.paddingLG),
+                r.spacing(AppDimens.paddingXL),
+                r.spacing(AppDimens.paddingLG),
+                0,
+              ),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.spacing(AppDimens.paddingMD),
+                  vertical: r.spacing(AppDimens.paddingSM + 2),
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F1FB),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lock_outline_rounded,
+                      size: r.fontSize(AppDimens.iconXS),
+                      color: const Color(0xFF185FA5),
+                    ),
+                    SizedBox(width: r.spacing(AppDimens.paddingXS + 2)),
+                    Expanded(
+                      child: Text(
+                        'Your information is safe and never shared with third parties.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontSize: r.fontSize(11.5),
+                          color: const Color(0xFF185FA5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  /// Bottom sheet shown whenever the user taps a collection card but
+  /// there's no data behind it (no registration yet, or fetch failed).
+  void _showNoDataSheet(BuildContext context) {
+    final r = Responsive.of(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(r.spacing(AppDimens.paddingXL)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                'assets/lottie/not-found.json',
+                width: r.value(mobile: 160.0, tablet: 200.0),
+                height: r.value(mobile: 160.0, tablet: 200.0),
+                fit: BoxFit.contain,
+                repeat: true,
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingMD)),
+              Text(
+                'No data yet',
+                style: AppTextStyles.titleSmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: r.fontSize(15),
+                ),
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingXS)),
+              Text(
+                _hasRegistration
+                    ? 'We could not find any data for your profile yet.'
+                    : 'Please complete your enquiry / registration first to see this.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: r.fontSize(13),
+                ),
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingLG)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Summary tab: hero banner + "View Profile" + "Saved Colleges" cards.
   Widget _buildProfile(
       BuildContext context,
       Responsive r,
       StudentProfileModel p,
+      ProfileController ctrl,
       ) =>
       SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 100),
@@ -157,22 +263,196 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               child: _ProfileHeroBanner(profile: p),
             ),
+
             const _SectionHeader(title: 'My Collections'),
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: r.spacing(AppDimens.paddingLG)),
-              child: _SavedCollegesButton(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => WishlistScreen(studentId: _studentId),
-                    ),
-                  );
-                },
+              child: Column(
+                children: [
+                  _ActionCard(
+                    icon: Icons.person_outline_rounded,
+                    iconColor: _kAccent,
+                    iconBg: const Color(0xFFE8F5E9),
+                    title: 'View Profile',
+                    subtitle: 'See and edit your full profile details',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProfileDetailsScreen(profile: p),
+                        ),
+                      ).then((_) => ctrl.fetchProfile());
+                    },
+                  ),
+                  SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                  _ActionCard(
+                    icon: Icons.bookmark_rounded,
+                    iconColor: _kAccent,
+                    iconBg: const Color(0xFFE8F5E9),
+                    title: 'Saved Colleges',
+                    subtitle: 'View your bookmarked colleges',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              WishlistScreen(studentId: _studentId),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
 
+            // Privacy note
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                r.spacing(AppDimens.paddingLG),
+                r.spacing(AppDimens.paddingXL),
+                r.spacing(AppDimens.paddingLG),
+                0,
+              ),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.spacing(AppDimens.paddingMD),
+                  vertical: r.spacing(AppDimens.paddingSM + 2),
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F1FB),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lock_outline_rounded,
+                      size: r.fontSize(AppDimens.iconXS),
+                      color: const Color(0xFF185FA5),
+                    ),
+                    SizedBox(width: r.spacing(AppDimens.paddingXS + 2)),
+                    Expanded(
+                      child: Text(
+                        'Your information is safe and never shared with third parties.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontSize: r.fontSize(11.5),
+                          color: const Color(0xFF185FA5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+/// Small gradient banner shown on the guest / no-data state, replacing
+/// the hero banner when there is no registered profile to display.
+class _GuestBanner extends StatelessWidget {
+  final String message;
+  const _GuestBanner({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    return Container(
+      padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: AppColors.cardGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppDimens.radiusXL),
+        boxShadow: [
+          BoxShadow(
+            color: _kAccent.withOpacity(0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: r.spacing(54),
+            height: r.spacing(54),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.person_outline_rounded,
+              color: Colors.white,
+              size: r.fontSize(AppDimens.iconMD),
+            ),
+          ),
+          SizedBox(width: r.spacing(AppDimens.paddingMD)),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: r.fontSize(13),
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Full profile details screen — Contact / Location / Academic / NEET,
+/// with an Edit icon in the app bar.
+class ProfileDetailsScreen extends StatelessWidget {
+  final StudentProfileModel profile;
+  const ProfileDetailsScreen({super.key, required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    final p = profile;
+
+    return Scaffold(
+      backgroundColor: AppColors.backgroundGrey,
+      appBar: VetAppBar(
+        title: 'Profile Details',
+        showBack: true,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: r.spacing(AppDimens.paddingMD)),
+            child: _EditProfilePill(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => UpdateProfileScreen(profile: p),
+                  ),
+                ).then((_) {
+                  if (Get.isRegistered<ProfileController>()) {
+                    Get.find<ProfileController>().fetchProfile();
+                  }
+                  // Go back to the Profile tab so the refreshed summary
+                  // (hero banner / completeness) is visible immediately.
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             // Contact Details
             const _SectionHeader(title: 'Contact Details'),
             Padding(
@@ -279,7 +559,9 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 void _copyToClipboard(BuildContext context, String value, String label) {
@@ -339,9 +621,24 @@ class _EditProfilePill extends StatelessWidget {
   }
 }
 
-class _SavedCollegesButton extends StatelessWidget {
+/// Generic tappable summary card used for both "View Profile" and
+/// "Saved Colleges" entries.
+class _ActionCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final String title;
+  final String subtitle;
   final VoidCallback onTap;
-  const _SavedCollegesButton({required this.onTap});
+
+  const _ActionCard({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -375,24 +672,24 @@ class _SavedCollegesButton extends StatelessWidget {
                   width: r.spacing(AppDimens.avatarSM),
                   height: r.spacing(AppDimens.avatarSM),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
+                    color: iconBg,
                     borderRadius:
                     BorderRadius.circular(AppDimens.radiusMD - 2),
                   ),
-                  child: Icon(Icons.bookmark_rounded,
-                      size: r.fontSize(AppDimens.iconSM), color: _kAccent),
+                  child: Icon(icon,
+                      size: r.fontSize(AppDimens.iconSM), color: iconColor),
                 ),
                 SizedBox(width: r.spacing(AppDimens.paddingMD)),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Saved Colleges',
+                      Text(title,
                           style: AppTextStyles.titleLarge
                               .copyWith(fontSize: r.fontSize(14))),
                       SizedBox(height: r.spacing(2)),
                       Text(
-                        'View your bookmarked colleges',
+                        subtitle,
                         style: AppTextStyles.bodySmall.copyWith(
                           fontSize: r.fontSize(12),
                           color: AppColors.textSecondary,
@@ -412,6 +709,7 @@ class _SavedCollegesButton extends StatelessWidget {
     );
   }
 }
+
 class _ProfileHeroBanner extends StatelessWidget {
   final StudentProfileModel profile;
   const _ProfileHeroBanner({required this.profile});
@@ -1069,7 +1367,10 @@ class _NeetCard extends StatelessWidget {
                     ],
                   ),
                   const Spacer(),
-      ]))],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
