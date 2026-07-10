@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
@@ -77,6 +78,55 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
       AppSnackbar.success('College saved to your wishlist.');
     } else {
       AppSnackbar.warning('College removed from your wishlist.');
+    }
+  }
+
+  // ── Launch helpers ────────────────────────────────────────
+  Future<void> _launchWebsite(String url) async {
+    if (url.isEmpty) return;
+
+    final formattedUrl = url.startsWith('http://') || url.startsWith('https://')
+        ? url
+        : 'https://$url';
+
+    final uri = Uri.parse(formattedUrl);
+
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        AppSnackbar.warning('Could not open website.');
+      }
+    } catch (e) {
+      AppSnackbar.warning('Could not open website.');
+    }
+  }
+
+  Future<void> _launchPhone(String phone) async {
+    if (phone.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: phone);
+    try {
+      final launched = await launchUrl(uri);
+      if (!launched) {
+        AppSnackbar.warning('Could not open dialer.');
+      }
+    } catch (e) {
+      AppSnackbar.warning('Could not open dialer.');
+    }
+  }
+
+  Future<void> _launchEmail(String email) async {
+    if (email.isEmpty) return;
+    final uri = Uri(scheme: 'mailto', path: email);
+    try {
+      final launched = await launchUrl(uri);
+      if (!launched) {
+        AppSnackbar.warning('Could not open email app.');
+      }
+    } catch (e) {
+      AppSnackbar.warning('Could not open email app.');
     }
   }
 
@@ -372,15 +422,20 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
                         child: Column(
                           children: [
                             _buildContactRow(r,
-                                icon: Icons.phone_outlined, label: detail.phone),
+                                icon: Icons.phone_outlined,
+                                label: detail.phone,
+                                onTap: () => _launchPhone(detail.phone)),
                             SizedBox(height: r.spacing(AppDimens.paddingSM)),
                             _buildContactRow(r,
-                                icon: Icons.email_outlined, label: detail.email),
+                                icon: Icons.email_outlined,
+                                label: detail.email,
+                                onTap: () => _launchEmail(detail.email)),
                             SizedBox(height: r.spacing(AppDimens.paddingSM)),
                             _buildContactRow(r,
                                 icon: Icons.language_outlined,
                                 label: detail.website,
-                                isLink: true),
+                                isLink: true,
+                                onTap: () => _launchWebsite(detail.website)),
                           ],
                         ),
                       ),
@@ -454,24 +509,31 @@ class _CollegeDetailScreenState extends State<CollegeDetailScreen> {
   }
 
   Widget _buildContactRow(Responsive r,
-      {required IconData icon, required String label, bool isLink = false}) {
-    return Row(
-      children: [
-        Icon(icon,
-            size: r.fontSize(AppDimens.iconXS + 2), color: AppColors.primary),
-        SizedBox(width: r.spacing(AppDimens.paddingSM + 2)),
-        Expanded(
-          child: Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              fontSize: r.fontSize(13),
-              color: isLink ? AppColors.primary : AppColors.textPrimary,
-              decoration:
-              isLink ? TextDecoration.underline : TextDecoration.none,
+      {required IconData icon,
+        required String label,
+        bool isLink = false,
+        VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          Icon(icon,
+              size: r.fontSize(AppDimens.iconXS + 2), color: AppColors.primary),
+          SizedBox(width: r.spacing(AppDimens.paddingSM + 2)),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: r.fontSize(13),
+                color: isLink ? AppColors.primary : AppColors.textPrimary,
+                decoration:
+                isLink ? TextDecoration.underline : TextDecoration.none,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
