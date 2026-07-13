@@ -1,13 +1,30 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'app/no internetconnection/network_service.dart';
 import 'app/routes/apppages.dart';
 
+import 'notification_services.dart'; // 👈 adjust path to wherever it lives
+//
+// Future<void> main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   Get.put(NetworkService());
+//   await GetStorage.init();
+//   runApp(const MyApp());
+// }
+
+
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();          // 👈 add this — required before any FCM call
   Get.put(NetworkService());
   await GetStorage.init();
+
+  NotificationService.instance.init();     // 👈 add this — do NOT await, per its own doc comment
+
   runApp(const MyApp());
 }
 

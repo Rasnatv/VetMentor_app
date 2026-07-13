@@ -25,6 +25,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -65,6 +66,11 @@ flutter {
 }
 
 
-flutter {
-    source = "../.."
+dependencies {
+
+    // 🔥 Required for flutter_local_notifications
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // ✅ ADD THIS (Fix for R8 missing okhttp classes)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

@@ -21,6 +21,7 @@ import '../../courses/view/coursesdetailscreen.dart';
 import '../../courses/view/coursesscreen.dart';
 import '../../courses/controller/courses_controller.dart';
 import '../bindings/home_binding.dart';
+import '../controller/pushnotification_controller.dart';
 import 'notificationpage.dart';
 import 'search_screen.dart';
 
@@ -43,6 +44,8 @@ class _HomeScreenState extends State<HomeScreen>
   final CollegeController _ctrl = Get.find<CollegeController>();
   final EnquiryController _enquiryCtrl = Get.find<EnquiryController>();
   final CourseController _courseCtrl = Get.find<CourseController>();
+  final PushNotificationController _pushCtrl =
+  Get.put(PushNotificationController()); // 👈 add this
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchCtrl = TextEditingController();
@@ -58,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _pushCtrl.registerDeviceToken();
 
     _fadeCtrl = AnimationController(
       vsync: this,
