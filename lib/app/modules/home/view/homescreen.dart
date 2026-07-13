@@ -127,12 +127,6 @@ class _HomeScreenState extends State<HomeScreen>
         binding: CourseDetailBinding(), // ✅
       );
 
-  void _openNotifications() {
-    // TODO: hook this up to your actual notifications screen, e.g.
-     Get.to(() => const Notificationpage());
-    setState(() => _hasUnreadNotifications = false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
