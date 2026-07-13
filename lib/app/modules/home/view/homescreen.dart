@@ -205,11 +205,11 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           SizedBox(width: r.spacing(AppDimens.paddingMD)),
-          _NotificationButton(
-            r: r,
-            hasUnread: _hasUnreadNotifications,
-            onTap: _openNotifications,
-          ),
+          // _NotificationButton(
+          //   r: r,
+          //   hasUnread: _hasUnreadNotifications,
+          //   onTap: _openNotifications,
+          // ),
         ],
       ),
     );

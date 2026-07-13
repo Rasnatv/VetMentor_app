@@ -7,35 +7,16 @@ import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../notification_services.dart';
+import '../../../core/network/api_constants.dart';
 import '../../../core/storage/fcm _token storage.dart';
 
-
-
-/// GetX controller responsible for registering the device's FCM token
-/// with the backend:
-///   POST https://rasma.astradevelops.in/vetniaryapp/public/api/device-token
-///
-/// Body:
-/// {
-///   "fcm_token": "...",
-///   "app_version": "1.4.2",
-///   "model": "Pixel 7",
-///   "model_name": "Pixel",
-///   "model_version": "13"
-/// }
-///
-/// This controller does NOT touch NotificationService. It only reads the
-/// token that NotificationService already saves (via FcmTokenStorage /
-/// your prefs wrapper) and pushes it to the API.
 class PushNotificationController extends GetxController {
   static PushNotificationController get instance =>
       Get.find<PushNotificationController>();
 
   static const String _apiUrl =
-      'https://rasma.astradevelops.in/vetniaryapp/public/api/device-token';
+      '${ApiConstants.baseUrl}/device-token';
 
-  /// Max number of times we retry if the FCM token isn't saved yet
-  /// (NotificationService.init() has a 3s delay before it fetches/saves it).
   static const int _maxRetries = 4;
   static const Duration _retryDelay = Duration(seconds: 2);
 
