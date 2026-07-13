@@ -1,4 +1,5 @@
 
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/appcolors.dart';
@@ -20,6 +21,7 @@ import '../../courses/view/coursesdetailscreen.dart';
 import '../../courses/view/coursesscreen.dart';
 import '../../courses/controller/courses_controller.dart';
 import '../bindings/home_binding.dart';
+import 'notificationpage.dart';
 import 'search_screen.dart';
 
 Color _shade(Color base, double lightnessDelta) {
@@ -48,6 +50,10 @@ class _HomeScreenState extends State<HomeScreen>
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
   bool _contentVisible = false;
+
+  // Set true (or wire to a controller / API flag) when there are unread
+  // notifications, to show the little dot on the bell icon.
+  bool _hasUnreadNotifications = false;
 
   @override
   void initState() {
@@ -116,6 +122,12 @@ class _HomeScreenState extends State<HomeScreen>
             () => CourseDetailScreen(courseId: course.id),
         binding: CourseDetailBinding(), // ✅
       );
+
+  void _openNotifications() {
+    // TODO: hook this up to your actual notifications screen, e.g.
+     Get.to(() => const Notificationpage());
+    setState(() => _hasUnreadNotifications = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +201,11 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           SizedBox(width: r.spacing(AppDimens.paddingMD)),
+          _NotificationButton(
+            r: r,
+            hasUnread: _hasUnreadNotifications,
+            onTap: _openNotifications,
+          ),
         ],
       ),
     );
@@ -586,5 +603,66 @@ class _HomeScreenState extends State<HomeScreen>
       _ctrl.fetchTopCollegesFromApi(),
       _courseCtrl.fetchCourses(),
     ]);
+  }
+}
+
+/// Rounded bell icon button used in the home app bar, with an optional
+/// small red dot to indicate unread notifications.
+class _NotificationButton extends StatelessWidget {
+  final Responsive r;
+  final bool hasUnread;
+  final VoidCallback onTap;
+
+  const _NotificationButton({
+    required this.r,
+    required this.hasUnread,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = r.spacing(42.0);
+    return Material(
+      color: AppColors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+        side: BorderSide(color: AppColors.borderLight),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.notifications_none_rounded,
+                color: AppColors.textPrimary,
+                size: r.fontSize(21),
+              ),
+              if (hasUnread)
+                Positioned(
+                  top: r.spacing(9),
+                  right: r.spacing(9),
+                  child: Container(
+                    width: r.spacing(8),
+                    height: r.spacing(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0483A),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.cardBackground,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
