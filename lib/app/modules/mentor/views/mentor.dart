@@ -8,6 +8,7 @@ import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
 import '../../../data/models/collegelistmodel.dart';
+import '../../../widgets/appsnackbar.dart';
 import '../../../widgets/commonwidget.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
 import '../../Colleges/view/Enquiry_form.dart';
@@ -126,8 +127,8 @@ class _MentorScreenState extends State<MentorScreen> {
     );
   }
 
-  void _showEnquirySheet(
-      BuildContext context, Responsive r, EnquiryController enquiryCtrl) {
+  void _showEnquirySheet(BuildContext context, Responsive r,
+      EnquiryController enquiryCtrl) {
     final mentorCollege = CollegeModel(
       id: '',
       collegeName: 'VET Admission Mentor',
@@ -139,48 +140,20 @@ class _MentorScreenState extends State<MentorScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => EnquiryBottomSheet(
-        college: mentorCollege,
-        onProceed: () {
-          Future.microtask(() {
-            Get.snackbar(
-              '',
-              '',
-              titleText: Row(
-                children: const [
-                  Icon(Icons.check_circle_rounded,
-                      color: Colors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Enquiry Submitted!',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              messageText: const Text(
-                'The mentor will get back to you within 24 hours.',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              backgroundColor: const Color(0xFF2E7D32),
-              snackPosition: SnackPosition.TOP,
-              margin: const EdgeInsets.all(16),
-              borderRadius: 12,
-              duration: const Duration(seconds: 3),
-              icon: null,
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            );
-          });
-        },
-      ),
+      builder: (_) =>
+          EnquiryBottomSheet(
+            college: mentorCollege,
+            onProceed: () {
+              Future.microtask(() {
+                AppSnackbar.success(
+                  'Enquiry submitted! The mentor will get back to you within 24 hours.',
+                );
+              });
+            },
+          ),
     );
   }
 }
-
 
 class _SectionLabel extends StatelessWidget {
   final Responsive r;

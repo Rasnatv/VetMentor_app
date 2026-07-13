@@ -173,6 +173,7 @@
 // }
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:veterinaryapp/app/widgets/appsnackbar.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
@@ -210,10 +211,8 @@ class _CollegeListScreenState extends State<CollegeListScreen> {
       _selectedIds.remove(college.id);
     } else {
       if (_selectedIds.length >= _maxCompare) {
-        Get.snackbar(
-          'Limit reached',
+        AppSnackbar.warning(
           'You can compare up to $_maxCompare colleges at a time.',
-          snackPosition: SnackPosition.BOTTOM,
         );
         return;
       }
@@ -229,10 +228,8 @@ class _CollegeListScreenState extends State<CollegeListScreen> {
   //   • iOS + type == '1' + not reg.  → skip form, go straight to Compare
   void _goToCompare() {
     if (_selectedIds.length < 2) {
-      Get.snackbar(
-        'Select colleges',
+      AppSnackbar.warning(
         'Please select 2 colleges to compare.',
-        snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }

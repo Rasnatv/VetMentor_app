@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../notification_services.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../core/storage/fcm _token storage.dart';
+import '../../../data/errors/ApiErrotHandler.dart';
 
 class PushNotificationController extends GetxController {
   static PushNotificationController get instance =>
@@ -72,8 +73,14 @@ class PushNotificationController extends GetxController {
             '❌ Device token registration failed (${response.statusCode}): ${response.data}');
       }
     } on DioException catch (e) {
+      // Use ApiErrorHandler just to extract a clean message for logging.
+      // This call runs silently in the background, so we deliberately
+      // avoid showError() here — we don't want a snackbar or a redirect
+      // to the server-error page firing off just because token
+      // registration failed.
+      final errorMsg = ApiErrorHandler.handleDioError(e);
       debugPrint(
-          '⚠️ PushNotificationController Dio error: ${e.message}\n${e.response?.data}');
+          '⚠️ PushNotificationController Dio error: $errorMsg\n${e.response?.data}');
     } catch (e, st) {
       debugPrint('⚠️ PushNotificationController error: $e\n$st');
     } finally {
