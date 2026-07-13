@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1091649864640",
+    "project_id": "vetmentor-17f65",
+    "storage_bucket": "vetmentor-17f65.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1091649864640:android:46ae35662299dbc0f2fe25",
+        "android_client_info": {
+          "package_name": "com.astraz.veterinaryapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2bN-8Or7FUQXu7ljiAN3XLILKKHgO2w8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
