@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart';
 import '../../../core/constants/appcolors.dart';
+import '../../../core/utils/responsive utiliteclass.dart';
 import '../../Colleges/controller/college_controller.dart' show CollegeDetailBinding;
 import '../../Colleges/view/collegedtailscreen.dart';
 import '../../home/bindings/home_binding.dart';
 import '../controller/comparecontroller.dart';
+
 
 class CompareCollegesScreen extends StatelessWidget {
   const CompareCollegesScreen({super.key});
@@ -14,11 +16,11 @@ class CompareCollegesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<CompareController>();
+    final r = context.responsive;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: VetAppBar(title: 'Compare Colleges',),
-
+      appBar: VetAppBar(title: 'Compare Colleges'),
       body: Obx(() {
         if (ctrl.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -31,14 +33,15 @@ class CompareCollegesScreen extends StatelessWidget {
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: r.pagePadding,
           child: Column(
             children: [
-              _buildHeaderCards(ctrl),
-              const SizedBox(height: 16),
-              _buildComparisonTable(ctrl),
-              const SizedBox(height: 16),
-              _buildDetailButtons(ctrl),
+              _buildHeaderCards(context, ctrl),
+              SizedBox(height: r.spacing(16)),
+              _buildComparisonTable(context, ctrl),
+              SizedBox(height: r.spacing(16)),
+              _buildDetailButtons(context, ctrl),
+              SizedBox(height: r.spacing(30)),
             ],
           ),
         );
@@ -46,9 +49,32 @@ class CompareCollegesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderCards(CompareController ctrl) {
+  Widget _buildHeaderCards(BuildContext context, CompareController ctrl) {
+    final r = context.responsive;
+    final count = ctrl.colleges.length;
+
+    // If more than 2 colleges on a small phone, let the row scroll
+    // horizontally instead of squeezing cards until text overflows.
+    final needsScroll = r.isMobile && count > 2;
+
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: ctrl.colleges
+          .asMap()
+          .entries
+          .map((entry) => needsScroll
+          ? SizedBox(
+        width: r.wp(42), // fixed card width when scrollable
+        child: _headerCard(context, ctrl, entry.key + 1, entry.value),
+      )
+          : Expanded(
+        child: _headerCard(context, ctrl, entry.key + 1, entry.value),
+      ))
+          .toList(),
+    );
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: r.cardPadding,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -59,28 +85,28 @@ class CompareCollegesScreen extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Row(
-            children: ctrl.colleges
-                .asMap()
-                .entries
-                .map((entry) => Expanded(
-              child: _headerCard(ctrl, entry.key + 1, entry.value),
-            ))
-                .toList(),
-          ),
+          needsScroll
+              ? SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: row,
+          )
+              : row,
           Container(
-            width: 32,
-            height: 32,
+            width: r.isMobile ? 32 : 40,
+            height: r.isMobile ? 32 : 40,
             decoration: const BoxDecoration(
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),
-            child: const Center(
-              child: Text('VS',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold)),
+            child: Center(
+              child: Text(
+                'VS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: r.fontSize(11),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ],
@@ -88,9 +114,13 @@ class CompareCollegesScreen extends StatelessWidget {
     );
   }
 
-  Widget _headerCard(CompareController ctrl, int index, college) {
+  Widget _headerCard(
+      BuildContext context, CompareController ctrl, int index, college) {
+    final r = context.responsive;
+    final imageHeight = r.value(mobile: 90.0, tablet: 110.0, desktop: 130.0);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: EdgeInsets.symmetric(horizontal: r.spacing(6)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -100,11 +130,11 @@ class CompareCollegesScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: Image.network(
                   college.logo,
-                  height: 90,
+                  height: imageHeight,
                   width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
-                    height: 90,
+                    height: imageHeight,
                     color: Colors.grey.shade200,
                     child: const Icon(Icons.school),
                   ),
@@ -114,51 +144,67 @@ class CompareCollegesScreen extends StatelessWidget {
                 top: 4,
                 left: 4,
                 child: CircleAvatar(
-                  radius: 11,
+                  radius: r.isMobile ? 11 : 13,
                   backgroundColor: AppColors.primary,
-                  child: Text('$index',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 11)),
+                  child: Text(
+                    '$index',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: r.fontSize(11),
+                    ),
+                  ),
                 ),
               ),
               Positioned(
                 top: 4,
                 right: 4,
                 child: GestureDetector(
-                  onTap: () => ctrl.removeCollege(college.id), // ✅ String
-                  child: const CircleAvatar(
-                    radius: 11,
+                  onTap: () => ctrl.removeCollege(college.id),
+                  child: CircleAvatar(
+                    radius: r.isMobile ? 11 : 13,
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.close, size: 13, color: Colors.black54),
+                    child: const Icon(Icons.close, size: 13, color: Colors.black54),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: r.spacing(6)),
+          // College name: maxLines 3 so longer names aren't cut off,
+          // with a slightly reduced, responsive font size.
           Text(
             college.collegeName,
-            maxLines: 2,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            softWrap: true,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: r.fontSize(12.5),
+              height: 1.2,
+            ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: r.spacing(2)),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.location_on, size: 12, color: Colors.grey),
+              Icon(Icons.location_on, size: r.fontSize(12), color: Colors.grey),
+              const SizedBox(width: 2),
               Expanded(
-                child: Text(college.location,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  college.location,
+                  maxLines: 2,
+                  style: TextStyle(fontSize: r.fontSize(11), color: Colors.grey),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: r.spacing(2)),
           Row(
             children: [
-              const Icon(Icons.star, size: 13, color: Colors.amber),
+              Icon(Icons.star, size: r.fontSize(13), color: Colors.amber),
               const SizedBox(width: 2),
-              Text(college.rating, style: const TextStyle(fontSize: 12)),
+              Text(college.rating, style: TextStyle(fontSize: r.fontSize(12))),
             ],
           ),
         ],
@@ -166,7 +212,8 @@ class CompareCollegesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildComparisonTable(CompareController ctrl) {
+  Widget _buildComparisonTable(BuildContext context, CompareController ctrl) {
+    final r = context.responsive;
     final c = ctrl.colleges;
     final rows = <_CompareRow>[
       _CompareRow('Years', Icons.timeline, c.map((e) => e.years).toList()),
@@ -188,31 +235,43 @@ class CompareCollegesScreen extends StatelessWidget {
       child: Column(
         children: rows
             .map((row) => Container(
-          padding:
-          const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          padding: EdgeInsets.symmetric(
+            vertical: r.spacing(12),
+            horizontal: r.spacing(12),
+          ),
           decoration: const BoxDecoration(
-            border: Border(
-                bottom: BorderSide(color: Color(0xFFEFEFEF))),
+            border:
+            Border(bottom: BorderSide(color: Color(0xFFEFEFEF))),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(row.icon, size: 16, color: AppColors.primary),
-                  const SizedBox(width: 6),
-                  Text(row.label,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 13)),
+                  Icon(row.icon,
+                      size: r.fontSize(16), color: AppColors.primary),
+                  SizedBox(width: r.spacing(6)),
+                  Text(
+                    row.label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: r.fontSize(13),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: r.spacing(6)),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: row.values
                     .map((v) => Expanded(
-                  child: Text(
-                    v.isEmpty ? '-' : v,
-                    style: const TextStyle(fontSize: 12),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: r.spacing(4)),
+                    child: Text(
+                      v.isEmpty ? '-' : v,
+                      style: TextStyle(fontSize: r.fontSize(12)),
+                    ),
                   ),
                 ))
                     .toList(),
@@ -225,24 +284,32 @@ class CompareCollegesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailButtons(CompareController ctrl) {
+  Widget _buildDetailButtons(BuildContext context, CompareController ctrl) {
+    final r = context.responsive;
+
     return Row(
       children: ctrl.colleges
           .map((college) => Expanded(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding: EdgeInsets.symmetric(horizontal: r.spacing(4)),
           child: OutlinedButton(
             onPressed: () {
               Get.to(
-                    () => CollegeDetailScreen(collegeId: college.id), // ✅ String
+                    () => CollegeDetailScreen(collegeId: college.id),
                 binding: CollegeDetailBinding(),
                 transition: Transition.rightToLeft,
               );
             },
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: AppColors.primary),
+              padding: EdgeInsets.symmetric(
+                vertical: r.spacing(10),
+              ),
             ),
-            child: const Text('View Details'),
+            child: Text(
+              'View Details',
+              style: TextStyle(fontSize: r.fontSize(13)),
+            ),
           ),
         ),
       ))
