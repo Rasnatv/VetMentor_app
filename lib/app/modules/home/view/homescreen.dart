@@ -1,13 +1,14 @@
 
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:veterinaryapp/app/modules/home/view/quizscreen.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/style/dimens.dart';
 import '../../../core/style/textstyle.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
 import '../../../data/models/collegelistmodel.dart';
 import '../../../data/models/coursemodel.dart';
+import '../../../data/models/questionmodel.dart';
 import '../../../no internetconnection/no_connection.dart';
 import '../../../widgets/collegecard.dart';
 import '../../../widgets/commonwidget.dart';
@@ -17,20 +18,18 @@ import '../../Colleges/controller/enquirycontroller.dart';
 import '../../Colleges/view/Enquiry_form.dart';
 import '../../Colleges/view/allcollegelistingscreen.dart';
 import '../../Colleges/view/collegedtailscreen.dart';
+import '../../Colleges/view/collegescreen.dart';
+import '../../Colleges/view/permanent_affiliatedcollegslist.dart';
+import '../../Colleges/view/tempoary_affilaiatedcollegelist.dart';
 import '../../courses/view/coursesdetailscreen.dart';
 import '../../courses/view/coursesscreen.dart';
 import '../../courses/controller/courses_controller.dart';
+import '../../notification/controller/notificationcontroller.dart';
+import '../../notification/view/notificationpage.dart';
 import '../bindings/home_binding.dart';
 import '../controller/pushnotification_controller.dart';
-import 'notificationpage.dart';
+import 'chatbaseScreen.dart';
 import 'search_screen.dart';
-
-Color _shade(Color base, double lightnessDelta) {
-  final hsl = HSLColor.fromColor(base);
-  return hsl
-      .withLightness((hsl.lightness + lightnessDelta).clamp(0.0, 1.0))
-      .toColor();
-}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,7 +44,10 @@ class _HomeScreenState extends State<HomeScreen>
   final EnquiryController _enquiryCtrl = Get.find<EnquiryController>();
   final CourseController _courseCtrl = Get.find<CourseController>();
   final PushNotificationController _pushCtrl =
-  Get.put(PushNotificationController()); // 👈 add this
+  Get.put(PushNotificationController());
+  final NotificationController notificationController =
+  Get.put(NotificationController());
+
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchCtrl = TextEditingController();
@@ -54,8 +56,6 @@ class _HomeScreenState extends State<HomeScreen>
   late final Animation<double> _fadeAnim;
   bool _contentVisible = false;
 
-  // Set true (or wire to a controller / API flag) when there are unread
-  // notifications, to show the little dot on the bell icon.
   bool _hasUnreadNotifications = false;
 
   @override
@@ -65,15 +65,14 @@ class _HomeScreenState extends State<HomeScreen>
 
     _fadeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 550),
     );
-    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeIn);
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOutCubic);
 
     _searchCtrl.addListener(() {
       _ctrl.onSearchChanged(_searchCtrl.text);
     });
 
-    // ✅ Reset fade when loading starts again (reconnect), fade in when done
     ever(_ctrl.topCollegesLoading, (bool loading) {
       if (loading) {
         _contentVisible = false;
@@ -114,18 +113,20 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _pushDetail(CollegeModel college) =>
-      Get.to(
-            () => CollegeDetailScreen(collegeId: college.id),
-        binding:  CollegeDetailBinding(), // ✅ add this
-        transition: Transition.rightToLeft,
-      );
+  void _pushDetail(CollegeModel college) => Get.to(
+        () => CollegeDetailScreen(collegeId: college.id),
+    binding: CollegeDetailBinding(),
+    transition: Transition.rightToLeft,
+  );
 
-  void _openCourseDetail(CourseModel course) =>
-      Get.to(
-            () => CourseDetailScreen(courseId: course.id),
-        binding: CourseDetailBinding(), // ✅
-      );
+  void _openCourseDetail(CourseModel course) => Get.to(
+        () => CourseDetailScreen(courseId: course.id),
+    binding: CourseDetailBinding(),
+  );
+
+  void _startMockTest() {
+    Get.to(() => QuizScreen(questions: dummyQuestions));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,9 +136,16 @@ class _HomeScreenState extends State<HomeScreen>
       child: Scaffold(
         key: _scaffoldKey,
         backgroundColor: AppColors.background,
+        floatingActionButton:  FloatingActionButton(
+          onPressed: () {
+     Get.to(()=>ChatbaseScreen());
+    },
+      backgroundColor:AppColors.primary,
+      child: const Icon(Icons.smart_toy, color: Colors.white),
+    ),
         body: Obx(() {
-          final isLoading = _ctrl.topCollegesLoading.value ||
-              _courseCtrl.isLoading.value;
+          final isLoading =
+              _ctrl.topCollegesLoading.value || _courseCtrl.isLoading.value;
 
           if (isLoading) {
             return const HomeScreenShimmer();
@@ -146,15 +154,22 @@ class _HomeScreenState extends State<HomeScreen>
             opacity: _fadeAnim,
             child: SafeArea(
               child: RefreshIndicator(
+                color: AppColors.primary,
                 onRefresh: _onRefresh,
                 child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
                   slivers: [
                     SliverToBoxAdapter(child: _buildAppBar(r)),
                     SliverToBoxAdapter(child: _buildSearchBar(r)),
                     SliverToBoxAdapter(child: _buildHeroBanner(r)),
+                    SliverToBoxAdapter(child: _buildMockTestSection(r)),
                     _buildRecommendedSliver(r),
+                    SliverToBoxAdapter(child: _buildAffiliationButtons(r)),
                     _buildTopCollegesHeader(r),
                     _buildTopCollegesSliver(r),
+                    SliverToBoxAdapter(child: SizedBox(height: r.spacing(32))),
                   ],
                 ),
               ),
@@ -165,33 +180,45 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // ── App bar ────────────────────────────────────────────────
   Widget _buildAppBar(Responsive r) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         r.spacing(AppDimens.paddingLG),
+        r.spacing(AppDimens.paddingLG + 8),
         r.spacing(AppDimens.paddingLG),
-        r.spacing(AppDimens.paddingLG),
-        0,
+        r.spacing(4),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Hello, Vet Aspirant 👋',
-                  style: AppTextStyles.headlineLarge.copyWith(
-                    fontSize: r.fontSize(19),
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      'Hello, Vet Aspirant',
+                      style: AppTextStyles.headlineLarge.copyWith(
+                        fontSize: r.fontSize(23),
+                        fontWeight: FontWeight.w900,
+                        height: 1.15,
+                        letterSpacing: -0.6,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(width: r.spacing(6)),
+                    Text('👋', style: TextStyle(fontSize: r.fontSize(20))),
+                  ],
                 ),
-                SizedBox(height: r.spacing(2)),
+                SizedBox(height: r.spacing(7)),
                 Text(
                   'Find the right path into veterinary science',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    fontSize: r.fontSize(12.5),
+                    fontSize: r.fontSize(13.5),
+                    height: 1.4,
+                    letterSpacing: -0.1,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -199,22 +226,25 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           SizedBox(width: r.spacing(AppDimens.paddingMD)),
-          // _NotificationButton(
-          //   r: r,
-          //   hasUnread: _hasUnreadNotifications,
-          //   onTap: _openNotifications,
-          // ),
+          Obx(
+                () => _NotificationButton(
+              hasUnread: notificationController.hasUnread.value,
+              onTap: () {
+                Get.to(() => const NotificationPage());
+              }, r: r,
+            ),
+          ),
         ],
       ),
     );
   }
 
-
+  // ── Search bar ─────────────────────────────────────────────
   Widget _buildSearchBar(Responsive r) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         r.spacing(AppDimens.paddingLG),
-        r.spacing(AppDimens.paddingLG),
+        r.spacing(AppDimens.paddingLG + 2),
         r.spacing(AppDimens.paddingLG),
         0,
       ),
@@ -222,86 +252,109 @@ class _HomeScreenState extends State<HomeScreen>
         onTap: () => Get.to(() => const SearchScreen()),
         child: Container(
           padding: EdgeInsets.symmetric(
-            horizontal: r.spacing(AppDimens.paddingMD),
-            vertical: r.spacing(13),
+            horizontal: r.spacing(AppDimens.paddingSM + 2),
+            vertical: r.spacing(AppDimens.paddingSM + 2),
           ),
           decoration: BoxDecoration(
             color: AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(AppDimens.radiusLG + 4),
-            border: Border.all(color: AppColors.borderLight),
+            borderRadius: BorderRadius.circular(AppDimens.radiusXL),
+            border: Border.all(color: AppColors.borderLight, width: 1),
             boxShadow: [
               BoxShadow(
-                color: AppColors.shadowLight,
+                color: Colors.black.withOpacity(0.035),
                 blurRadius: 14,
-                offset: const Offset(0, 6),
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.05),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
           child: Row(
             children: [
-              Icon(Icons.search_rounded,
-                  color: AppColors.textSecondary, size: r.fontSize(20)),
-              SizedBox(width: r.spacing(AppDimens.paddingSM)),
+              Container(
+                padding: EdgeInsets.all(r.spacing(8)),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                ),
+                child: Icon(Icons.search_rounded,
+                    color: AppColors.primary, size: r.fontSize(18)),
+              ),
+              SizedBox(width: r.spacing(AppDimens.paddingSM + 4)),
               Expanded(
                 child: Text(
-                  'Search colleges...',
+                  'Search colleges, courses...',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    fontSize: r.fontSize(13),
+                    fontSize: r.fontSize(14),
+                    letterSpacing: -0.1,
                     color: AppColors.textSecondary,
                   ),
                 ),
               ),
-
+              Container(
+                padding: EdgeInsets.all(r.spacing(8)),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: Icon(Icons.tune_rounded,
+                    color: AppColors.textSecondary, size: r.fontSize(16)),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+
+  // ── Hero banner ────────────────────────────────────────────
   Widget _buildHeroBanner(Responsive r) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         r.spacing(AppDimens.paddingLG),
-        r.spacing(AppDimens.paddingXL),
+        r.spacing(24),
         r.spacing(AppDimens.paddingLG),
         0,
       ),
       child: Container(
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppDimens.radiusXL + 6),
           gradient: LinearGradient(
-            colors: [_shade(AppColors.primary, -0.08), AppColors.primary],
+            colors: [AppColors.primary, AppColors.primaryDark],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(AppDimens.radiusXL + 4),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.28),
-              blurRadius: 22,
-              offset: const Offset(0, 12),
+              color: AppColors.primaryDark.withOpacity(0.28),
+              blurRadius: 28,
+              offset: const Offset(0, 14),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimens.radiusXL + 4),
+          borderRadius: BorderRadius.circular(AppDimens.radiusXL + 6),
           child: Stack(
             children: [
-              // Decorative circles
               Positioned(
-                top: -26,
-                right: -18,
+                top: -30,
+                right: -20,
                 child: Container(
-                  width: r.spacing(110),
-                  height: r.spacing(110),
+                  width: r.spacing(120),
+                  height: r.spacing(120),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
+                    color: AppColors.accentLight.withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
                 ),
               ),
               Positioned(
-                bottom: 38,
-                right: 70,
+                bottom: -40,
+                right: r.spacing(40),
                 child: Container(
                   width: r.spacing(70),
                   height: r.spacing(70),
@@ -311,14 +364,12 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
               ),
-
-              // Vet image — anchored to bottom-right, bleeds to edge
               Positioned(
                 right: 0,
                 bottom: 0,
                 child: SizedBox(
-                  height: r.value(
-                      mobile: r.spacing(150), tablet: r.spacing(200)),
+                  height:
+                  r.value(mobile: r.spacing(112), tablet: r.spacing(148)),
                   child: Image.asset(
                     'assets/images/vetapp.png',
                     fit: BoxFit.contain,
@@ -326,76 +377,113 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
               ),
-
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                  r.spacing(AppDimens.paddingXL),
-                  r.spacing(AppDimens.paddingXL),
-                  r.spacing(AppDimens.paddingXL),
-                  r.spacing(AppDimens.paddingLG),
+                  r.spacing(AppDimens.paddingLG + 4),
+                  r.spacing(AppDimens.paddingLG + 2),
+                  r.spacing(AppDimens.paddingLG + 2),
+                  r.spacing(AppDimens.paddingMD + 6),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: r.spacing(10),
+                        vertical: r.spacing(5),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.16),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.25),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        'ADMISSIONS OPEN',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: r.fontSize(9.5),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: r.spacing(12)),
                     SizedBox(
                       width: r.value(
-                          mobile: r.spacing(190), tablet: r.spacing(260)),
+                          mobile: r.spacing(195), tablet: r.spacing(270)),
                       child: Text(
                         'Build a Better\nFuture for Animals',
                         style: AppTextStyles.displayWhite.copyWith(
-                          fontSize: r.fontSize(19),
-                          fontWeight: FontWeight.w800,
+                          fontSize: r.fontSize(19.5),
+                          fontWeight: FontWeight.w900,
                           height: 1.18,
-                          letterSpacing: -0.4,
+                          letterSpacing: -0.5,
                         ),
                       ),
                     ),
-                    SizedBox(height: r.spacing(AppDimens.paddingSM)),
+                    SizedBox(height: r.spacing(9)),
                     SizedBox(
                       width: r.value(
-                          mobile: r.spacing(190), tablet: r.spacing(260)),
+                          mobile: r.spacing(200), tablet: r.spacing(270)),
                       child: Text(
                         'Discover and compare the best veterinary colleges across India.',
                         style: AppTextStyles.bodyWhite.copyWith(
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withOpacity(0.82),
                           fontSize: r.fontSize(12),
-                          height: 1.35,
+                          height: 1.45,
+                          letterSpacing: -0.1,
                         ),
                       ),
                     ),
-                    SizedBox(height: r.spacing(AppDimens.paddingMD)),
-                    GestureDetector(
-                      onTap: () => Get.to(
-                            () => CollegeListScreen(),
-                        binding: CollegesBinding(),
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: r.spacing(16),
-                          vertical: r.spacing(9),
+                    SizedBox(height: r.spacing(AppDimens.paddingMD + 2)),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius:
+                        BorderRadius.circular(AppDimens.radiusLG),
+                        onTap: () => Get.to(
+                              () => CollegeListScreen(),
+                          binding: CollegesBinding(),
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius:
-                          BorderRadius.circular(AppDimens.radiusLG),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Explore Colleges',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: r.fontSize(12),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: r.spacing(17),
+                            vertical: r.spacing(11),
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                            BorderRadius.circular(AppDimens.radiusLG),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.14),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
                               ),
-                            ),
-                            SizedBox(width: r.spacing(4)),
-                            Icon(Icons.arrow_forward_rounded,
-                                color: AppColors.primary,
-                                size: r.fontSize(14)),
-                          ],
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Explore Colleges',
+                                style: TextStyle(
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: r.fontSize(12.5),
+                                  letterSpacing: -0.1,
+                                ),
+                              ),
+                              SizedBox(width: r.spacing(7)),
+                              Icon(Icons.arrow_forward_rounded,
+                                  color: AppColors.primaryDark,
+                                  size: r.fontSize(15)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -409,6 +497,167 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // ── Mock Test banner ──────────────────────────────────────
+  Widget _buildMockTestSection(Responsive r) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        r.spacing(AppDimens.paddingLG),
+        r.spacing(20),
+        r.spacing(AppDimens.paddingLG),
+        0,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _startMockTest,
+          borderRadius: BorderRadius.circular(AppDimens.radiusLG + 6),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: AppColors.cardBackground,
+              borderRadius: BorderRadius.circular(AppDimens.radiusLG + 6),
+              border: Border.all(color: AppColors.borderLight),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD + 4)),
+            child: Row(
+              children: [
+                Container(
+                  width: r.spacing(56),
+                  height: r.spacing(56),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.badgePublicText.withOpacity(0.22),
+                        AppColors.badgePublicText.withOpacity(0.08),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+                  ),
+                  child: Icon(Icons.fact_check_rounded,
+                      color: AppColors.badgePublicText, size: r.fontSize(26)),
+                ),
+                SizedBox(width: r.spacing(AppDimens.paddingMD + 2)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Take a Mock Test',
+                        style: AppTextStyles.titleLarge.copyWith(
+                          fontSize: r.fontSize(15.5),
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                          height: 1.3,
+                        ),
+                      ),
+                      SizedBox(height: r.spacing(5)),
+                      Text(
+                        '15 Questions · Instant Score & Marks',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontSize: r.fontSize(12),
+                          height: 1.4,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: r.spacing(AppDimens.paddingSM)),
+                Container(
+                  padding: EdgeInsets.all(r.spacing(11)),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.arrow_forward_rounded,
+                      color: Colors.white, size: r.fontSize(17)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Affiliated colleges — two elegant buttons ─────────────
+  Widget _buildAffiliationButtons(Responsive r) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        r.spacing(AppDimens.paddingLG),
+        r.spacing(15),
+        r.spacing(AppDimens.paddingLG),
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Affiliated Colleges',
+            style: AppTextStyles.titleLarge.copyWith(
+              fontSize: r.fontSize(17),
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+              height: 1.3,
+            ),
+          ),
+          SizedBox(height: r.spacing(4)),
+          Text(
+            'Browse colleges by affiliation status',
+            style: AppTextStyles.bodyMedium.copyWith(
+              fontSize: r.fontSize(12.5),
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: r.spacing(AppDimens.paddingMD + 4)),
+          Row(
+            children: [
+              Expanded(
+                child: _AffiliationButton(
+                  r: r,
+                  label: 'Temporary',
+                  subtitle: 'Provisionally affiliated',
+                  icon: Icons.hourglass_top_rounded,
+                  accent: AppColors.badgeStateText,
+                  onTap: () =>
+                      Get.to(() => const TemporaryAffiliatedScreen()),
+                ),
+              ),
+              SizedBox(width: r.spacing(AppDimens.paddingMD)),
+              Expanded(
+                child: _AffiliationButton(
+                  r: r,
+                  label: 'Permanent',
+                  subtitle: 'Fully affiliated',
+                  icon: Icons.verified_rounded,
+                  accent: AppColors.badgePublicText,
+                  onTap: () =>
+                      Get.to(() => const PermanentAffiliatedScreen()),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Recommended courses ───────────────────────────────────
   Widget _buildRecommendedSliver(Responsive r) {
     if (_courseCtrl.hasError.value) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
@@ -431,7 +680,7 @@ class _HomeScreenState extends State<HomeScreen>
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           r.spacing(AppDimens.paddingLG),
-          r.spacing(AppDimens.paddingXL),
+          r.spacing(15),
           r.spacing(AppDimens.paddingLG),
           0,
         ),
@@ -443,10 +692,10 @@ class _HomeScreenState extends State<HomeScreen>
               actionText: 'View All',
               onAction: () => Get.to(() => CourseListingScreen()),
             ),
-            SizedBox(height: r.spacing(AppDimens.paddingMD)),
+            SizedBox(height: r.spacing(AppDimens.paddingMD + 4)),
             ...bvscCourses.map((course) => Padding(
-              padding:
-              EdgeInsets.only(bottom: r.spacing(AppDimens.paddingMD)),
+              padding: EdgeInsets.only(
+                  bottom: r.spacing(AppDimens.paddingMD)),
               child: _buildCourseCard(course, r),
             )),
           ],
@@ -460,7 +709,7 @@ class _HomeScreenState extends State<HomeScreen>
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           r.spacing(AppDimens.paddingLG),
-          r.spacing(AppDimens.paddingXL),
+          r.spacing(30),
           r.spacing(AppDimens.paddingLG),
           0,
         ),
@@ -487,12 +736,22 @@ class _HomeScreenState extends State<HomeScreen>
               Icon(Icons.wifi_off_rounded,
                   size: r.fontSize(48), color: AppColors.textSecondary),
               SizedBox(height: r.spacing(AppDimens.paddingMD)),
-              Text('Failed to load colleges', style: AppTextStyles.bodyMedium),
+              Text('Failed to load colleges',
+                  style: AppTextStyles.bodyMedium),
               SizedBox(height: r.spacing(AppDimens.paddingMD)),
               ElevatedButton.icon(
                 onPressed: _ctrl.fetchTopCollegesFromApi,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                    BorderRadius.circular(AppDimens.radiusMD + 4),
+                  ),
+                ),
               ),
             ],
           ),
@@ -504,24 +763,25 @@ class _HomeScreenState extends State<HomeScreen>
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
-            child: Text('No colleges found.', style: AppTextStyles.bodyMedium)),
+            child:
+            Text('No colleges found.', style: AppTextStyles.bodyMedium)),
       );
     }
 
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(
         r.spacing(AppDimens.paddingLG),
-        r.spacing(AppDimens.paddingMD),
+        r.spacing(AppDimens.paddingMD + 4),
         r.spacing(AppDimens.paddingLG),
-        100,
+        AppDimens.paddingLG,
       ),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
               (ctx, i) {
             final college = _ctrl.topColleges[i];
             return Padding(
-              padding:
-              EdgeInsets.only(bottom: r.spacing(AppDimens.paddingXS)),
+              padding: EdgeInsets.only(
+                  bottom: r.spacing(AppDimens.paddingSM + 4)),
               child: CollegeCard(
                 collegeName: college.collegeName,
                 location: college.location,
@@ -535,72 +795,178 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-
   Widget _buildCourseCard(CourseModel course, Responsive r) {
-    return GestureDetector(
-      onTap: () => _openCourseDetail(course),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.radiusLG),
-          border: Border.all(color: AppColors.borderLight),
-          boxShadow: [
-            BoxShadow(
-                color: AppColors.shadowLight,
-                blurRadius: 6,
-                offset: const Offset(0, 2)),
-          ],
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(AppDimens.radiusLG)),
-                child: Container(
-                  width:
-                  r.value(mobile: r.spacing(100), tablet: r.spacing(120)),
-                  color: AppColors.primarySurface,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openCourseDetail(course),
+        borderRadius: BorderRadius.circular(AppDimens.radiusLG + 2),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppDimens.radiusLG + 2),
+            border: Border.all(color: AppColors.borderLight),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.025),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5)),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
+            child: Row(
+              children: [
+                Container(
+                  width: r.spacing(52),
+                  height: r.spacing(52),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.kAccent.withOpacity(0.18),
+                        AppColors.kAccent.withOpacity(0.08),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusMD + 4),
+                  ),
                   child: Icon(Icons.menu_book_rounded,
-                      color: AppColors.primary,
-                      size: r.fontSize(AppDimens.avatarMD)),
+                      color: AppColors.kAccent, size: r.fontSize(24)),
                 ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(course.courseName,
-                          style: AppTextStyles.titleLarge
-                              .copyWith(fontSize: r.fontSize(14)),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
-                      SizedBox(height: r.spacing(AppDimens.paddingSM)),
-                    ],
+                SizedBox(width: r.spacing(AppDimens.paddingMD + 2)),
+                Expanded(
+                  child: Text(
+                    course.courseName,
+                    style: AppTextStyles.titleLarge.copyWith(
+                      fontSize: r.fontSize(14.5),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.1,
+                      height: 1.35,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                SizedBox(width: r.spacing(6)),
+                Icon(Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary.withOpacity(0.6),
+                    size: r.fontSize(22)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onRefresh() async {
+    await Future.wait([
+      _ctrl.fetchTopCollegesFromApi(),
+      _courseCtrl.fetchCourses(),
+    ]);
+  }
+}
+
+/// Elegant card button used for the Temporary / Permanent affiliation
+/// choices — a soft gradient icon badge, label, subtitle, and a
+/// tucked-in arrow chip in the corner.
+class _AffiliationButton extends StatelessWidget {
+  final Responsive r;
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _AffiliationButton({
+    required this.r,
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimens.radiusLG + 6),
+        child: Ink(
+          padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD + 2)),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppDimens.radiusLG + 6),
+            border: Border.all(color: AppColors.borderLight),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withOpacity(0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
-              Padding(
-                padding:
-                EdgeInsets.only(right: r.spacing(AppDimens.paddingMD)),
-                child: Icon(Icons.chevron_right_rounded,
-                    color: AppColors.textSecondary, size: r.fontSize(20)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: r.spacing(46),
+                    height: r.spacing(46),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          accent.withOpacity(0.20),
+                          accent.withOpacity(0.08),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius:
+                      BorderRadius.circular(AppDimens.radiusMD + 4),
+                    ),
+                    child: Icon(icon, color: accent, size: r.fontSize(22)),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(r.spacing(6)),
+                    decoration: BoxDecoration(
+                      color: accent.withOpacity(0.10),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.arrow_outward_rounded,
+                        color: accent, size: r.fontSize(13)),
+                  ),
+                ],
+              ),
+              SizedBox(height: r.spacing(AppDimens.paddingMD + 2)),
+              Text(
+                label,
+                style: AppTextStyles.titleLarge.copyWith(
+                  fontSize: r.fontSize(15.5),
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              SizedBox(height: r.spacing(3)),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontSize: r.fontSize(11.5),
+                  color: AppColors.textSecondary,
+                  height: 1.3,
+                ),
               ),
             ],
           ),
         ),
       ),
     );
-  }
-  Future<void> _onRefresh() async {
-    await Future.wait([
-      _ctrl.fetchTopCollegesFromApi(),
-      _courseCtrl.fetchCourses(),
-    ]);
   }
 }
 
@@ -619,7 +985,7 @@ class _NotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = r.spacing(42.0);
+    final size = r.spacing(46.0);
     return Material(
       color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(
@@ -638,15 +1004,15 @@ class _NotificationButton extends StatelessWidget {
               Icon(
                 Icons.notifications_none_rounded,
                 color: AppColors.textPrimary,
-                size: r.fontSize(21),
+                size: r.fontSize(22),
               ),
               if (hasUnread)
                 Positioned(
                   top: r.spacing(9),
                   right: r.spacing(9),
                   child: Container(
-                    width: r.spacing(8),
-                    height: r.spacing(8),
+                    width: r.spacing(9),
+                    height: r.spacing(9),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE0483A),
                       shape: BoxShape.circle,

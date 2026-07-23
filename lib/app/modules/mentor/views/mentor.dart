@@ -52,16 +52,11 @@ class _MentorScreenState extends State<MentorScreen> {
               100,
             ),
             children: [
-              Text(
-                'Get personal guidance for your BVSc admission',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  fontSize: r.fontSize(13),
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              // ── Hero banner ───────────────────────────────────────────
+              _HeroBanner(r: r),
               SizedBox(height: r.spacing(AppDimens.paddingLG)),
 
-              _SectionLabel(r: r, label: 'Featured Channel'),
+              _SectionLabel(r: r, label: 'Guidance Videos'),
               SizedBox(height: r.spacing(AppDimens.paddingSM)),
               _YouTubeChannelCard(r: r, controller: controller),
 
@@ -155,6 +150,74 @@ class _MentorScreenState extends State<MentorScreen> {
   }
 }
 
+/// ── Hero banner (mirrors the "Need Guidance?" illustration card) ─────────
+class _HeroBanner extends StatelessWidget {
+  final Responsive r;
+  const _HeroBanner({required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(r.spacing(AppDimens.paddingLG)),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primarySurface,
+            AppColors.primarySurface.withOpacity(0.55),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppDimens.radiusLG),
+        border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Illustration avatar
+          Container(
+            width: r.spacing(90),
+            height: r.spacing(90),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Image.asset('assets/images/mentor.png'),
+            ),
+          ),
+          SizedBox(width: r.spacing(AppDimens.paddingMD)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Need Guidance?',
+                  style: AppTextStyles.titleLarge.copyWith(
+                    fontSize: r.fontSize(16),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: r.spacing(4)),
+                Text(
+                  'Watch short guidance videos and connect with our expert mentors for personalized support on your admission journey.',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontSize: r.fontSize(12.5),
+                    color: AppColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionLabel extends StatelessWidget {
   final Responsive r;
   final String label;
@@ -174,7 +237,7 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-
+/// ── Featured channel card with a horizontally scrollable guidance-video row ──
 class _YouTubeChannelCard extends StatelessWidget {
   final Responsive r;
   final MentorController controller;
@@ -191,148 +254,7 @@ class _YouTubeChannelCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Thumbnail ────────────────────────────────────────────────────
-          Obx(() {
-            final isLoading = controller.isVideosLoading.value;
-            final videos = controller.videos;
-            final firstVideo = videos.isNotEmpty ? videos.first : null;
-
-            return GestureDetector(
-              onTap: firstVideo != null
-                  ? () => controller.openVideo(firstVideo)
-                  : controller.openYouTubeChannel,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppDimens.radiusLG),
-                ),
-                child: Stack(
-                  children: [
-                    // Thumbnail / fallback
-                    SizedBox(
-                      width: double.infinity,
-                      height: r.spacing(180),
-                      child: isLoading
-                          ? _ThumbnailSkeleton(r: r)
-                          : (firstVideo?.thumbnailUrl != null
-                          ? Image.network(
-                        firstVideo!.thumbnailUrl!,
-                        width: double.infinity,
-                        height: r.spacing(180),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _ThumbnailFallback(r: r),
-                      )
-                          : _ThumbnailFallback(r: r)),
-                    ),
-
-                    // Dark scrim
-                    if (!isLoading)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.45),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    // YouTube badge – top left
-                    if (!isLoading)
-                      Positioned(
-                        top: r.spacing(10),
-                        left: r.spacing(10),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: r.spacing(AppDimens.paddingSM + 2),
-                            vertical: r.spacing(3),
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF0000),
-                            borderRadius:
-                            BorderRadius.circular(AppDimens.radiusXS),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.play_arrow_rounded,
-                                  color: Colors.white, size: 12),
-                              SizedBox(width: r.spacing(3)),
-                              Text(
-                                'YouTube',
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  fontSize: r.fontSize(10),
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                    if (!isLoading)
-                      Positioned.fill(
-                        child: Center(
-                          child: Container(
-                            width: r.spacing(56),
-                            height: r.spacing(56),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF0000),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.play_arrow_rounded,
-                              color: Colors.white,
-                              size: r.fontSize(AppDimens.iconMD + 6),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    // Video count badge – bottom right
-                    if (!isLoading && controller.videos.length > 1)
-                      Positioned(
-                        bottom: r.spacing(8),
-                        right: r.spacing(10),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: r.spacing(AppDimens.paddingSM),
-                            vertical: r.spacing(3),
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.65),
-                            borderRadius:
-                            BorderRadius.circular(AppDimens.radiusXS),
-                          ),
-                          child: Text(
-                            '${controller.videos.length} videos',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              fontSize: r.fontSize(10),
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }),
-
-          // ── Channel info row ─────────────────────────────────────────────
+          // ── Channel info row ─────────────────────────────────────────
           Padding(
             padding: EdgeInsets.all(r.spacing(AppDimens.paddingMD)),
             child: Row(
@@ -359,7 +281,7 @@ class _YouTubeChannelCard extends StatelessWidget {
                       ),
                       SizedBox(height: r.spacing(2)),
                       Text(
-                        '@vetadmissionmentor',
+                        '@vetadmissionmentor · Guidance Videos',
                         style: AppTextStyles.bodySmall
                             .copyWith(fontSize: r.fontSize(11)),
                       ),
@@ -390,43 +312,52 @@ class _YouTubeChannelCard extends StatelessWidget {
             ),
           ),
 
-          // ── Video list (when API returns multiple) ───────────────────────
-          Obx(() {
-            if (controller.videos.length <= 1) return const SizedBox.shrink();
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Divider(height: 1, color: AppColors.border),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: r.spacing(AppDimens.paddingMD),
-                    vertical: r.spacing(AppDimens.paddingSM),
-                  ),
-                  child: Text(
-                    'ALL VIDEOS',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: r.fontSize(10),
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ),
-                ...controller.videos.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final video = entry.value;
-                  return _VideoListTile(
-                    r: r,
-                    video: video,
-                    index: index,
-                    onTap: () => controller.openVideo(video),
-                  );
-                }),
-                SizedBox(height: r.spacing(AppDimens.paddingSM)),
-              ],
-            );
-          }),
+          Divider(height: 1, color: AppColors.border),
 
+          // ── Horizontally scrollable guidance-video carousel ──────────
+          Padding(
+            padding: EdgeInsets.only(top: r.spacing(AppDimens.paddingMD)),
+            child: Obx(() {
+              final isLoading = controller.isVideosLoading.value;
+              final videos = controller.videos;
+
+              if (isLoading) {
+                return _VideoCarouselSkeleton(r: r);
+              }
+
+              if (videos.isEmpty) {
+                return _EmptyVideosState(
+                  r: r,
+                  onOpenChannel: controller.openYouTubeChannel,
+                );
+              }
+
+              return SizedBox(
+                height: r.spacing(184),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(
+                      horizontal: r.spacing(AppDimens.paddingMD)),
+                  itemCount: videos.length,
+                  separatorBuilder: (_, __) =>
+                      SizedBox(width: r.spacing(AppDimens.paddingSM + 2)),
+                  itemBuilder: (context, index) {
+                    final video = videos[index];
+                    return _VideoCardHorizontal(
+                      r: r,
+                      video: video,
+                      index: index,
+                      onTap: () => controller.openVideo(video),
+                    );
+                  },
+                ),
+              );
+            }),
+          ),
+
+          SizedBox(height: r.spacing(AppDimens.paddingMD)),
+
+          // ── Visit channel CTA ──────────────────────────────────────────
           Padding(
             padding: EdgeInsets.fromLTRB(
               r.spacing(AppDimens.paddingMD),
@@ -451,7 +382,7 @@ class _YouTubeChannelCard extends StatelessWidget {
                         color: Colors.white, size: 16),
                     SizedBox(width: r.spacing(AppDimens.paddingXS)),
                     Text(
-                      'Visit YouTube Channel',
+                      'Watch More on YouTube',
                       style: AppTextStyles.titleMedium.copyWith(
                         fontSize: r.fontSize(13),
                         color: Colors.white,
@@ -469,37 +400,193 @@ class _YouTubeChannelCard extends StatelessWidget {
   }
 }
 
-
-class _ThumbnailFallback extends StatelessWidget {
+/// Single horizontally scrolled guidance-video card — thumbnail + play
+/// overlay + a real caption (falls back gracefully if the API has no title).
+class _VideoCardHorizontal extends StatelessWidget {
   final Responsive r;
-  const _ThumbnailFallback({required this.r});
+  final MentorVideo video;
+  final int index;
+  final VoidCallback onTap;
+
+  const _VideoCardHorizontal({
+    required this.r,
+    required this.video,
+    required this.index,
+    required this.onTap,
+  });
+
+  /// Pulls the best available caption text off the video model.
+  /// Adjust the field names here if your `MentorVideo` model differs.
+  String get _caption {
+    final dynamic v = video;
+    try {
+      final title = v.title as String?;
+      if (title != null && title.trim().isNotEmpty) return title.trim();
+    } catch (_) {}
+    try {
+      final name = v.videoTitle as String?;
+      if (name != null && name.trim().isNotEmpty) return name.trim();
+    } catch (_) {}
+    return 'Guidance Video ${index + 1}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: r.spacing(180),
-      color: const Color(0xFF1A1A2E),
-      child: Center(
-        child: Icon(
-          Icons.play_circle_fill_rounded,
-          color: Colors.white.withOpacity(0.12),
-          size: r.fontSize(90),
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: r.spacing(160),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+              child: Stack(
+                children: [
+                  SizedBox(
+                    width: r.spacing(160),
+                    height: r.spacing(96),
+                    child: video.thumbnailUrl != null
+                        ? Image.network(
+                      video.thumbnailUrl!,
+                      width: r.spacing(160),
+                      height: r.spacing(96),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          _MiniThumbFallback(r: r),
+                    )
+                        : _MiniThumbFallback(r: r),
+                  ),
+                  // Dark scrim for legibility
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.35),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Play button
+                  Positioned.fill(
+                    child: Center(
+                      child: Container(
+                        width: r.spacing(34),
+                        height: r.spacing(34),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFF0000),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: r.fontSize(20),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // "Guidance" tag badge (replaces plain numeric index)
+                  Positioned(
+                    top: r.spacing(6),
+                    left: r.spacing(6),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: r.spacing(7),
+                        vertical: r.spacing(2),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius:
+                        BorderRadius.circular(AppDimens.radiusXS),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.school_rounded,
+                              size: r.fontSize(9), color: Colors.white),
+                          SizedBox(width: r.spacing(3)),
+                          Text(
+                            'Guidance',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              fontSize: r.fontSize(9.5),
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: r.spacing(6)),
+            // ── Caption (actual video title, falls back to a friendly label) ──
+            Text(
+              _caption,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.titleMedium.copyWith(
+                fontSize: r.fontSize(12.5),
+                fontWeight: FontWeight.w600,
+                height: 1.25,
+              ),
+            ),
+            SizedBox(height: r.spacing(2)),
+            Row(
+              children: [
+                Icon(Icons.play_circle_outline_rounded,
+                    size: r.fontSize(11), color: AppColors.textSecondary),
+                SizedBox(width: r.spacing(3)),
+                Text(
+                  'Tap to watch',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize: r.fontSize(10.5),
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ThumbnailSkeleton extends StatefulWidget {
+class _VideoCarouselSkeleton extends StatelessWidget {
   final Responsive r;
-  const _ThumbnailSkeleton({required this.r});
+  const _VideoCarouselSkeleton({required this.r});
 
   @override
-  State<_ThumbnailSkeleton> createState() => _ThumbnailSkeletonState();
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: r.spacing(184),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: r.spacing(AppDimens.paddingMD)),
+        itemCount: 4,
+        separatorBuilder: (_, __) => SizedBox(width: r.spacing(AppDimens.paddingSM + 2)),
+        itemBuilder: (_, __) => _ShimmerCard(r: r),
+      ),
+    );
+  }
 }
 
-class _ThumbnailSkeletonState extends State<_ThumbnailSkeleton>
+class _ShimmerCard extends StatefulWidget {
+  final Responsive r;
+  const _ShimmerCard({required this.r});
+
+  @override
+  State<_ShimmerCard> createState() => _ShimmerCardState();
+}
+
+class _ShimmerCardState extends State<_ShimmerCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _anim;
   late Animation<double> _opacity;
@@ -522,85 +609,76 @@ class _ThumbnailSkeletonState extends State<_ThumbnailSkeleton>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _opacity,
-      builder: (_, __) => Container(
-        width: double.infinity,
-        height: widget.r.spacing(180),
-        color: Color.lerp(
-          const Color(0xFF1A1A2E),
-          const Color(0xFF2A2A3E),
-          _opacity.value,
-        ),
+    final r = widget.r;
+    return SizedBox(
+      width: r.spacing(160),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AnimatedBuilder(
+            animation: _opacity,
+            builder: (_, __) => Container(
+              width: r.spacing(160),
+              height: r.spacing(96),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                color: Color.lerp(
+                  const Color(0xFF1A1A2E),
+                  const Color(0xFF2A2A3E),
+                  _opacity.value,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: r.spacing(8)),
+          Container(
+            width: r.spacing(120),
+            height: r.spacing(10),
+            color: AppColors.border,
+          ),
+          SizedBox(height: r.spacing(6)),
+          Container(
+            width: r.spacing(80),
+            height: r.spacing(10),
+            color: AppColors.border,
+          ),
+          SizedBox(height: r.spacing(6)),
+          Container(
+            width: r.spacing(60),
+            height: r.spacing(8),
+            color: AppColors.border,
+          ),
+        ],
       ),
     );
   }
 }
 
-class _VideoListTile extends StatelessWidget {
+class _EmptyVideosState extends StatelessWidget {
   final Responsive r;
-  final MentorVideo video;
-  final int index;
-  final VoidCallback onTap;
-  const _VideoListTile({
-    required this.r,
-    required this.video,
-    required this.index,
-    required this.onTap,
-  });
+  final VoidCallback onOpenChannel;
+  const _EmptyVideosState({required this.r, required this.onOpenChannel});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: r.spacing(AppDimens.paddingMD),
-          vertical: r.spacing(AppDimens.paddingXS + 2),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimens.radiusSM),
-              child: video.thumbnailUrl != null
-                  ? Image.network(
-                video.thumbnailUrl!,
-                width: r.spacing(72),
-                height: r.spacing(44),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    _MiniThumbFallback(r: r),
-              )
-                  : _MiniThumbFallback(r: r),
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: r.spacing(AppDimens.paddingMD),
+        vertical: r.spacing(AppDimens.paddingLG),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.videocam_off_rounded,
+              size: r.fontSize(28), color: AppColors.textSecondary),
+          SizedBox(height: r.spacing(8)),
+          Text(
+            'No guidance videos available right now',
+            style: AppTextStyles.bodySmall.copyWith(
+              fontSize: r.fontSize(12),
+              color: AppColors.textSecondary,
             ),
-            SizedBox(width: r.spacing(AppDimens.paddingMD)),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Video ${index + 1}',
-                    style: AppTextStyles.titleMedium
-                        .copyWith(fontSize: r.fontSize(13)),
-                  ),
-                  SizedBox(height: r.spacing(2)),
-                  Text(
-                    'Tap to watch',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: r.fontSize(11),
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.play_circle_outline_rounded,
-              size: r.fontSize(AppDimens.iconSM),
-              color: const Color(0xFFFF0000),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -613,11 +691,11 @@ class _MiniThumbFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: r.spacing(72),
-      height: r.spacing(44),
+      width: r.spacing(160),
+      height: r.spacing(96),
       color: const Color(0xFF1A1A2E),
       child: const Icon(Icons.play_arrow_rounded,
-          color: Colors.white38, size: 20),
+          color: Colors.white38, size: 28),
     );
   }
 }

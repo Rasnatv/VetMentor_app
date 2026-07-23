@@ -26,6 +26,10 @@ class _WishlistScreenState extends State<WishlistScreen>
 
   late final WishlistController ctrl;
 
+  /// True only when the student has actually registered/submitted an
+  /// enquiry (a real studentId exists). Used to tailor the empty state.
+  bool get _isRegistered => widget.studentId != 0;
+
   @override
   bool get wantKeepAlive => false;
 
@@ -35,7 +39,12 @@ class _WishlistScreenState extends State<WishlistScreen>
     ctrl = Get.isRegistered<WishlistController>()
         ? Get.find<WishlistController>()
         : Get.put(WishlistController());
-    ctrl.fetchWishlist(widget.studentId);
+    // Only hit the API if there's a real student to fetch for. Unregistered
+    // users (studentId == 0) can't have saved anything yet, so we just show
+    // the empty state directly instead of firing a doomed network call.
+    if (_isRegistered) {
+      ctrl.fetchWishlist(widget.studentId);
+    }
   }
 
   @override
@@ -46,7 +55,9 @@ class _WishlistScreenState extends State<WishlistScreen>
     return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: AppColors.backgroundGrey,
       appBar: VetAppBar(title: 'Saved Colleges', showBack: true),
-      body: Obx(() {
+      body: !_isRegistered
+          ? _buildEmpty(r)
+          : Obx(() {
         if (ctrl.isFetching.value) return _buildLoading();
         return RefreshIndicator(
           color: AppColors.primary,
@@ -62,6 +73,7 @@ class _WishlistScreenState extends State<WishlistScreen>
   );
 
   Widget _buildEmpty(Responsive r) => ListView(
+    physics: const AlwaysScrollableScrollPhysics(),
     children: [
       SizedBox(
         height: MediaQuery.of(context).size.height * 0.65,
@@ -88,7 +100,9 @@ class _WishlistScreenState extends State<WishlistScreen>
                 ),
                 SizedBox(height: r.spacing(AppDimens.paddingXS)),
                 Text(
-                  'Colleges you bookmark while browsing\nwill appear here.',
+                  _isRegistered
+                      ? 'Colleges you bookmark while browsing\nwill appear here.'
+                      : 'Complete your enquiry / registration first —\nonly then you can save colleges.',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,

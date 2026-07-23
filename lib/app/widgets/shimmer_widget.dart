@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class ShimmerWrapper extends StatefulWidget {
@@ -88,12 +89,29 @@ class ShimmerAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          _SBox(w: 210, h: 20, r: 6),  // "Hello, Vet Aspirant! 👋"
-          SizedBox(height: 8),
-          _SBox(w: 250, h: 14, r: 6),  // subtitle
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                _SBox(w: 210, h: 20, r: 6),  // "Hello, Vet Aspirant! 👋"
+                SizedBox(height: 8),
+                _SBox(w: 250, h: 14, r: 6),  // subtitle
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Notification bell placeholder
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE0E0E0),
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
         ],
       ),
     );
@@ -118,25 +136,61 @@ class ShimmerSearchBar extends StatelessWidget {
   }
 }
 
-
 class ShimmerHeroBanner extends StatelessWidget {
   const ShimmerHeroBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: Container(
-        height: 160,
+        height: 200, // matches image height (112–148) + text/padding
         decoration: BoxDecoration(
           color: const Color(0xFFE0E0E0),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(26),
         ),
       ),
     );
   }
 }
 
+// Mock Test banner — matches _buildMockTestSection
+class ShimmerMockTestBanner extends StatelessWidget {
+  const ShimmerMockTestBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+        ),
+        child: Row(
+          children: [
+            const _SBox(w: 56, h: 56, r: 16), // icon badge
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  _SBox(w: 150, h: 15, r: 6),
+                  SizedBox(height: 8),
+                  _SBox(w: 190, h: 12, r: 6),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            const _SBox(w: 40, h: 40, r: 20), // circular arrow chip
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class ShimmerSectionHeader extends StatelessWidget {
   const ShimmerSectionHeader({super.key});
@@ -152,8 +206,6 @@ class ShimmerSectionHeader extends StatelessWidget {
     );
   }
 }
-
-
 
 class ShimmerCourseCard extends StatelessWidget {
   const ShimmerCourseCard({super.key});
@@ -176,7 +228,6 @@ class ShimmerCourseCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Left icon square — same size as book icon area
           Container(
             width: 90,
             height: 88,
@@ -187,7 +238,6 @@ class ShimmerCourseCard extends StatelessWidget {
               ),
             ),
           ),
-          // Course name lines
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -202,7 +252,6 @@ class ShimmerCourseCard extends StatelessWidget {
               ),
             ),
           ),
-          // Chevron
           const Padding(
             padding: EdgeInsets.only(right: 14),
             child: _SBox(w: 16, h: 16, r: 4),
@@ -213,6 +262,66 @@ class ShimmerCourseCard extends StatelessWidget {
   }
 }
 
+// Temporary / Permanent affiliation buttons — matches _AffiliationButton
+class ShimmerAffiliationButtons extends StatelessWidget {
+  const ShimmerAffiliationButtons({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SBox(w: 170, h: 17, r: 6), // "Affiliated Colleges"
+          const SizedBox(height: 8),
+          const _SBox(w: 220, h: 13, r: 6), // subtitle
+          const SizedBox(height: 14),
+          Row(
+            children: const [
+              Expanded(child: _AffiliationButtonShimmer()),
+              SizedBox(width: 14),
+              Expanded(child: _AffiliationButtonShimmer()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AffiliationButtonShimmer extends StatelessWidget {
+  const _AffiliationButtonShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFEEEEEE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _SBox(w: 46, h: 46, r: 14),
+              _SBox(w: 26, h: 26, r: 13),
+            ],
+          ),
+          SizedBox(height: 14),
+          _SBox(w: 90, h: 15, r: 6),
+          SizedBox(height: 6),
+          _SBox(w: 110, h: 11, r: 6),
+        ],
+      ),
+    );
+  }
+}
 
 class ShimmerCollegeCard extends StatelessWidget {
   const ShimmerCollegeCard({super.key});
@@ -249,12 +358,10 @@ class ShimmerCollegeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // College name — can be 2 lines
                 const _SBox(w: double.infinity, h: 14, r: 6),
                 const SizedBox(height: 6),
                 const _SBox(w: 180, h: 14, r: 6),
                 const SizedBox(height: 10),
-                // Location row: pin icon + city
                 Row(
                   children: const [
                     _SBox(w: 12, h: 12, r: 6),
@@ -271,7 +378,6 @@ class ShimmerCollegeCard extends StatelessWidget {
   }
 }
 
-
 class HomeScreenShimmer extends StatelessWidget {
   const HomeScreenShimmer({super.key});
 
@@ -285,7 +391,7 @@ class HomeScreenShimmer extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Greeting ─────────────────────────────────
+              // ── Greeting + bell ───────────────────────────
               const ShimmerAppBar(),
 
               // ── Search ───────────────────────────────────
@@ -294,6 +400,9 @@ class HomeScreenShimmer extends StatelessWidget {
               // ── Hero banner ──────────────────────────────
               const ShimmerHeroBanner(),
 
+              // ── Mock test banner ──────────────────────────
+              const ShimmerMockTestBanner(),
+
               // ── Recommended For You ──────────────────────
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 28, 20, 0),
@@ -301,8 +410,11 @@ class HomeScreenShimmer extends StatelessWidget {
               ),
               const Padding(
                 padding: EdgeInsets.fromLTRB(20, 14, 20, 0),
-                child: ShimmerCourseCard(), // single card — matches real UI
+                child: ShimmerCourseCard(),
               ),
+
+              // ── Affiliated colleges buttons ───────────────
+              const ShimmerAffiliationButtons(),
 
               // ── Top Veterinary Colleges ───────────────────
               const Padding(

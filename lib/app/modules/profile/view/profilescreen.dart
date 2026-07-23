@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:veterinaryapp/app/modules/profile/view/privacypolicy.dart';
 import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart';
 import '../../../core/constants/appcolors.dart';
@@ -18,6 +19,7 @@ import '../controller/profilecontroller.dart';
 import '../../../data/models/studentprofilemodel.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
 import 'updateprofilescreen.dart';
+
 
 const Color _kAccent = Color(0xFF1D9E75);
 const Color _kAccentDark = Color(0xFF0F6E56);
@@ -55,6 +57,21 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   bool get _hasRegistration => _studentId != 0;
+
+  /// Single source of truth for what happens when "View Profile" is tapped.
+  /// Always opens the profile details page — the page itself shows
+  /// whatever fields (name, email, etc.) exist and falls back to
+  /// placeholders for anything not filled in yet. We no longer block
+  /// this behind a "no data" sheet; registration/enquiry status only
+  /// affects what data is available to show, not whether the page opens.
+  void _onViewProfileTap(BuildContext context, StudentProfileModel? p) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileDetailsScreen(profile: p),
+      ),
+    ).then((_) => ctrl.fetchProfile());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,60 +151,47 @@ class _ProfileScreenState extends State<ProfileScreen>
                     iconBg: const Color(0xFFE8F5E9),
                     title: 'View Profile',
                     subtitle: 'See and edit your full profile details',
-                    onTap: () => _showNoDataSheet(context),
+                    onTap: () =>
+                        _onViewProfileTap(context, ctrl.profile.value),
                   ),
                   SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                  // _ActionCard(
+                  //   icon: Icons.bookmark_rounded,
+                  //   iconColor: _kAccent,
+                  //   iconBg: const Color(0xFFE8F5E9),
+                  //   title: 'Saved Colleges',
+                  //   subtitle: 'View your bookmarked colleges',
+                  //   onTap: () => _showNoDataSheet(context),
+                  // ),
                   _ActionCard(
                     icon: Icons.bookmark_rounded,
                     iconColor: _kAccent,
                     iconBg: const Color(0xFFE8F5E9),
                     title: 'Saved Colleges',
                     subtitle: 'View your bookmarked colleges',
-                    onTap: () => _showNoDataSheet(context),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => WishlistScreen(studentId: _studentId),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                  _ActionCard(
+                    icon: Icons.privacy_tip_outlined,
+                    iconColor: const Color(0xFF185FA5),
+                    iconBg: const Color(0xFFE6F1FB),
+                    title: 'Privacy Policy',
+                    subtitle: 'Read how we handle your data',
+                    onTap: () => openPrivacyPolicy(context),
                   ),
                 ],
               ),
             ),
 
-            // Privacy note
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                r.spacing(AppDimens.paddingLG),
-                r.spacing(AppDimens.paddingXL),
-                r.spacing(AppDimens.paddingLG),
-                0,
-              ),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: r.spacing(AppDimens.paddingMD),
-                  vertical: r.spacing(AppDimens.paddingSM + 2),
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F1FB),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.lock_outline_rounded,
-                      size: r.fontSize(AppDimens.iconXS),
-                      color: const Color(0xFF185FA5),
-                    ),
-                    SizedBox(width: r.spacing(AppDimens.paddingXS + 2)),
-                    Expanded(
-                      child: Text(
-                        'Your information is safe and never shared with third parties.',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: r.fontSize(11.5),
-                          color: const Color(0xFF185FA5),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const _PrivacyNote(),
           ],
         ),
       );
@@ -266,6 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
     );
   }
+
   /// Summary tab: hero banner + "View Profile" + "Saved Colleges" cards.
   Widget _buildProfile(
       BuildContext context,
@@ -301,14 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     iconBg: const Color(0xFFE8F5E9),
                     title: 'View Profile',
                     subtitle: 'See and edit your full profile details',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ProfileDetailsScreen(profile: p),
-                        ),
-                      ).then((_) => ctrl.fetchProfile());
-                    },
+                    onTap: () => _onViewProfileTap(context, p),
                   ),
                   SizedBox(height: r.spacing(AppDimens.paddingMD)),
                   _ActionCard(
@@ -327,49 +325,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                       );
                     },
                   ),
+                  SizedBox(height: r.spacing(AppDimens.paddingMD)),
+                  _ActionCard(
+                    icon: Icons.privacy_tip_outlined,
+                    iconColor: const Color(0xFF185FA5),
+                    iconBg: const Color(0xFFE6F1FB),
+                    title: 'Privacy Policy',
+                    subtitle: 'Read how we handle your data',
+                    onTap: () => openPrivacyPolicy(context),
+                  ),
                 ],
               ),
             ),
 
-            // Privacy note
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                r.spacing(AppDimens.paddingLG),
-                r.spacing(AppDimens.paddingXL),
-                r.spacing(AppDimens.paddingLG),
-                0,
-              ),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: r.spacing(AppDimens.paddingMD),
-                  vertical: r.spacing(AppDimens.paddingSM + 2),
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F1FB),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.lock_outline_rounded,
-                      size: r.fontSize(AppDimens.iconXS),
-                      color: const Color(0xFF185FA5),
-                    ),
-                    SizedBox(width: r.spacing(AppDimens.paddingXS + 2)),
-                    Expanded(
-                      child: Text(
-                        'Your information is safe and never shared with third parties.',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: r.fontSize(11.5),
-                          color: const Color(0xFF185FA5),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const _PrivacyNote(),
           ],
         ),
       );
@@ -435,13 +404,35 @@ class _GuestBanner extends StatelessWidget {
 
 
 class ProfileDetailsScreen extends StatelessWidget {
-  final StudentProfileModel profile;
+  /// Nullable on purpose: the page opens and renders regardless of
+  /// registration status. When there's no profile yet, every field
+  /// below just falls back to '—' instead of blocking navigation.
+  final StudentProfileModel? profile;
   const ProfileDetailsScreen({super.key, required this.profile});
+
+  bool get _hasData => profile != null;
 
   @override
   Widget build(BuildContext context) {
     final r = Responsive.of(context);
     final p = profile;
+
+    // Convenience getters so every field below reads cleanly whether or
+    // not we actually have profile data.
+    final fullName = p?.fullName.isNotEmpty == true
+        ? p!.fullName
+        : '${p?.firstName ?? ''} ${p?.lastName ?? ''}'.trim();
+    final gender = p?.gender ?? '';
+    final email = p?.email ?? '';
+    final phoneNo = p?.phoneNo ?? '';
+    final countryCode = p?.countryCode ?? '';
+    final country = p?.country ?? '';
+    final state = p?.state ?? '';
+    final district = p?.district ?? '';
+    final address = p?.address ?? '';
+    final pincode = p?.pincode ?? '';
+    final program = p?.program ?? '';
+    final netScore = p?.netScore ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
@@ -453,10 +444,23 @@ class ProfileDetailsScreen extends StatelessWidget {
             padding: EdgeInsets.only(right: r.spacing(AppDimens.paddingMD)),
             child: _EditProfilePill(
               onTap: () {
+                if (!_hasData) {
+                  // No profile record to edit yet — let the user know
+                  // instead of pushing into UpdateProfileScreen with
+                  // nothing to save against.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      behavior: SnackBarBehavior.floating,
+                      content: Text(
+                          'Complete your enquiry / registration first to edit your profile.'),
+                    ),
+                  );
+                  return;
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => UpdateProfileScreen(profile: p),
+                    builder: (_) => UpdateProfileScreen(profile: p!),
                   ),
                 ).then((_) {
                   if (Get.isRegistered<ProfileController>()) {
@@ -476,6 +480,43 @@ class ProfileDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (!_hasData)
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  r.spacing(AppDimens.paddingLG),
+                  r.spacing(AppDimens.paddingLG),
+                  r.spacing(AppDimens.paddingLG),
+                  0,
+                ),
+                child: _GuestBanner(
+                  message:
+                  'Submit an enquiry to unlock your full profile details.',
+                ),
+              ),
+
+            // Personal Details
+            const _SectionHeader(title: 'Personal Details'),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: r.spacing(AppDimens.paddingLG)),
+              child: InfoCard(rows: [
+                InfoRowData(
+                  icon: Icons.badge_outlined,
+                  iconColor: const Color(0xFF534AB7),
+                  iconBg: const Color(0xFFEEEDFE),
+                  label: 'Full name',
+                  value: fullName.isNotEmpty ? fullName : '—',
+                ),
+                InfoRowData(
+                  icon: Icons.wc_rounded,
+                  iconColor: const Color(0xFF0F6E56),
+                  iconBg: const Color(0xFFE1F5EE),
+                  label: 'Gender',
+                  value: gender.isNotEmpty ? gender : '—',
+                ),
+              ]),
+            ),
+
             // Contact Details
             const _SectionHeader(title: 'Contact Details'),
             Padding(
@@ -487,9 +528,9 @@ class ProfileDetailsScreen extends StatelessWidget {
                   iconColor: const Color(0xFF185FA5),
                   iconBg: const Color(0xFFE6F1FB),
                   label: 'Email address',
-                  value: p.email.isNotEmpty ? p.email : '—',
-                  onTap: p.email.isNotEmpty
-                      ? () => _copyToClipboard(context, p.email, 'Email')
+                  value: email.isNotEmpty ? email : '—',
+                  onTap: email.isNotEmpty
+                      ? () => _copyToClipboard(context, email, 'Email')
                       : null,
                 ),
                 InfoRowData(
@@ -497,25 +538,66 @@ class ProfileDetailsScreen extends StatelessWidget {
                   iconColor: const Color(0xFF0F6E56),
                   iconBg: const Color(0xFFE1F5EE),
                   label: 'Phone number',
-                  value: p.phoneNo.isNotEmpty
-                      ? '${p.countryCode} ${p.phoneNo}'
+                  value: phoneNo.isNotEmpty
+                      ? '$countryCode $phoneNo'
                       : '—',
-                  onTap: p.phoneNo.isNotEmpty
+                  onTap: phoneNo.isNotEmpty
                       ? () => _copyToClipboard(
                       context,
-                      '${p.countryCode} ${p.phoneNo}',
+                      '$countryCode $phoneNo',
                       'Phone number')
                       : null,
                 ),
               ]),
             ),
 
-            // Location Details
+            // Location Details — full field breakdown shown in both
+            // states (filled via LocationCard, empty via matching
+            // placeholder rows) so the layout doesn't jump between
+            // "no data" and "has data".
             const _SectionHeader(title: 'Location Details'),
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: r.spacing(AppDimens.paddingLG)),
-              child: LocationCard(profile: p),
+              child: _hasData
+                  ? LocationCard(profile: p!)
+                  : InfoCard(rows: [
+                InfoRowData(
+                  icon: Icons.public_rounded,
+                  iconColor: const Color(0xFF0F6E56),
+                  iconBg: const Color(0xFFE1F5EE),
+                  label: 'Country',
+                  value: country.isNotEmpty ? country : '—',
+                ),
+                InfoRowData(
+                  icon: Icons.map_outlined,
+                  iconColor: const Color(0xFFC2622B),
+                  iconBg: const Color(0xFFFCEBDD),
+                  label: 'State',
+                  value: state.isNotEmpty ? state : '—',
+                ),
+                InfoRowData(
+                  icon: Icons.location_city_outlined,
+                  iconColor: const Color(0xFF534AB7),
+                  iconBg: const Color(0xFFEEEDFE),
+                  label: 'District',
+                  value: district.isNotEmpty ? district : '—',
+                ),
+                InfoRowData(
+                  icon: Icons.home_outlined,
+                  iconColor: const Color(0xFF185FA5),
+                  iconBg: const Color(0xFFE6F1FB),
+                  label: 'Address',
+                  value: address.isNotEmpty ? address : '—',
+                ),
+                InfoRowData(
+                  icon: Icons.pin_drop_outlined,
+                  iconColor: const Color(0xFFB8860B),
+                  iconBg: const Color(0xFFFCF3D9),
+                  label: 'Pincode',
+                  value: pincode.isNotEmpty ? pincode : '—',
+                ),
+              ]),
             ),
 
             // Academic Details
@@ -529,7 +611,7 @@ class ProfileDetailsScreen extends StatelessWidget {
                   iconColor: const Color(0xFF534AB7),
                   iconBg: const Color(0xFFEEEDFE),
                   label: 'Program',
-                  value: p.program.isNotEmpty ? p.program : '—',
+                  value: program.isNotEmpty ? program : '—',
                 ),
               ]),
             ),
@@ -538,48 +620,11 @@ class ProfileDetailsScreen extends StatelessWidget {
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: r.spacing(AppDimens.paddingLG)),
-              child: NeetCard(score: p.netScore),
+              child: NeetCard(score: netScore),
             ),
 
-            // Privacy note
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                r.spacing(AppDimens.paddingLG),
-                r.spacing(AppDimens.paddingXL),
-                r.spacing(AppDimens.paddingLG),
-                0,
-              ),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: r.spacing(AppDimens.paddingMD),
-                  vertical: r.spacing(AppDimens.paddingSM + 2),
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F1FB),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.lock_outline_rounded,
-                      size: r.fontSize(AppDimens.iconXS),
-                      color: const Color(0xFF185FA5),
-                    ),
-                    SizedBox(width: r.spacing(AppDimens.paddingXS + 2)),
-                    Expanded(
-                      child: Text(
-                        'Your information is safe and never shared with third parties.',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: r.fontSize(11.5),
-                          color: const Color(0xFF185FA5),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+
+            const _PrivacyNote(),
           ],
         ),
       ),
@@ -952,6 +997,59 @@ class _WhiteChip extends StatelessWidget {
   }
 }
 
+/// Shared "your info is safe" banner used on every profile-related screen,
+/// with a tappable "Privacy Policy" link so users can read the full policy
+/// instead of just taking our word for it.
+class _PrivacyNote extends StatelessWidget {
+  const _PrivacyNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        r.spacing(AppDimens.paddingLG),
+        r.spacing(AppDimens.paddingXL),
+        r.spacing(AppDimens.paddingLG),
+        0,
+      ),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: r.spacing(AppDimens.paddingMD),
+          vertical: r.spacing(AppDimens.paddingSM + 2),
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE6F1FB),
+          borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.lock_outline_rounded,
+              size: r.fontSize(AppDimens.iconXS),
+              color: const Color(0xFF185FA5),
+            ),
+            SizedBox(width: r.spacing(AppDimens.paddingXS + 2)),
+            Expanded(
+              child: Text(
+                'Your information is safe and never shared with third parties.',
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontSize: r.fontSize(11.5),
+                  color: const Color(0xFF185FA5),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            SizedBox(width: r.spacing(AppDimens.paddingXS)),
+
+                  ]),
+                ),
+
+
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader({required this.title});
@@ -990,4 +1088,3 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-
