@@ -87,12 +87,8 @@ class NotificationController extends GetxController {
       final msg = ApiErrorHandler.handleDioError(e);
       errorMessage.value = msg.isNotEmpty ? msg : 'Something went wrong. Please try again.';
 
-      if (!ApiErrorHandler.isNetworkError(e)) {
-        ApiErrorHandler.showError(e);
-      }
     } catch (e) {
-      errorMessage.value = 'Something went wrong. Please try again.';
-      AppSnackbar.error(errorMessage.value);
+
     } finally {
       isLoading.value = false;
     }

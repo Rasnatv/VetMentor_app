@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
 
 import '../../core/constants/appcolors.dart';
 import '../../core/style/dimens.dart';
@@ -46,7 +47,7 @@ class _NewsEventsScreenState extends State<NewsEventsScreen>
     super.build(context); // required by AutomaticKeepAliveClientMixin
     final r = Responsive.of(context);
 
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: VetAppBar(
         title: 'News & Events',
@@ -79,7 +80,7 @@ class _NewsEventsScreenState extends State<NewsEventsScreen>
           ),
         ],
       ),
-    );
+    ));
   }
 
   // ── News tab ────────────────────────────────────────────

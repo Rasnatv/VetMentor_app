@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:veterinaryapp/app/no%20internetconnection/no_connection.dart';
 import 'package:veterinaryapp/app/widgets/commonwidget.dart';
 
 import '../../../data/models/notificationmodel.dart';
@@ -19,7 +20,7 @@ class NotificationPage extends StatelessWidget {
       controller.markAllAsRead();
     });
 
-    return Scaffold(
+    return  NetworkAwareWrapper(child: Scaffold(
       appBar: VetAppBar(title: 'Notifications',),
       body: Obx(() {
         if (controller.isLoading.value && controller.notifications.isEmpty) {
@@ -57,7 +58,7 @@ class NotificationPage extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   void _handleNotificationTap(NotificationItem item) {
