@@ -82,8 +82,6 @@ class _NewsEventsScreenState extends State<NewsEventsScreen>
       ),
     ));
   }
-
-  // ── News tab ────────────────────────────────────────────
   Widget _buildNewsTab(Responsive r) {
     return Obx(() {
       if (_newsCtrl.isLoading.value) {
