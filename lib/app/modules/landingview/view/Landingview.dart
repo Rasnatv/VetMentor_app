@@ -2,11 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../widgets/bottomnavbar.dart';
+import '../../Colleges/view/allcollegelistingscreen.dart';
 import '../../careers/careers_Screen.dart';
 import '../../home/bindings/home_binding.dart';
 import '../../home/view/homescreen.dart';
 import '../../Colleges/view/collegescreen.dart';
 import '../../mentor/views/mentor.dart';
+import '../../newsevents/news_eventssection.dart';
 import '../../profile/view/profilescreen.dart';
 import '../controller/landingcontroller.dart';
 
@@ -50,11 +52,11 @@ class LandingView extends StatelessWidget {
                 ),
                 Offstage(
                   offstage: index != 1,
-                  child: const AffiliationSelectorScreen(),
+                  child: const CollegeListScreen(),
                 ),
                 Offstage(
                   offstage: index != 2,
-                  child: const CareersScreen(),
+                  child: const NewsEventsScreen(),
                 ),
                 Offstage(
                   offstage: index != 3,

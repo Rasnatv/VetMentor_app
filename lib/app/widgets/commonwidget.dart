@@ -447,6 +447,61 @@ class EmptyState extends StatelessWidget {
   }
 }
 
+// // ─── Custom App Bar ──────────────────────────────────────────
+// class VetAppBar extends StatelessWidget implements PreferredSizeWidget {
+//   final String? title;
+//   final List<Widget>? actions;
+//   final bool showBack;
+//   final VoidCallback? onBack;
+//   final Widget? leading;
+//   final bool centerTitle;
+//
+//   const VetAppBar({
+//     super.key,
+//     this.title,
+//     this.actions,
+//     this.showBack = true,
+//     this.onBack,
+//     this.leading,
+//     this.centerTitle = true,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return AppBar(
+//       backgroundColor: AppColors.backgroundWhite,
+//       elevation: 0,
+//       scrolledUnderElevation: 0,
+//       centerTitle: centerTitle,
+//       leading: showBack
+//           ? (leading ??
+//           GestureDetector(
+//             onTap: onBack ?? () => Navigator.pop(context),
+//             child: Container(
+//               margin: const EdgeInsets.all(10),
+//               decoration: BoxDecoration(
+//                 color: AppColors.backgroundGrey,
+//                 borderRadius: BorderRadius.circular(10),
+//               ),
+//               child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.textPrimary),
+//             ),
+//           ))
+//           : null,
+//       automaticallyImplyLeading: false,
+//       title: title != null
+//           ? Text(title!, style: AppTextStyles.headlineLarge)
+//           : null,
+//       actions: actions,
+//       bottom: PreferredSize(
+//         preferredSize: const Size.fromHeight(1),
+//         child: Container(height: 1, color: AppColors.borderLight),
+//       ),
+//     );
+//   }
+//
+//   @override
+//   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
+// }
 // ─── Custom App Bar ──────────────────────────────────────────
 class VetAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -455,6 +510,7 @@ class VetAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onBack;
   final Widget? leading;
   final bool centerTitle;
+  final PreferredSizeWidget? bottom; // NEW: e.g. a TabBar
 
   const VetAppBar({
     super.key,
@@ -464,6 +520,7 @@ class VetAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onBack,
     this.leading,
     this.centerTitle = true,
+    this.bottom, // NEW
   });
 
   @override
@@ -492,15 +549,20 @@ class VetAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? Text(title!, style: AppTextStyles.headlineLarge)
           : null,
       actions: actions,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: AppColors.borderLight),
-      ),
+      // If a custom bottom (e.g. TabBar) is supplied, use it.
+      // Otherwise fall back to the default 1px divider.
+      bottom: bottom ??
+          PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: AppColors.borderLight),
+          ),
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
+  Size get preferredSize => Size.fromHeight(
+    kToolbarHeight + (bottom?.preferredSize.height ?? 1),
+  );
 }
 
 // ─── Info Row ────────────────────────────────────────────────

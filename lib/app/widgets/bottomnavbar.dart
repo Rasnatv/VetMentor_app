@@ -15,7 +15,7 @@ class VetBottomNav extends StatelessWidget {
   static const _items = [
     _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home'),
     _NavItem(icon: Icons.school_outlined, activeIcon: Icons.school_rounded, label: 'Colleges'),
-    _NavItem(icon: Icons.work_outline, activeIcon: Icons.work_rounded, label: 'Careers'),
+    _NavItem(icon: Icons.work_outline, activeIcon: Icons.work_rounded, label: 'News'),
     _NavItem(icon: Icons.support_agent, activeIcon: Icons.support_agent_rounded, label: 'Mentor'),
     _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
   ];

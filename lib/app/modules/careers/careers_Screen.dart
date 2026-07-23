@@ -5,7 +5,9 @@ import '../../core/constants/appcolors.dart';
 import '../../core/style/dimens.dart';
 import '../../core/style/textstyle.dart';
 import '../../core/utils/responsive utiliteclass.dart';
+import '../../data/models/carrermodel.dart';
 import '../../widgets/commonwidget.dart';
+import 'carrerdetailscreen.dart';
 
 const _blue = Color(0xFF185FA5);
 const _blueBg = Color(0xFFE6F1FB);
@@ -17,103 +19,6 @@ const _coral = Color(0xFF993C1D);
 const _coralBg = Color(0xFFFAECE7);
 
 const double _kNodeColumnWidth = 52;
-
-class CareerPath {
-  final String id;
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final String category;
-  final Color accent;
-  final Color accentBg;
-
-  const CareerPath({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.category,
-    required this.accent,
-    required this.accentBg,
-  });
-}
-
-class CareerData {
-  static const List<CareerPath> paths = [
-    CareerPath(
-      id: '1',
-      title: 'Govt Vet Officer / LDO',
-      subtitle: 'State PSC · ₹50,000–80,000/mo',
-      icon: Icons.account_balance_outlined,
-      category: 'Public service',
-      accent: _blue,
-      accentBg: _blueBg,
-    ),
-    CareerPath(
-      id: '2',
-      title: 'Private Pet Practice',
-      subtitle: 'Clinics & Hospitals · ₹40,000–1L/mo',
-      icon: Icons.favorite_border_rounded,
-      category: 'Animal care',
-      accent: _teal,
-      accentBg: _tealBg,
-    ),
-    CareerPath(
-      id: '3',
-      title: 'Dairy, Poultry & Food Safety',
-      subtitle: 'Industry & Pharma · FSSAI roles',
-      icon: Icons.factory_outlined,
-      category: 'Industry & research',
-      accent: _purple,
-      accentBg: _purpleBg,
-    ),
-    CareerPath(
-      id: '4',
-      title: 'Wildlife, Zoo & Animal Welfare',
-      subtitle: 'NGOs · Conservation organisations',
-      icon: Icons.park_outlined,
-      category: 'Animal care',
-      accent: _coral,
-      accentBg: _coralBg,
-    ),
-    CareerPath(
-      id: '5',
-      title: 'Research / M.V.Sc / PhD',
-      subtitle: 'ICAR, Universities · Stipend + growth',
-      icon: Icons.science_outlined,
-      category: 'Industry & research',
-        accent: _blue,
-        accentBg: _blueBg
-    ),
-    CareerPath(
-      id: '6',
-      title: 'UPSC IFS / ICAR / State PSC',
-      subtitle: 'Civil services · Govt research roles',
-      icon: Icons.workspace_premium_outlined,
-      category: 'Public service',
-      accent: _teal,
-      accentBg: _tealBg,
-    ),
-    CareerPath(
-      id: '7',
-      title: 'Startups in Pet Care & Tech',
-      subtitle: 'Nutrition, health tech · Equity growth',
-      icon: Icons.rocket_launch_outlined,
-      category: 'Global & growth',
-      accent: _purple,
-      accentBg: _purpleBg,
-    ),
-    CareerPath(
-      id: '8',
-      title: 'USA/Canada — NAVLE / ECFVG',
-      subtitle: 'International licensing path',
-      icon: Icons.public_outlined,
-      category: 'Global & growth',
-      accent: _coral,
-      accentBg: _coralBg,
-    ),
-  ];
-}
 
 class CareersScreen extends StatelessWidget {
   const CareersScreen({super.key});
@@ -127,7 +32,7 @@ class CareersScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: VetAppBar(
-          showBack: false,
+          showBack: true,
           title: 'Career Roadmap',
         ),
         body: ListView(
@@ -163,7 +68,13 @@ class CareersScreen extends StatelessWidget {
                 r: r,
                 path: paths[index],
                 isLast: index == paths.length - 1,
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CareerDetailScreen(path: paths[index]),
+                    ),
+                  );
+                },
               );
             }),
 
@@ -284,23 +195,33 @@ class _TimelineCareerCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: r.spacing(8),
-                          vertical: r.spacing(2),
-                        ),
-                        decoration: BoxDecoration(
-                          color: path.accentBg,
-                          borderRadius: BorderRadius.circular(AppDimens.radiusMD),
-                        ),
-                        child: Text(
-                          path.category,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            fontSize: r.fontSize(10.5),
-                            fontWeight: FontWeight.w600,
-                            color: path.accent,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: r.spacing(8),
+                              vertical: r.spacing(2),
+                            ),
+                            decoration: BoxDecoration(
+                              color: path.accentBg,
+                              borderRadius: BorderRadius.circular(AppDimens.radiusMD),
+                            ),
+                            child: Text(
+                              path.category,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontSize: r.fontSize(10.5),
+                                fontWeight: FontWeight.w600,
+                                color: path.accent,
+                              ),
+                            ),
                           ),
-                        ),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: r.fontSize(18),
+                            color: AppColors.textSecondary,
+                          ),
+                        ],
                       ),
                       SizedBox(height: r.spacing(AppDimens.paddingXS)),
                       Text(path.title, style: AppTextStyles.titleLarge),
