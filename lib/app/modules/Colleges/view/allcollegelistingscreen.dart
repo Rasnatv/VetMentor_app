@@ -126,7 +126,9 @@ class _CollegeListScreenState extends State<CollegeListScreen> {
     return NetworkAwareWrapper(
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: VetAppBar(title: 'All Colleges'), // no toggle needed anymore
+        appBar: VetAppBar(
+            showBack: false,
+            title: 'All Colleges'), // no toggle needed anymore
         body: Obx(() {
           if (_ctrl.isLoading) {
             return const Center(child: CircularProgressIndicator());
