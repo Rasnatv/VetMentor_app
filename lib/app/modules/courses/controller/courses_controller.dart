@@ -14,8 +14,8 @@ class CourseController extends GetxController {
 
   final _dio = Dio(
     BaseOptions(
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {'Accept': 'application/json'},
     ),
   );
@@ -53,10 +53,14 @@ class CourseController extends GetxController {
         hasError.value = true;
       }
     } on DioException catch (e) {
-      if (ApiErrorHandler.isNetworkError(e)) {
-        hasError.value = false;
-      } else {
-        hasError.value = true;
+      // FIX: previously network errors set hasError = false, which
+      // silently hid the failure. The home screen relies on
+      // `_courseCtrl.isLoading.value` to decide whether to keep
+      // showing the shimmer, so a failed request must always flip
+      // hasError to true and let `finally` clear isLoading — never
+      // leave both loading and unresolved at once.
+      hasError.value = true;
+      if (!ApiErrorHandler.isNetworkError(e)) {
         ApiErrorHandler.showError(e);
       }
       if (kDebugMode) debugPrint('CourseController DioError: $e');
@@ -64,6 +68,8 @@ class CourseController extends GetxController {
       hasError.value = true;
       if (kDebugMode) debugPrint('CourseController error: $e');
     } finally {
+      // Always guaranteed to run — this is what stops the shimmer
+      // from spinning forever even if the request above throws.
       isLoading.value = false;
     }
   }
