@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
@@ -12,8 +13,8 @@ class CollegeController extends GetxController {
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: ApiConstants.baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {'Accept': 'application/json'},
     ),
   );
@@ -47,14 +48,24 @@ class CollegeController extends GetxController {
     super.onClose();
   }
 
+  /// Runs both fetches in PARALLEL instead of sequentially.
+  /// Previously this awaited fetchColleges() then fetchTopCollegesFromApi()
+  /// one after another — both hitting the SAME endpoint (/college-list),
+  /// which meant a slow/unreachable network could stack two timeouts
+  /// back to back (up to ~60s) before the home screen could render
+  /// anything, leaving the UI stuck on the shimmer loader.
   Future<void> _loadInitialData() async {
-    await fetchColleges();
-    await fetchTopCollegesFromApi();
+    await Future.wait([
+      fetchColleges(),
+      fetchTopCollegesFromApi(),
+    ]);
   }
 
   Future<void> _onReconnect() async {
-    await fetchColleges(forceRefresh: true);
-    await fetchTopCollegesFromApi();
+    await Future.wait([
+      fetchColleges(forceRefresh: true),
+      fetchTopCollegesFromApi(),
+    ]);
   }
 
   Future<void> fetchColleges({bool forceRefresh = false}) async {
@@ -74,11 +85,17 @@ class CollegeController extends GetxController {
         _handleError(result.message);
       }
     } on DioException catch (e) {
-      if (ApiErrorHandler.isNetworkError(e)) {
-        loadState.value = CollegeLoadState.initial;
-      } else {
+      // FIX: previously a network error left loadState untouched at
+      // "initial", which could leave the UI stuck showing nothing
+      // useful. Now it always surfaces as an error state so the
+      // retry UI can show up instead of an indefinite loading state.
+      _handleError(
+        ApiErrorHandler.isNetworkError(e)
+            ? 'No internet connection. Please try again.'
+            : ApiErrorHandler.handleDioError(e),
+      );
+      if (!ApiErrorHandler.isNetworkError(e)) {
         ApiErrorHandler.showError(e);
-        _handleError(ApiErrorHandler.handleDioError(e));
       }
     } catch (e) {
       _handleError('Unexpected error occurred.');
@@ -102,16 +119,20 @@ class CollegeController extends GetxController {
         errorMessage.value = result.message;
       }
     } on DioException catch (e) {
-      if (ApiErrorHandler.isNetworkError(e)) {
-        topCollegesError.value = false;
-      } else {
-        topCollegesError.value = true;
+      // FIX: previously network errors set topCollegesError = false,
+      // which silently hid the failure and could leave the screen
+      // showing "No colleges found" instead of a clear retry state.
+      // Now ALL failures (network or otherwise) surface as an error.
+      topCollegesError.value = true;
+      if (!ApiErrorHandler.isNetworkError(e)) {
         ApiErrorHandler.showError(e);
       }
     } catch (e) {
       topCollegesError.value = true;
       errorMessage.value = 'Unexpected error occurred.';
     } finally {
+      // Always guaranteed to run — this is what stops the shimmer
+      // from spinning forever even if the request above throws.
       topCollegesLoading.value = false;
     }
   }
@@ -129,6 +150,7 @@ class CollegeController extends GetxController {
           c.state.toLowerCase().contains(q)),
     );
   }
+
   void _handleError(String msg) {
     errorMessage.value = msg;
     loadState.value = CollegeLoadState.error;
