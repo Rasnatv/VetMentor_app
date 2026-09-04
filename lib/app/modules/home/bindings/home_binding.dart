@@ -3,7 +3,8 @@ import '../../Colleges/controller/college_controller.dart';
 import '../../Colleges/controller/enquirycontroller.dart';
 import '../../courses/controller/courses_controller.dart';
 import '../../Colleges/controller/course_detailcontroller.dart';
-import '../../Saved/controller/whishlist_controller.dart'; // ← add this
+import '../../Saved/controller/whishlist_controller.dart';
+import '../controller/astraaddcontroller.dart'; // ← add this
 
 class HomeBinding extends Bindings {
   @override
@@ -11,6 +12,7 @@ class HomeBinding extends Bindings {
     Get.lazyPut<CollegeController>(() => CollegeController(), fenix: true);
     Get.lazyPut<EnquiryController>(() => EnquiryController(), fenix: true);
     Get.lazyPut<CourseController>(() => CourseController(), fenix: true);
+    Get.lazyPut<AdController>(() => AdController(), fenix: true); // ← add this
   }
 }
 
