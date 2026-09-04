@@ -283,8 +283,6 @@ class _BottomAdBannerState extends State<BottomAdBanner> {
                 ),
               ),
 
-
-
         ]));
       },
     );
