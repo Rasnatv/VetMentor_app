@@ -27,7 +27,9 @@ import '../../courses/controller/courses_controller.dart';
 import '../../notification/controller/notificationcontroller.dart';
 import '../../notification/view/notificationpage.dart';
 import '../bindings/home_binding.dart';
+import '../controller/astraaddcontroller.dart';
 import '../controller/pushnotification_controller.dart';
+import 'bottomaddbanner.dart';
 import 'chatbaseScreen.dart';
 import 'search_screen.dart';
 
@@ -47,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen>
   Get.put(PushNotificationController());
   final NotificationController notificationController =
   Get.put(NotificationController());
+
 
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
