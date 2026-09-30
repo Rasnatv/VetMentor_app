@@ -5,6 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import 'app/no internetconnection/network_service.dart';
 import 'app/routes/apppages.dart';
 import 'notification_services.dart'; // 👈 adjust path to wherever it lives
+import 'package:flutter/services.dart';
 
 
 
@@ -12,12 +13,15 @@ import 'notification_services.dart'; // 👈 adjust path to wherever it lives
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();          // 👈 add this — required before any FCM call
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
+  await Firebase.initializeApp();
   Get.put(NetworkService());
   await GetStorage.init();
 
-  NotificationService.instance.init();     // 👈 add this — do NOT await, per its own doc comment
-
+  NotificationService.instance.init();
   runApp(const MyApp());
 }
 

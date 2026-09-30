@@ -10,12 +10,6 @@ import '../../../core/style/dimens.dart';
 import '../../../core/utils/responsive utiliteclass.dart';
 import '../controller/astraaddcontroller.dart';
 
-/// Advertisement carousel meant to sit directly ABOVE the bottom
-/// navigation bar. Rotates through multiple ads with dot indicators,
-/// mirrors the _AdCarousel reference style but wired to GetX/AdController.
-///
-/// Renders nothing at all if there's no ad to show or the user has
-/// already closed it — so it never reserves empty space.
 class BottomAdBanner extends StatefulWidget {
   const BottomAdBanner({super.key});
 

@@ -48,12 +48,6 @@ class CollegeController extends GetxController {
     super.onClose();
   }
 
-  /// Runs both fetches in PARALLEL instead of sequentially.
-  /// Previously this awaited fetchColleges() then fetchTopCollegesFromApi()
-  /// one after another — both hitting the SAME endpoint (/college-list),
-  /// which meant a slow/unreachable network could stack two timeouts
-  /// back to back (up to ~60s) before the home screen could render
-  /// anything, leaving the UI stuck on the shimmer loader.
   Future<void> _loadInitialData() async {
     await Future.wait([
       fetchColleges(),
