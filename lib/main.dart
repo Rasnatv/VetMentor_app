@@ -7,9 +7,6 @@ import 'app/routes/apppages.dart';
 import 'notification_services.dart'; // 👈 adjust path to wherever it lives
 import 'package:flutter/services.dart';
 
-
-
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
