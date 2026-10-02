@@ -24,6 +24,7 @@ import '../../Colleges/view/tempoary_affilaiatedcollegelist.dart';
 import '../../courses/view/coursesdetailscreen.dart';
 import '../../courses/view/coursesscreen.dart';
 import '../../courses/controller/courses_controller.dart';
+import '../../landingview/controller/landingcontroller.dart';
 import '../../notification/controller/notificationcontroller.dart';
 import '../../notification/view/notificationpage.dart';
 import '../bindings/home_binding.dart';
@@ -448,10 +449,11 @@ class _HomeScreenState extends State<HomeScreen>
                       child: InkWell(
                         borderRadius:
                         BorderRadius.circular(AppDimens.radiusLG),
-                        onTap: () => Get.to(
-                              () => CollegeListScreen(),
-                          binding: CollegesBinding(),
-                        ),
+                        onTap: () => Get.find<LandingController>().changePage(1),
+                        // onTap: () => Get.to(
+                        //       () => CollegeListScreen(),
+                        //   binding: CollegesBinding(),
+                        // ),
                         child: Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: r.spacing(17),
@@ -719,10 +721,11 @@ class _HomeScreenState extends State<HomeScreen>
         child: SectionHeader(
           title: 'Top Veterinary Colleges',
           actionText: 'View All',
-          onAction: () => Get.to(
-                () => CollegeListScreen(),
-            binding: CollegesBinding(),
-          ),
+            onAction: () => Get.find<LandingController>().changePage(1)
+          // onAction: () => Get.to(
+          //       () => CollegeListScreen(),
+          //   binding: CollegesBinding(),
+          // ),
         ),
       ),
     );
